@@ -183,12 +183,12 @@
    Similar comments probably apply to other efforts like Apache Parquet&Arrow.
 
    As far as I can tell, NIO is alone in striving for a flexible column/vector
-   |matix|tensor "store" that strives to just solve **just one simple problem**
-   - not parsing & reparsing - and understands that filesystems are already
-   hierarchical (and some even support random access to compressed data, but
-   streaming row-at-a-time perf is usually better).  All that said, the NIO
-   solution is *so* simple that it seems not improbable *someone* else has
-   devised a close analogue.
+   |matix|tensor "store" that strives to just solve **just one simple problem**:
+   not parsing & reparsing and understands filesystems are already hierarchical
+   (and some even support random access to compressed data, but streaming
+   row-at-a-time perf is usually better).  All that said, the NIO solution is
+   *so* simple that it seems not improbable *someone* else has devised a close
+   analogue.
 
 10) Ok..Why not a full object graph?
 
