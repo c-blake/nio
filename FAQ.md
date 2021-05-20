@@ -172,7 +172,25 @@
    provide.  Meanwhile, files & dirs are universal; Users know what to do with
    tar/zip archive files or with dirs of files they want to bundle.
 
-9b) Ok..Why not a full object graph?
+9b) Doesn't KDB do this already?
+
+    Sort of, but not really.  For example, back around the turn of the 2010
+    decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
+    multi-threaded decompression via backing store IO >20x less.  Nothing like
+    this was at all available for kdb, though it has surely grown support for
+    more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
+    and better factoring wins the day.  To do this with the NIO model is easy.
+    Similar comments probably apply to other efforts like Apache Parquet&Arrow.
+
+    As far as I can tell, NIO is alone in striving for a flexible column/vector
+    |matix|tensor "store" that strives to just solve **just one simple problem**
+    - not parsing & reparsing - and understands that filesystems are already
+    hierarchical (and some even support random access to compressed data, but
+    streaming row-at-a-time perf is usually better).  All that said, the NIO
+    solution is *so* simple that it seems not improbable *someone* else has
+    devised a close analogue.
+
+10) Ok..Why not a full object graph?
 
    This could be a good addition.  Generalizing how string repositories work to
    allow more arbitrary pointers may not even be hard.  Always insert-at-end/
@@ -182,7 +200,7 @@
    this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
    for decades without this feature.
 
-10) Why no bit fields?
+11) Why no bit fields?
 
     This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
     on prefix multipliers might work as a syntax.  The problem is mostly that it
