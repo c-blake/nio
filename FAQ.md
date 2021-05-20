@@ -174,21 +174,21 @@
 
 9b) Doesn't KDB do this already?
 
-    Sort of, but not really.  For example, back around the turn of the 2010
-    decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
-    multi-threaded decompression via backing store IO >20x less.  Nothing like
-    this was at all available for kdb, though it has surely grown support for
-    more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
-    and better factoring wins the day.  To do this with the NIO model is easy.
-    Similar comments probably apply to other efforts like Apache Parquet&Arrow.
+   Sort of, but not really.  For example, back around the turn of the 2010
+   decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
+   multi-threaded decompression via backing store IO >20x less.  Nothing like
+   this was at all available for kdb, though it has surely grown support for
+   more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
+   and better factoring wins the day.  To do this with the NIO model is easy.
+   Similar comments probably apply to other efforts like Apache Parquet&Arrow.
 
-    As far as I can tell, NIO is alone in striving for a flexible column/vector
-    |matix|tensor "store" that strives to just solve **just one simple problem**
-    - not parsing & reparsing - and understands that filesystems are already
-    hierarchical (and some even support random access to compressed data, but
-    streaming row-at-a-time perf is usually better).  All that said, the NIO
-    solution is *so* simple that it seems not improbable *someone* else has
-    devised a close analogue.
+   As far as I can tell, NIO is alone in striving for a flexible column/vector
+   |matix|tensor "store" that strives to just solve **just one simple problem**
+   - not parsing & reparsing - and understands that filesystems are already
+   hierarchical (and some even support random access to compressed data, but
+   streaming row-at-a-time perf is usually better).  All that said, the NIO
+   solution is *so* simple that it seems not improbable *someone* else has
+   devised a close analogue.
 
 10) Ok..Why not a full object graph?
 
