@@ -22,7 +22,7 @@
     and being able to mmap & go lets one be "fluid" about data/program lifetime
     & computations, subdividing however is convenient.
 
-1') Why not bio for binary IO?
+1a) Why not bio for binary IO?
 
     To avoid confusion with block/buffered IO which is "similar but different"
     and focus on the main points of nativeness/number-hood.
@@ -157,7 +157,7 @@
     there seems definite value to non-DB persistence formats.  The closest
     analogue to envisioned NIO use cases is HDF5.
 
-9') Ok..Why not HDF5?
+9a) Ok..Why not HDF5?
 
     HDF5 heralds from NetCDF and earlier formats all designed to work with very
     limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
@@ -172,7 +172,7 @@
     provide.  Meanwhile, files & dirs are universal; Users know what to do with
     tar/zip archive files or with dirs of files they want to bundle.
 
-9'') Ok..Why not a full object graph?
+9b) Ok..Why not a full object graph?
 
     This could be a good addition.  Generalizing how string repositories work to
     allow more arbitrary pointers may not even be hard.  Always insert-at-end/
