@@ -24,8 +24,8 @@
 
 1a) Why not bio for binary IO?
 
-    To avoid confusion with block/buffered IO which is "similar but different"
-    and focus on the main points of nativeness/number-hood.
+   To avoid confusion with block/buffered IO which is "similar but different"
+   and focus on the main points of nativeness/number-hood.
 
 2) How do I express a row format?
 
@@ -159,28 +159,28 @@
 
 9a) Ok..Why not HDF5?
 
-    HDF5 heralds from NetCDF and earlier formats all designed to work with very
-    limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
-    Consequently, these formats re-create archive functionality (like tar/zip)
-    instead of just using the filesystem.  The 1980s are mostly behind us all.
-    Using regular files has many charms.  Not the least charm is that users all
-    know how to find & manage files & directories.  This includes many & varied
-    compression programs to compress files - not just library access to codecs
-    but programs like zstd xyz or lz4 pdq etc.  Bundling functionality in HDF5
-    might *seem* nice, but can also be a limiting luxury trap, e.g. to support
-    compression libs, ACLs, rsync optimization or all other things files & dirs
-    provide.  Meanwhile, files & dirs are universal; Users know what to do with
-    tar/zip archive files or with dirs of files they want to bundle.
+   HDF5 heralds from NetCDF and earlier formats all designed to work with very
+   limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
+   Consequently, these formats re-create archive functionality (like tar/zip)
+   instead of just using the filesystem.  The 1980s are mostly behind us all.
+   Using regular files has many charms.  Not the least charm is that users all
+   know how to find & manage files & directories.  This includes many & varied
+   compression programs to compress files - not just library access to codecs
+   but programs like zstd xyz or lz4 pdq etc.  Bundling functionality in HDF5
+   might *seem* nice, but can also be a limiting luxury trap, e.g. to support
+   compression libs, ACLs, rsync optimization or all other things files & dirs
+   provide.  Meanwhile, files & dirs are universal; Users know what to do with
+   tar/zip archive files or with dirs of files they want to bundle.
 
 9b) Ok..Why not a full object graph?
 
-    This could be a good addition.  Generalizing how string repositories work to
-    allow more arbitrary pointers may not even be hard.  Always insert-at-end/
-    mark deleted with some kind of eventual GC may retain a mostly usable "run
-    right off of files" for broader use cases, but notably will need parallel
-    GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
-    this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
-    for decades without this feature.
+   This could be a good addition.  Generalizing how string repositories work to
+   allow more arbitrary pointers may not even be hard.  Always insert-at-end/
+   mark deleted with some kind of eventual GC may retain a mostly usable "run
+   right off of files" for broader use cases, but notably will need parallel
+   GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
+   this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
+   for decades without this feature.
 
 10) Why no bit fields?
 
