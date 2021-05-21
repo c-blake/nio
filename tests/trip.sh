@@ -97,12 +97,8 @@ out=$(nio f -oszip.schema)
 nio f -szip.schema /dev/stdin < data > $out
 
 cat > rip.schema <<EOF
-#Test schema
-#--preproc=gzip -d \$1|c2tsv   # popen() preproc to make strict TSV
 --nHeader=0                  # number of rows which are headers
---maxLog=100                 # limit same-kind log messages
 --shared=rstrings.LS         # name of any common strings file
-#name NC SC TRANSFORM:args   # NC=NIOcode; SC=(scan|src)Code like scan1
 qty	i	d            # parse input as decimal; emit uint32
 Px	f	f            # parse as float32; emit float32
 Ign	i	x @.         # ignore an input column
