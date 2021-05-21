@@ -1,0 +1,9 @@
+*.swp
+*.ndb
+nio
+utils/tabGen
+utils/addEmpty
+utils/c2tsv
+utils/c2tsvs
+utils/tabGen
+utils/transpose
