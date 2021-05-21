@@ -8,7 +8,7 @@
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 import strutils, math, os, strformat {.all.}, # only for proc formatInt
-       tables, sets, system.ansi_C, cligen/[osUt, strUt]
+       tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt]
 from memfiles as mf import nil  #NOTE: gcc __float128 CPU-portable but slow
 
 type #*** BASIC TYPE SETUP
@@ -667,23 +667,29 @@ proc zip*(paths: Strings): int =
         outu buf
   for i in 0 ..< fs.len: fs[i].close
 
-iterator elts(slices: Strings, bound: int): int =
-  for s in slices:                      #XXX parse [a]-[b] slices
-    yield parseInt(s)
+iterator elts(slices: Strings, bound: int): (int, int) =
+  var a, b: int
+  for s in slices:
+    (a, b) = parseSlice(s)
+    if a < 0: a.inc bound
+    if b < 0: b.inc bound
+    if b < a: b = a + 1
+    yield (a, b)
 
-proc cut*(fields: Strings = @[], Fields: Strings = @[],
-          rows: Strings = @[], Rows: Strings = @[], paths: Strings): int =
-  ## pass/drop selected columns & rows {generalized cut(1)} to stdout.
+proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
+  ## pass|drop selected column slices {generalized cut(1)} to stdout.
   ##
-  ## You can only drop|pass fields|rows but not both in the same domain.
-  if paths.len > 1 or (fields.len > 0 and Fields.len > 0) or
-     (rows.len > 0 and Rows.len > 0): return 1
-  var cPass = int(Fields.len > 0)
-  let fields = if fields.len > 0: fields else: Fields
+  ## Slice specification is `[a][%][:[b[%]]]`, like Python (incl negatives) but
+  ## w/optional '%'.  If "a"|"b" are on (0,1) their amount is a (rounded) size
+  ## fraction even without '%'.  a==b => empty.
+  if paths.len > 1 or (drop.len > 0 and pass.len > 0):
+    erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
+  var cPass = int(pass.len > 0)
+  let fields = if drop.len > 0: drop else: pass
   var inp = nOpen(paths[0])
-  #XXX Always know col range in advance; Rows should be like head/tail/head-tail
   var colSet: HashSet[int]              # Q: Tensors aided by flat view?
-  for elt in fields.elts(inp.rowFmt.cols.len): colSet.incl elt
+  for (a,b) in fields.elts(inp.rowFmt.cols.len):
+    for j in a..<b: colSet.incl j
   var buf: string
   var offs, ns: seq[int]
   var off = 0
@@ -992,10 +998,8 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "names" : "pre.N names for output files"}],
     [zip   , help={"paths" : "[paths: 2|more paths to NIO files]"}],
     [cut   , help={"paths" : "{paths: 1 path to a NIO file}",
-                   "fields": "drop/delete field slice [N]-[M]",
-                   "Fields": "pass/propagate field slice [N]-[M]",
-                   "rows"  : "drop/delete row slice [N]-[M]",
-                   "Rows"  : "pass/propagate row slice [N]-[M]"}],
+                   "drop"  : "drop/delete field slice [a[%]]:[b[%]]",
+                   "pass"  : "pass/propagate field slice [a[%]]:[b[%]]"}],
     [descr , help={"paths" : "[paths: 1|more paths to NIO files]",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
 #   [order , help={"paths" : "[paths: 1|more paths to NIO files]"}],
