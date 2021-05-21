@@ -1,10 +1,10 @@
 #!/bin/sh
 # This is presently far from exhaustive.
 
-(echo 1.23; echo 4.56; echo 7.89) | nio sc -if -of > kk.Nf
+(echo 1.23; echo 4.56; echo 7.89) | nio l -if -of > kk.Nf
 nio p kk.Nf
 
-(echo 123; echo 456) | nio sc -id -oi > jj.Ni
+(echo 123; echo 456) | nio l -id -oi > jj.Ni
 nio p jj.Ni
 
 ln -s jj.Ni jj.N2i
@@ -12,11 +12,11 @@ ln -s jj.Ni jj.Nii
 nio p jj.N2i
 nio p jj.Nii
 
-(echo 1; echo 2; echo 3)|nio sc -if -og > ld.Ng
+(echo 1; echo 2; echo 3)|nio l -if -og > ld.Ng
 nio p ld.Ng
 
-(echo 0; echo 3; echo 6)|nio sc -id -oi > foos.Ni
-(echo 1; echo 2; echo 3)|nio sc -if -of > flt.Nf
+(echo 0; echo 3; echo 6)|nio l -id -oi > foos.Ni
+(echo 1; echo 2; echo 3)|nio l -if -of > flt.Nf
 printf abc > ch.Nc
 
 nio zip ch.Nc ch.Nc ch.Nc > ch3.N3c
@@ -27,7 +27,7 @@ nio p ch4.N4c
 ln -s ch4.N4c ch4.Ncccc
 nio p ch4.Ncccc
 
-(echo 1; echo 2; echo 3)|nio sc -id -oi > foo.Ni
+(echo 1; echo 2; echo 3)|nio l -id -oi > foo.Ni
 nio zip ch4.N4c foo.Ni > chF.N4ci
 nio zip foo.Ni ch4.N4c > chF2.Ni4c
 
@@ -39,22 +39,22 @@ nio p foodot
  echo neighborino
  echo MoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256chars
 ) > strings
-nio sc -ix -oi < strings -x@strs > strs.Ni
+nio l -ix -oi < strings -x@strs > strs.Ni
 nio p strs.Ni@strs%s
 
-nio sc -ix -oi < strings -x@strs.Dn > strsDn.Ni
+nio l -ix -oi < strings -x@strs.Dn > strsDn.Ni
 nio p strsDn.Ni@strs.Dn%s
 
-nio sc -ix -oi < strings -x@strs.D0 > strsD0.Ni
+nio l -ix -oi < strings -x@strs.D0 > strsD0.Ni
 nio p strsD0.Ni@strs.D0%s
 
-nio sc -ix -oi < strings -x@strs.LC > strsLC.Ni
+nio l -ix -oi < strings -x@strs.LC > strsLC.Ni
 nio p strsLC.Ni@strs.LC%s
 
-nio sc -ix -oi < strings -x@strs.LS > strsLS.Ni
+nio l -ix -oi < strings -x@strs.LS > strsLS.Ni
 nio p strsLS.Ni@strs.LS%s
 
-nio sc -ix -oi < strings -x@strs.N6C > strs6C.Ni
+nio l -ix -oi < strings -x@strs.N6C > strs6C.Ni
 nio p strs6C.Ni@strs.N6C%s
 
 nio d foo.Nifd9c

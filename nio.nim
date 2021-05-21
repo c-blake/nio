@@ -798,8 +798,8 @@ proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
 # elif xfm.startsWith("L"):             # external shared library/DLL
   else: raise newException(ValueError, "unknown transformer prefix")
 
-proc scan1*(inCode, oCode: char; xform="", count=1): int =
-  ## scan 1 ASCII column on stdin to NIO on stdout (for import,testing).
+proc load1*(inCode, oCode: char; xform="", count=1): int =
+  ## load 1 ASCII column on stdin to NIO on stdout (for import,testing).
   let kout = ioCodeK(oCode)
   var xfm: Transform
   if inCode == 'x': xfm = initXfm(inCode, kout, xform)
@@ -828,7 +828,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ##   --maxLog=100                 # limit same-kind log messages
   ##   --zip                        # stdout zip mode not default rip mode
   ##   --shared=strings             # name of any common strings file
-  ##   #name NC SC TRANSFORM:args   # NC=NIOcode; SC=(scan|src)Code like scan1
+  ##   #name NC SC TRANSFORM:args   # NC=NIOcode; SC=(load|src)Code like load1
   ##   qty   i  d                   # parse input as decimal; emit uint32
   ##   Px    f  f                   # parse as float32; emit float32
   ##   Junk  i  ignore              # ignore an input column
@@ -960,7 +960,7 @@ when isMainModule:
         let bn = paramStr(0).lastPathPart
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
-          if bns in ["scan1", "fromSV", "print", "define", "zip", "rip"]:
+          if bns in ["load1", "fromSV", "print", "define", "zip", "rip"]:
             result.add bn[2..^1]        # make above hard/symlinks if you like
         return result & cmdline
       let underJoin = strutils.toUpperAscii(cmdNames.join("_"))
@@ -974,7 +974,7 @@ when isMainModule:
     result = result & cmdLine           # and then whatever user entered
 
   dispatchMulti(
-    [scan1 , help={"inCode": """input code: [**bodh**] Bin|Octal|Dec|Hex int
+    [load1 , help={"inCode": """input code: [**bodh**] Bin|Octal|Dec|Hex int
 **f** Float; **c** charArray(count); **x** transform""",
                    "oCode" : "Usual [**cCsSiIlLfdg**] NIO storage code",
                    "xform" : "TransformParams; Eg. @file.[NDL].. {NOUP}",
