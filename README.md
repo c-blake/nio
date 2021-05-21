@@ -9,19 +9,25 @@ code is just the first letter of each C type.  Capitals are unsigned while
 lowercase are signed.  That's it.
 
 The full syntax is one or more:
+```
   [<COUNT[,..]>]<c|C|s|S|i|I|l|L|f|d|g>
+```
 where
+```
   c: signed char    C: unsigned char
   s: signed short   S: unsigned short
   i: signed int     I: unsigned int
   l: signed long    L: unsigned long
   f: float          d: double           g: long double
+```
 
 Some examples:
+```
   hey.NS        a column-vector (Nx1 matrix) of unsigned shorts
   foo.N10f      an Nx10 matrix of floats
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
+```
 
 I have found this to be surprisingly usable and efficient.  It can perhaps cure
 you from your addiction of parsing & re-parsing ASCII numbers which is up to
