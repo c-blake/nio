@@ -57,8 +57,9 @@ nio p strsLS.Ni@strs.LS%s
 nio l -ix -oi < strings -x@strs.N6C > strs6C.Ni
 nio p strs6C.Ni@strs.N6C%s
 
-nio d foo.Nifd9c
-nio d -lc foo.Nifd9c
+nio me .Nifd9c
+nio me -c%z .Nifd9c
+echo # last should have had no newline
 
 #XXX add tests for under/overflow checking
 

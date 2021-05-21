@@ -557,7 +557,7 @@ proc meta*(format="", nios: Strings): int =
         else: "name: %n\nrows: %r\nbytes/row: %z\nlastWidth: %w\nlastType: %b\n"
   for path in nios:
     let (path, fmt, _) = metaData(path)
-    let sz = getFileSize(path)
+    let sz = if path.len > 0: getFileSize(path) else: 0
     var inPct = false
     for c in f:
       if inPct:
