@@ -8,6 +8,7 @@ else
     mkdir "$d"
     cd "$d" || exit 2
 fi
+rm -f *
 
 (echo 1.23; echo 4.56; echo 7.89) | nio l -if -of > kk.Nf
 nio p kk.Nf
