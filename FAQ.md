@@ -85,7 +85,9 @@
    of the same name but with a leading '.'.  These can contain a string just
    like the filename extension.  For example, "dateFoo" might have ".dateFoo"
    with contents "if@dates%s%.3f".  Then users can simply say `nio p dateFoo`
-   or otherwise `nOpen("dateFoo")`.
+   or otherwise `nOpen("dateFoo")`.  Note the text after [@%] is really only
+   special `nio print` syntax and stripped by `nio print`.  The file could also
+   contain just "if".
 
 6) What do you mean "NIO formalizes/generalizes existing practice"?
 
@@ -174,3 +176,10 @@ nio p typePid*
    on prefix multipliers might work as a syntax.  The problem is mostly that it
    is much less obvious what zip, rip, cut and similar transformations mean in
    the presence of bit fields.  And obviousness is good.
+
+12) What about filename limits, like < 255 chars?
+
+   If you are packing that many fields into single rows then you are almost
+   certainly on the wrong track, if for no other reason than IO bw and the
+   extraordinary unlikelihood you need all those fields in every table scan.
+   In any event, you can still use dot files.
