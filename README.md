@@ -32,9 +32,8 @@ Some examples:
 I have found this setup to be surprisingly usable and efficient.  It can perhaps
 cure you from your likely addiction of parsing & re-parsing ASCII numbers which
 is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
-those are memory bandwidth bound even in L1 cache and L1 can go at 200 GB/s
-while parsing at even 1 GB/s is a challenge and printing/formatting is even
-slower.)
+SIMD's are L1 cache bandwidth which are order 100s of GB/s while parsing at even
+1 GB/s is a challenge and printing/formatting is even slower.)
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is a [cligen](https://github.com/c-blake/cligen)
