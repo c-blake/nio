@@ -956,8 +956,9 @@ when isMainModule:
         let bn = paramStr(0).lastPathPart
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
-          if bns in ["load1", "fromSV", "print", "define", "zip", "rip"]:
-            result.add bn[2..^1]        # make above hard/symlinks if you like
+          if bns in ["load1", "fromSV", "meta", "print", "zip", "rip", "cut",
+                     "moments", "typedef"]: # allow n-print, etc. hardlinks
+            result.add bn[2..^1]
         return result & cmdline
       let underJoin = strutils.toUpperAscii(cmdNames.join("_"))
       var cfPath = getEnv(underJoin & "_CONFIG")      # See if cfg file redirect
