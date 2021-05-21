@@ -914,22 +914,22 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
 import stats
-type StatKind = enum skN="n", skMin="min", skMax="max", skSum="sum",
-                     skAvg="avg", skSdev="sdev", skSkew="skew", skKurt="kurt"
+type MomKind = enum moN="n", moMin="min", moMax="max", moSum="sum",
+                    moAvg="avg", moSdev="sdev", moSkew="moew", moKurt="kurt"
 
-proc fmtStat(st: RunningStat, sk: StatKind): string =
-  case sk
-  of skN:    $st.n
-  of skMin:  $st.min
-  of skMax:  $st.max
-  of skSum:  $st.sum
-  of skAvg:  $st.mean
-  of skSdev: $st.standardDeviation
-  of skSkew: $st.skewness
-  of skKurt: $st.kurtosis
+proc fmtStat(rs: RunningStat, mo: MomKind): string =
+  case mo
+  of moN:    $rs.n
+  of moMin:  $rs.min
+  of moMax:  $rs.max
+  of moSum:  $rs.sum
+  of moAvg:  $rs.mean
+  of moSdev: $rs.standardDeviation
+  of moSkew: $rs.skewness
+  of moKurt: $rs.kurtosis
 
-proc descr*(stats: set[StatKind] = {skMin, skMax}, paths: Strings): int =
-  ## print descriptive statistics over all columns of all `paths`.
+proc moments*(stats: set[MomKind] = {moMin, moMax}, paths: Strings): int =
+  ## print selected moments over all columns of all `paths`.
   for path in paths:                    # NOTE: This is intended as an easy,
     var inp = nOpen(path)               #..but not useless example calculation.
     var sts = newSeq[RunningStat](inp.rowFmt.cols.len)
@@ -943,8 +943,8 @@ proc descr*(stats: set[StatKind] = {skMin, skMax}, paths: Strings): int =
             sts[j].push num
     for j in 0 ..< sts.len:
       outu path, ":", j
-      for sk in [skN, skMin, skMax, skSum, skAvg, skSdev, skSkew, skKurt]:
-        if sk in stats: outu " ", $sk, ": ", fmtStat(sts[j], sk)
+      for mo in [moN, moMin, moMax, moSum, moAvg, moSdev, moSkew, moKurt]:
+        if mo in stats: outu " ", $mo, ": ", fmtStat(sts[j], mo)
       outu "\n"
 
 proc order*(paths: Strings): int =
@@ -1000,7 +1000,7 @@ if AT=="" %s renders as a number via `fmTy`""",
     [cut   , help={"paths" : "{paths: 1 path to a NIO file}",
                    "drop"  : "drop/delete field slice [a[%]]:[b[%]]",
                    "pass"  : "pass/propagate field slice [a[%]]:[b[%]]"}],
-    [descr , help={"paths" : "[paths: 1|more paths to NIO files]",
+    [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
 #   [order , help={"paths" : "[paths: 1|more paths to NIO files]"}],
     [typedef,help={"paths" : "[paths: 1|more paths to NIO files]",
