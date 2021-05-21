@@ -64,13 +64,13 @@ After that, you can save this blurb to some demo.sh and run "sh demo.sh":
 ```
 #!/bin/sh
 t=/usr/bin/time
-tabGen 1_000_000 4 > f 2> f.sc        # generate a million*4 table
-head -n3 < f                          # look at the top
-head f.sc                             # look at the parsing schema
-$t nio fromSV -s f.sc /dev/stdin < f  # parse the data into NIO.
+tabGen 1_000_000 4 > f 2> f.sc        # generate million*4 table
+head -n3 < f                          # look @top
+head f.sc                             # look @parsing schema
+$t nio fromSV -s f.sc /dev/stdin < f  # parse the data into NIO
 ls                                    # peruse some files
 nio pr a.Nf b.Nf%.5f | head -n3       # print human readable
-$t nio zip a.Nf b.Nf > ab.Nff         # stitch/zip together a couple cols
+$t nio zip a.Nf b.Nf > ab.Nff         # stitch cols together
 nio pr ab.Nff%.9f%.5f | head -n3      # print those, too
 $t nio moments [a-z].N* )             # compute some summary stats
 ```
