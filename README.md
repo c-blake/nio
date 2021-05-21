@@ -55,7 +55,7 @@ steps and then explain things.  To start, you will first need to compile &
 install in your $PATH utils/tabGen.nim.  Something like this may do the trick:
 
 ```
-git clone https://github.com/c-blake/niohttps://github.com/c-blake/nio
+git clone https://github.com/c-blake/nio
 cd nio
 n="nim c -d:danger"
 $n nio && $n utils/c2tsv && $n utils/tabGen &&
