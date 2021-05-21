@@ -1,5 +1,13 @@
 #!/bin/sh
 # This is presently far from exhaustive.
+d="/tmp/tn" # test nio dir
+#nio=... # Might $nio everywhere confuse some, example code-wise?
+if [ -r "$d" -a -w "$d" -a -x "$d" -a -d "$d" ]; then
+    cd "$d" || exit 1
+else
+    mkdir "$d"
+    cd "$d" || exit 2
+fi
 
 (echo 1.23; echo 4.56; echo 7.89) | nio l -if -of > kk.Nf
 nio p kk.Nf
