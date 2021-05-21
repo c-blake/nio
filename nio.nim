@@ -928,7 +928,7 @@ proc fmtStat(rs: RunningStat, mo: MomKind): string =
   of moSkew: $rs.skewness
   of moKurt: $rs.kurtosis
 
-proc moments*(stats: set[MomKind] = {moMin, moMax}, paths: Strings): int =
+proc moments*(fmt="%.6f", stats: set[MomKind] = {moMin, moMax}, paths: Strings): int =
   ## print selected moments over all columns of all `paths`.
   for path in paths:                    # NOTE: This is intended as an easy,
     var inp = nOpen(path)               #..but not useless example calculation.
@@ -998,6 +998,7 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "drop"  : "drop/delete field slice [a[%]]:[b[%]]",
                    "pass"  : "pass/propagate field slice [a[%]]:[b[%]]"}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
+                   "fmt"   : "Nim floating point output format",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
     [typedef,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
