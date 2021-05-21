@@ -947,10 +947,6 @@ proc moments*(stats: set[MomKind] = {moMin, moMax}, paths: Strings): int =
         if mo in stats: outu " ", $mo, ": ", fmtStat(sts[j], mo)
       outu "\n"
 
-proc order*(paths: Strings): int =
-  ## sort path(s) into order XXX do me
-  discard
-
 when isMainModule:
   import cligen, cligen/cfUt, os
 
@@ -1002,7 +998,6 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "pass"  : "pass/propagate field slice [a[%]]:[b[%]]"}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
-#   [order , help={"paths" : "[paths: 1|more paths to NIO files]"}],
     [typedef,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
                    "lang"  : "programming language"}])
