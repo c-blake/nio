@@ -25,7 +25,7 @@
 1a) Why not bio for binary IO?
 
    To avoid confusion with block/buffered IO which is "similar but different"
-   and focus on the main points of nativeness/number-hood.
+   in the same context and focus on the main points of nativeness/number-hood.
 
 2) How do I express a row format?
 
@@ -85,9 +85,11 @@
     The input side is simpler since there is no base-10/16/.. variation.
 
     One of the draws of the so-called Unix Philosophy is a simple consistent
-    newline delimited row format, but text is particularly inefficient for
-    numbers.  One way to view NIO is the simplest possible generalization of
-    this to binary formats.  Simplest means no headers.
+    newline-delimited row format, but text is particularly inefficient for
+    numbers (possibly << 1 GB/s vs >> 100 GB/s).  One way to view NIO is the
+    simplest possible generalization of this "simple, consistent format" to
+    binary numeric formats.  To me, simplest implies no headers, but this is
+    admittedly somewhat subjective.
 
     When used for shell pipelines prototyped interactively a terse syntax that
     does not require shell quoting is helpful.  The utility of such pipelines
