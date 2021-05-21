@@ -9,9 +9,9 @@ const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 import strutils, math, os, strformat {.all.}, # only for proc formatInt
        tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt]
-from memfiles as mf import nil  #NOTE: gcc __float128 CPU-portable but slow
+from memfiles as mf import nil
 
-type #*** BASIC TYPE SETUP
+type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   IOKind* = enum cIk = "int8" , CIk = "uint8" , sIk = "int16", SIk = "uint16",
                  iIk = "int32", IIk = "uint32", lIk = "int64", LIk = "uint64",
                  fIk = "float32", dIk = "float32", gIk = "float80"
