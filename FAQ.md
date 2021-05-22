@@ -10,9 +10,10 @@ of the Buddha, outside many Buddhist temples.  Homonymic "Neo" is the messiah in
 The Matrix trilogy and a Nim linear algebra package. ;)
 
 This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
-of command-line tools designed to manipulate simple arrays of structs stored in
-files.  One dimensional/vector layouts are like structs of arrays while rank3
-and above also enjoy some support (eg. time series of matrices).
+of command-line tools designed to standardize & simplify manipulation of simple
+arrays of structs stored in files.  One dimensional/vector layouts are like
+structs of arrays while rank3 and above also enjoy some support (eg. time series
+of matrices).
 
 The basic idea is to have files be self-describing with zero cost "parsing".
 I.e. mmap & go or read a row at a time into one fixed buffer where packed field
@@ -118,14 +119,16 @@ NIO is for use by programmer data analysts..perhaps advanced programmers who
 think they can IO optimize better than query analyzers or who have custom
 analytics or other needs to integrate with "real" prog.lang libraries that is
 all too painful in SQL/SQL stored procedures (the latter of which are often very
-non-DB portable).  Repayment for low-levelness is true zero overhead IO (and
-easy access to SIMD speeds, as yet another example).  Updates are also often
-rare to never; Yet analyses can hit large data sets hundreds if not hundreds of
-thousands of times.  So, vectors/tables/tensors are apt while ACID is
-over-engineered and any cost is waste.  There may be a way to get mostly what
-you want IO-wise from LMDB but specifying structure of the data will still need
-something like NIO anyway.  In short, there seems definite value to non-DB
-persistence formats.  The closest analogue to envisioned NIO use cases is HDF5.
+non-DB portable).  Last I checked, it was a trick to even get Gaussian deviates
+out of PostGres.  Trying to build some machine learning algo as part of a stored
+procedure sounds like a nightmare.  Repayment for low-levelness is true zero
+overhead IO (and easy access to SIMD speeds).  Updates are also often rare to
+never; Yet analyses can hit large data sets 100s if not 100s of thousands of
+times.  So, vectors/tables/tensors are apt while ACID is over-engineered and any
+cost is waste.  There may be a way to get mostly what you want IO-wise from LMDB
+but specifying structure of the data will still need something like NIO anyway.
+In short, there seems definite value to non-DB persistence formats.  The closest
+analogue to envisioned NIO use cases is HDF5.
 
 ### 8 - Ok..Why not HDF5?
 
@@ -179,7 +182,50 @@ the presence of bit fields.  And obviousness is good.
 
 ### 12 - What about filename limits, like \< 255 chars?
 
-If you are packing that many fields into single rows then you are almost
-certainly on the wrong track, if for no other reason than IO bw and the
-extraordinary unlikelihood you need all those fields in every table scan.
-In any event, you can still use dot files.
+If you are packing that many fields into single rows then you (or some upstream
+dependency you have) are almost certainly on the wrong track, if for no other
+reason than IO bw and the extraordinary unlikelihood you need all those fields
+in every table scan.  In any event, you can still use dot files.
+
+### 13 - Why don't you just always do column IO?
+
+Column stores became all the rage in the 2010s and it's true in 2002 when I
+first started doing things like this they had charm (and still do) for some
+situations.  That said, sometimes you always want pairs/triples or in general
+tuples that do not data compress much more as a tuple than they do in columns.
+Or you may not be compressing at all.  Spreading your IO requests over 4 files
+could have Winchester disk seek risk or other inefficiencies.  "To zip or rip?"
+ultimately depends on hardware deployment & data context.  Since there is no way
+to always know such answers at abstraction-creation-time, it is better not to
+decide ahead of time.
+
+Various zips of files like this would be called "materialized views" in the
+database world.  As with almost everything in NIO, they are "available but
+manual" since we assume users can code & reason about their data processing/
+analysis needs "when it matters" at large scales.  At large scales things can
+take hours, days, or weeks and factors of 2-10x can make enormous usability
+differences.  So, no compromise access can be critical.
+
+### 14 - Why don't you just always do simple tensor IO like x.N10,10f?
+
+This special case, like column IO, can be exactly what you want sometimes.
+Other times it can be helpful to zip tensors with identifying tags or other
+metadata..perhaps only transiently, but transiently is "enough" to need support
+in the format.
+
+### 15 - This is all hopelessly hard to use compared to SQL
+
+Also not a question.  I think reasonable folks can differ on this and I am open
+to usability suggestions.  Also, the idea is kind of "between" the IO parts of
+DBs and the access/query parts.  So, you could think of it as a way to layer
+building a DB in such a way that preserves no compromise access by programmers
+willing to put in some effort.  E.g., query language-like functionality can be
+layered on top, and more transactional ideas could be stuffed in underneath,
+hopefully optionally to preserve efficiency.  In the 1980s, there used to be a
+popular access mode called Embedded SQL which had a similar compiler-mediated
+field access but backed by some connection to a database back-end.  NIO is a
+simpler way to achieve that less reliant upon compiler integration, but also
+more manual, but also providing "more random" access than the streaming query
+result pattern of Embedded SQL.  NIO is just a supplementary point in the design
+space rather than an outright replacement.  Not appealing to all in all cases
+is just another way of saying "Yup.  It's software". ;)
