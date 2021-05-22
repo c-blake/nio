@@ -91,8 +91,8 @@ extension, NIO tools will look for "dot files" of the same name but with a
 leading '.'.  These can contain a string just like the filename extension.  For
 example, "dateFoo" might have ".dateFoo" with contents "if@dates%s%.3f".  Then
 users can simply say `nio p dateFoo` or otherwise `nOpen("dateFoo")`.  Note the
-text after `[@%]` is really only special `nio print` syntax and stripped by `nio
-print`.  The file could also contain just "if".
+text after `[@%]` is really only special `nio print` syntax and ignored in other
+contexts.  The file could also contain just "if" for most purposes.
 
 ### 6 - What do you mean "NIO formalizes/generalizes existing practice"?
 
