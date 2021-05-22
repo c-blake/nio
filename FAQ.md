@@ -38,8 +38,8 @@ avoid "name smell" as well as "code smell". Lolz. ;-)
 Dependence upon C is only mnemonic.  C's ubiquity at the system level means
 most/almost all prog.langs have exposure to C, e.g. for foreign function
 interfaces.  A great many programmers who would never call themselves "C
-programmers" nevertheless find the above table easy.  I have accessed NIO files
-from C, C++, Python, and Nim.  The format is all the same.
+programmers" nevertheless find the suffix syntax easy to remember.  I have
+accessed NIO files from C, C++, Python, and Nim.  The format is all the same.
 
 ### 3 - NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
 
