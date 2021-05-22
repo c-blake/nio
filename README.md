@@ -6,7 +6,9 @@ and easy to remember (I think) because it is derived from the C programming
 language family.  Most programmers have those basic "CPU types" memorized.
 With the lone exception of long double (an already exceptional thing), the type
 code is just the first letter of each C type.  Capitals are unsigned while
-lowercase are signed.  That's it.
+lowercase are signed.  That's it.  There is an 
+[FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) with elaborated
+motivation.
 
 The full syntax is one or more:
 ```
