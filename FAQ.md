@@ -7,7 +7,7 @@ That's not a question. ;-)  Also, please just forgive the poetic license.
 "Nio" are [two wrath-filled & muscular but "benevolent" King
 guardians](https://en.wikipedia.org/wiki/Nio) of the Buddha, outside many
 Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix trilogy and a
-Nim linear algebra package. ;)  (And you can pronoucne it like "eye-oh" if you
+Nim linear algebra package. ;)  (And you can pronounce it like "eye-oh" if you
 want).
 
 This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
