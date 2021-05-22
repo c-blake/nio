@@ -62,15 +62,16 @@ but those are many "ands" and perfect is the enemy of the good.
 
 ### 4 - Why is the type syntax so darn terse?  Why no file headers?
 
-People use terse codes for outputs (like printf).  Why not for inputs?  The
-input side is simpler since there is no base-10/16/.. variation.
+People use terse codes for outputs (like printf) all the time.  Why not for
+inputs?  The input side is much simpler.  There is no base-10/16/.. variation,
+no left/right adjustment or number of decimals or alternate formats.
 
 One of the draws of the so-called Unix Philosophy is a simple consistent
 newline-delimited row format, but text is particularly inefficient for numbers
 (possibly << 1 GB/s vs >> 100 GB/s).  One way to view NIO is the simplest
 possible generalization of this "simple, consistent format" to binary numeric
-formats.  To me, simplest implies no headers, but this is admittedly somewhat
-subjective.
+formats.  To me, simplest implies no headers since there are various ways you
+can get ahold of an IO buffer, but this is admittedly somewhat subjective.
 
 When used for shell pipelines prototyped interactively a terse syntax that does
 not require shell quoting is helpful.  The utility of such pipelines also makes
