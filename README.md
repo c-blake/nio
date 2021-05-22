@@ -6,9 +6,7 @@ and easy to remember (I think) because it is derived from the C programming
 language family.  Most programmers have those basic "CPU types" memorized.
 With the lone exception of long double (an already exceptional thing), the type
 code is just the first letter of each C type.  Capitals are unsigned while
-lowercase are signed.  That's it.  There is an 
-[FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) with elaborated
-motivation.
+lowercase are signed.  That's it.
 
 The full syntax is one or more:
 ```
@@ -22,6 +20,8 @@ where
   l: signed long    L: unsigned long
   f: float          d: double           g: long double
 ```
+The number of rows is inferred from the file size (but could be a length-prefix
+in a messaging context).
 
 Some examples:
 ```
@@ -30,7 +30,6 @@ Some examples:
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
 ```
-
 I have found this setup to be surprisingly usable and efficient.  It can perhaps
 cure you from your likely addiction of parsing & re-parsing ASCII numbers which
 is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
@@ -40,7 +39,8 @@ SIMD's are L1 cache bandwidth which are order 100s of GB/s while parsing at even
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is a [cligen](https://github.com/c-blake/cligen)
 multi-command.  So the shortest unique prefix for subcommand names (and long
-option names) is sufficient.
+option names) is sufficient.  The
+[FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) has more motivation.
 
 While one can do a few things with the `nio` command, the main point of the
 design is to be extendable by actual programmers doing `import nio` and nOpen,
