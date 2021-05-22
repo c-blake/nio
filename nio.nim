@@ -679,9 +679,7 @@ iterator elts(slices: Strings, bound: int): (int, int) =
 proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
   ##
-  ## Slice specification is `[a][%][:[b[%]]]`, like Python (incl negatives) but
-  ## w/optional '%'.  If "a"|"b" are on (0,1) their amount is a (rounded) size
-  ## fraction even without '%'.  a==b => empty.
+  ## Slice specification is `[a][:[b]]`, like Python (incl negatives).
   if paths.len > 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
   var cPass = int(pass.len > 0)
