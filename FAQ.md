@@ -231,7 +231,22 @@ If you want then you can pair up everything .Nififif for a triple of distinct
 floats with, say, units of measure encoded as the preceding integer.  You just
 need a higher level of the system to interpret or enforce the types.
 
-### 16 - This is all hopelessly hard to use compared to SQL
+### 16 - Why so many string repository styles?
+
+Because no one can really agree on what is convenient and text varies so much.
+Length-prefixed is the most general 8-bit clean format, but is harder to edit
+by hand.  Delimited is nice, but not 8-bit clean.  Fixed width is 8-bit clean
+and even affords smaller integer row number indices, but then is fixed width,
+meaning it has to truncate and takes up a lot of space.
+
+There is actually (at least) one more unrepresented style that is useful but
+slow, namely newline-delimited-but-line-number-indexed (rather than byte offset-
+indexed).  With this, you can just fire up a text editor and hack away on string
+definitions with no regard to keeping string lengths the same.  The downside is
+that, at load time, you must parse the newlines in the file which can take time
+for large repositories.
+
+### 17 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
@@ -247,3 +262,25 @@ also more manual, but also providing "more random" access than the streaming
 query result pattern of Embedded SQL.  NIO is just a supplementary point in the
 design space rather than an outright replacement.  Not appealing to all in all
 cases is just another way of saying "Yup.  It's software". ;)
+
+### 18 - Ok.  I am *so* sold, BUT what about *my* programming language?
+
+Hey..Glad you like the idea (and even read to the end).  There are only so many
+hours in the day, though.  My hope is that the core idea is simple enough to be
+replicated in any PL with any kind of low level IO.  The core filename extension
+parser, `nio.initIORow`, is like 25 lines of non-comment Nim.
+
+The missing value|N/A convention is perhaps less critical in a first pass.  A
+full suite of tools like loaders/parsers/printers/zip/rip is not necessary *if*
+you are merely willing to compile/learn how to use the nio program here.
+
+Once you have a basic access libraries you could write n-foo CL tools (or libs)
+in a dozen PLs if you want..n-awk, n-plot, n-histo, etc.  As already mentioned,
+the main use case is custom calculations over big data where all you really need
+is the row stream/mmap interfaces and your own code which may not need little
+generality.  OTOH, maybe there are dozens of general things to do.  Have at it.
+
+NIO is so simple/easy that its main value to the world might not be *any* one
+implementation, tool, or libraray, but merely some standard suffix syntax/naming
+convention.  Stick to that convention and the world benefits from any/all impls
+in any/all PLs, like CSV or TSV or whatever, but with no per-datum parsing.
