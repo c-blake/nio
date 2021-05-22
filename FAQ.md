@@ -213,7 +213,21 @@ Other times it can be helpful to zip tensors with identifying tags or other
 metadata..perhaps only transiently, but transiently is "enough" to need support
 in the format.
 
-### 15 - This is all hopelessly hard to use compared to SQL
+### 15 - Isn't the "type system" barely worthy of the name?
+
+Yes & no.  It's basically the CPU type system (sans less portable latterday SIMD
+types) rather than a more sophisticated programming language type system.  How
+much of a problem this is depends upon what you are doing.  The main use case
+for NIO is when performance matters which means big data which almost always
+means big loops with low complexity data.  Low complexity data is not usually
+too hamstrung by weak types.
+
+Also, adding a type tag is not a crazy application of the above question's zip.
+If you want then you can pair up everything .Nififif for a triple of distinct
+floats with, say, units of measure encoded as the preceding integer.  You just
+need a higher level of the system to interpret or enforce the types.
+
+### 16 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
