@@ -238,8 +238,8 @@ layered on top, and more transactional ideas could be stuffed in underneath,
 hopefully optionally to preserve efficiency.  In the 1980s, there used to be a
 popular access mode called Embedded SQL which had a similar compiler-mediated
 field access but backed by some connection to a database back-end.  NIO is a
-simpler way to achieve that less reliant upon compiler integration, but also
-more manual, but also providing "more random" access than the streaming query
-result pattern of Embedded SQL.  NIO is just a supplementary point in the design
-space rather than an outright replacement.  Not appealing to all in all cases
-is just another way of saying "Yup.  It's software". ;)
+simpler way to achieve that which is less reliant upon compiler integration, but
+also more manual, but also providing "more random" access than the streaming
+query result pattern of Embedded SQL.  NIO is just a supplementary point in the
+design space rather than an outright replacement.  Not appealing to all in all
+cases is just another way of saying "Yup.  It's software". ;)
