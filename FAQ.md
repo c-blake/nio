@@ -4,9 +4,10 @@ That's not a question. ;-)  Also, please just forgive the poetic license.
 
 ### 1 - What is NIO?
 
-"Nio" is a wrath-filled & muscular but "benevolent" King guardian of the Buddha,
-outside many Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix
-trilogy and a Nim linear algebra package. ;)
+"Nio" are
+[two wrath-filled & muscular but "benevolent" King guardians](https://en.wikipedia.org/wiki/Nio)
+of the Buddha, outside many Buddhist temples.  Homonymic "Neo" is the messiah in
+The Matrix trilogy and a Nim linear algebra package. ;)
 
 This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
 of command-line tools designed to manipulate simple arrays of structs stored in
@@ -84,7 +85,7 @@ extension, NIO tools will look for "dot files" of the same name but with a
 leading '.'.  These can contain a string just like the filename extension.  For
 example, "dateFoo" might have ".dateFoo" with contents "if@dates%s%.3f".  Then
 users can simply say `nio p dateFoo` or otherwise `nOpen("dateFoo")`.  Note the
-text after [@%] is really only special `nio print` syntax and stripped by `nio
+text after `[@%]` is really only special `nio print` syntax and stripped by `nio
 print`.  The file could also contain just "if".
 
 ### 6 - What do you mean "NIO formalizes/generalizes existing practice"?
