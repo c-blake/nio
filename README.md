@@ -21,20 +21,18 @@ where
   f: float          d: double           g: long double
 ```
 The number of rows is inferred from the file size (but could be a length-prefix
-in a messaging context).
-
-Some examples:
+in a messaging context).  Some examples:
 ```
   hey.NS        a column-vector (Nx1 matrix) of unsigned shorts
   foo.N10f      an Nx10 matrix of floats
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
 ```
-I have found this setup to be surprisingly usable and efficient.  It can perhaps
-cure you from your likely addiction of parsing & re-parsing ASCII numbers which
-is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
-SIMD's are L1 cache bandwidth which are order 100s of GB/s while parsing at even
-1 GB/s is a challenge and printing/formatting is even slower.)
+I have found this setup to be quite usable, flexible, and efficient.  It can
+perhaps cure you from your likely addiction of parsing & re-parsing ASCII
+numbers which is up to hundreds of times slower than modern SIMD FP operations.
+(Seriously, SIMD's are L1 cache bandwidth which are order 100s of GB/s while
+parsing at even 1 GB/s is a challenge and printing/formatting is even slower.)
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is a [cligen](https://github.com/c-blake/cligen)
@@ -54,7 +52,6 @@ in `utils/`.  E.g., `transpose` is often useful in the context of schema writing
 Here is a little usage vignette using simulated data.  First we will show some
 steps and then explain things.  To start, you will first need to compile &
 install in your $PATH utils/tabGen.nim.  Something like this may do the trick:
-
 ```
 git clone https://github.com/c-blake/nio
 cd nio
