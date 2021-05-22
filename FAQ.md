@@ -4,10 +4,11 @@ That's not a question. ;-)  Also, please just forgive the poetic license.
 
 ### 1 - What is NIO?
 
-"Nio" are
-[two wrath-filled & muscular but "benevolent" King guardians](https://en.wikipedia.org/wiki/Nio)
-of the Buddha, outside many Buddhist temples.  Homonymic "Neo" is the messiah in
-The Matrix trilogy and a Nim linear algebra package. ;)
+"Nio" are [two wrath-filled & muscular but "benevolent" King
+guardians](https://en.wikipedia.org/wiki/Nio) of the Buddha, outside many
+Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix trilogy and a
+Nim linear algebra package. ;)  (And you can pronoucne it like "eye-oh" if you
+want).
 
 This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
 of command-line tools designed to standardize & simplify manipulation of simple
@@ -27,7 +28,10 @@ subdividing however is convenient.
 #### 1a - Why not bio for binary IO?
 
 To avoid confusion with block/buffered IO which is "similar but different" in
-the same context and focus on the main points of nativeness/number-hood.
+the same context and focus on the main points of nativeness/number-hood.  Also,
+"BIO" would introduce at least one pronunciation alternative that sounds like
+"B.O." which in English speaking cultures abbreviates body odor and we try to
+avoid "name smell" as well as "code smell". Lolz. ;-)
 
 ### 2 - How can it be "programming language agnostic" if it uses C type names?
 
