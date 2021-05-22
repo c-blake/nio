@@ -1,185 +1,184 @@
-0) Hey!  This FAQ is more like a design document than "frequent" questions.
+## 0 - Hey!  This FAQ is more like a design document than "frequent" questions.
 
-   That's not a question. ;-)  Also, please just forgive the poetic license.
+That's not a question. ;-)  Also, please just forgive the poetic license.
 
-1) What is NIO?
+## 1 - What is NIO?
 
-   "Nio" is a wrath-filled & muscular but "benevolent" King guardian of the
-   Buddha, outside many Buddhist temples.  Homonymic "Neo" is the messiah in
-   The Matrix trilogy and a Nim linear algebra package. ;)
+"Nio" is a wrath-filled & muscular but "benevolent" King guardian of the Buddha,
+outside many Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix
+trilogy and a Nim linear algebra package. ;)
 
-   This NIO is a "Native/Numerical IO" system.  It consists of a library and a
-   set of command-line tools designed to manipulate simple arrays of structs
-   stored in files.  One dimensional/vector layouts are like structs of arrays
-   while rank3 and above also enjoy some support (eg. time series of matrices).
+This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
+of command-line tools designed to manipulate simple arrays of structs stored in
+files.  One dimensional/vector layouts are like structs of arrays while rank3
+and above also enjoy some support (eg. time series of matrices).
 
-   The basic idea is to have files be self-describing with zero cost "parsing".
-   I.e. mmap & go or read a row at a time into one fixed buffer where packed
-   field access is mediated by optimizing compilers.  In addition to this zero
-   overhead access, NIO libraries also provide very low cost converting reads
-   that can translate missing value/NA codes.  This allows heterogeneous rows
-   to be read into heterogeneous program variables.  Data may not fit in memory
-   and being able to mmap & go lets one be "fluid" about data/program lifetime
-   & computations, subdividing however is convenient.
+The basic idea is to have files be self-describing with zero cost "parsing".
+I.e. mmap & go or read a row at a time into one fixed buffer where packed field
+access is mediated by optimizing compilers.  In addition to this zero overhead
+access, NIO libraries also provide very low cost converting reads that can
+translate missing value/NA codes.  This allows heterogeneous rows to be read
+into heterogeneous program variables.  Data may not fit in memory and being able
+to mmap & go lets one be "fluid" about data/program lifetime & computations,
+subdividing however is convenient.
 
-1a) Why not bio for binary IO?
+### 1a - Why not bio for binary IO?
 
-   To avoid confusion with block/buffered IO which is "similar but different"
-   in the same context and focus on the main points of nativeness/number-hood.
+To avoid confusion with block/buffered IO which is "similar but different" in
+the same context and focus on the main points of nativeness/number-hood.
 
-2) How can it be "programming language agnostic" if it uses C type names?
+## 2 - How can it be "programming language agnostic" if it uses C type names?
 
-   Dependence upon C is only mnemonic.  C's ubiquity at the system level means
-   most/almost all prog.langs have exposure to C, e.g. for foreign function
-   interfaces.  A great many programmers who would never call themselves "C
-   programmers" nevertheless find the above table easy.  I have accessed NIO
-   files from C, C++, Python, and Nim.  The format is all the same.
+Dependence upon C is only mnemonic.  C's ubiquity at the system level means
+most/almost all prog.langs have exposure to C, e.g. for foreign function
+interfaces.  A great many programmers who would never call themselves "C
+programmers" nevertheless find the above table easy.  I have accessed NIO files
+from C, C++, Python, and Nim.  The format is all the same.
 
-3) NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
+## 3 - NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
 
-   Architecture neutrality was always over-rated for files for data analysis or
-   programmatic interaction, the main use case of NIO.  Neutrality has become
-   ever more outmoded since the early 2000s as the Intel-ARM hegemony has grown
-   ever more dominant.  To preserve mmap&go capability, one would need at least
-   2 copies, possibly made with some new `nio bswap` tool.  `dd swab` may be
-   enough for simple row formats.  It is possible to have the nio.(read|write)
-   interfaces do any needed byte swaps, at some IO performance hit.  I haven't
-   personally needed this capability in decades using these ideas, though I am
-   not averse to some PR for it.
+Architecture neutrality was always over-rated for files for data analysis or
+programmatic interaction, the main use case of NIO.  Neutrality has become ever
+more outmoded since the early 2000s as the Intel-ARM hegemony has grown ever
+more dominant.  To preserve mmap&go capability, one would need at least 2
+copies, possibly made with some new `nio bswap` tool.  `dd swab` may be enough
+for simple row formats.  It is possible to have the nio.(read|write) interfaces
+do any needed byte swaps, at some IO performance hit.  I haven't personally
+needed this capability in decades using these ideas, though I am not averse to
+some PR for it.
 
-   While rare today, if you really have a cluster of heterogeneously endian
-   machines all computing against shared data and you cannot store two copies
-   then NIO may not add much value over other approaches since it loses full
-   optimizing compiler mediated access, though it may still be "simpler".
-   Nothing can be all things to all folks in all circumstances.  As they say,
-   your mileage may vary, but those are many "ands" and perfect is the enemy of
-   the good.
+While rare today, if you really have a cluster of heterogeneously endian
+machines all computing against shared data and you cannot store two copies then
+NIO may not add much value over other approaches since it loses full optimizing
+compiler mediated access, though it may still be "simpler".  Nothing can be all
+things to all folks in all circumstances.  As they say, your mileage may vary,
+but those are many "ands" and perfect is the enemy of the good.
 
-4) Why is the type syntax so darn terse?  Why no file headers?
+## 4 - Why is the type syntax so darn terse?  Why no file headers?
 
-   People use terse codes for outputs (like printf).  Why not for inputs?
-   The input side is simpler since there is no base-10/16/.. variation.
+People use terse codes for outputs (like printf).  Why not for inputs?  The
+input side is simpler since there is no base-10/16/.. variation.
 
-   One of the draws of the so-called Unix Philosophy is a simple consistent
-   newline-delimited row format, but text is particularly inefficient for
-   numbers (possibly << 1 GB/s vs >> 100 GB/s).  One way to view NIO is the
-   simplest possible generalization of this "simple, consistent format" to
-   binary numeric formats.  To me, simplest implies no headers, but this is
-   admittedly somewhat subjective.
+One of the draws of the so-called Unix Philosophy is a simple consistent
+newline-delimited row format, but text is particularly inefficient for numbers
+(possibly << 1 GB/s vs >> 100 GB/s).  One way to view NIO is the simplest
+possible generalization of this "simple, consistent format" to binary numeric
+formats.  To me, simplest implies no headers, but this is admittedly somewhat
+subjective.
 
-   When used for shell pipelines prototyped interactively a terse syntax that
-   does not require shell quoting is helpful.  The utility of such pipelines
-   also makes users confront & thus quickly learn/memorize row format syntax.
-   Row format transformations (such as combining columns) render explicitly.
-   Being explicit has pros as well as cons & we won't settle that debate here.
+When used for shell pipelines prototyped interactively a terse syntax that does
+not require shell quoting is helpful.  The utility of such pipelines also makes
+users confront & thus quickly learn/memorize row format syntax.  Row format
+transformations (such as combining columns) render explicitly.  Being explicit
+has pros as well as cons & we won't settle that debate here.
 
-5) What about case-insensitive file systems?
+## 5 - What about case-insensitive file systems?
 
-   I never use these myself and fail to see the appeal, but there are (at
-   least) two kinds of case-insensitivity: A) fully forgetful and B)
-   store/present with case variation but match insensitively.  Since it is
-   already a type violation to alter a row format after creation, and since
-   users present pathnames often generated by case-preserving operations, case
-   B may cause little trouble.  For case A) (and any case B gotcha/aesthetics),
-   when there is no .N filename extension, NIO tools will look for "dot files"
-   of the same name but with a leading '.'.  These can contain a string just
-   like the filename extension.  For example, "dateFoo" might have ".dateFoo"
-   with contents "if@dates%s%.3f".  Then users can simply say `nio p dateFoo`
-   or otherwise `nOpen("dateFoo")`.  Note the text after [@%] is really only
-   special `nio print` syntax and stripped by `nio print`.  The file could also
-   contain just "if".
+I never use these myself and fail to see the appeal, but there are (at least)
+two kinds of case-insensitivity: A) fully forgetful and B) store/present with
+case variation but match insensitively.  Since it is already a type violation to
+alter a row format after creation, and since users present pathnames often
+generated by case-preserving operations, case B may cause little trouble.  For
+case A) (and any case B gotcha/aesthetics), when there is no .N filename
+extension, NIO tools will look for "dot files" of the same name but with a
+leading '.'.  These can contain a string just like the filename extension.  For
+example, "dateFoo" might have ".dateFoo" with contents "if@dates%s%.3f".  Then
+users can simply say `nio p dateFoo` or otherwise `nOpen("dateFoo")`.  Note the
+text after [@%] is really only special `nio print` syntax and stripped by `nio
+print`.  The file could also contain just "if".
 
-6) What do you mean "NIO formalizes/generalizes existing practice"?
+## 6 - What do you mean "NIO formalizes/generalizes existing practice"?
 
-   Unix /var/run/utmp & /var/log/wtmp have had this format for decades.  This
-   sort of works as a poor man's utmpdump/last:
+Unix /var/run/utmp & /var/log/wtmp have had this format for decades.  This sort
+of works as a poor man's utmpdump/last:
 ```
 ln -s (/var/run/utmp|/var/log/wtmp) \
   typePidLineIdUserHostExitSessTvIp6rsv.Nsi32C4C32C256C2sl2l4i10C
 nio p typePid*
 # or on BSD approx typePadTvIdPadPidUserLineHostRsv.Ns6c2l8C4ci32C16C128C64C
 ```
-   Python's NumPy has had a `save` method to do this from the very beginning..
-   simply without a corresponding "reshape" metadata on load or mmap.  NYSE TAQ
-   data also used to ship .BIN files that were back-to-back structs.  I believe
-   the 2010s saw option exchange data feeds move to this.  Similarly, a 128xM
-   24-bit/3-byte color image raster file can literally just be a binary file
-   "foo.N128,3c".  Standard numerical code using this access library could then
-   just access the raster or similar variants directly.
+Python's NumPy has had a `save` method to do this from the very beginning..
+simply without a corresponding "reshape" metadata on load or mmap.  NYSE TAQ
+data also used to ship .BIN files that were back-to-back structs.  I believe the
+2010s saw option exchange data feeds move to this.  Similarly, a 128xM
+24-bit/3-byte color image raster file can literally just be a binary file
+"foo.N128,3c".  Standard numerical code using this access library could then
+just access the raster or similar variants directly.
 
-   So, the general notion at play here is in use and has been for decades, but
-   its use is clunky/ad hoc requiring C FFIs, Perl/Python "pack" modules.  One
-   standard such as the NIO suffix format suffices to write *general* tools
-   that can handle any layout, transformation, multiple OSes, etc. as well as
-   avoiding mucking bout with `hexdump`, `od`, etc.
+So, the general notion at play here is in use and has been for decades, but its
+use is clunky/ad hoc requiring C FFIs, Perl/Python "pack" modules.  One standard
+such as the NIO suffix format suffices to write *general* tools that can handle
+any layout, transformation, multiple OSes, etc. as well as avoiding mucking bout
+with `hexdump`, `od`, etc.
 
-7) Why not a relational database?
+## 7 - Why not a relational database like SQLite/MySql/etc.?
 
-   NIO is for use by programmer data analysts..perhaps advanced programmers who
-   think they can IO optimize better than query analyzers or who have custom
-   analytics or other needs to integrate with "real" prog.lang libraries that
-   is all too painful in SQL/SQL stored procedures (the latter of which are
-   often very non-DB portable).  Repayment for low-levelness is true zero
-   overhead IO (and easy access to SIMD speeds, as yet another example).
-   Updates are also often rare to never; Yet analyses can hit large data sets
-   hundreds if not hundreds of thousands of times.  So, vectors/tables/tensors
-   are apt while ACID is over-engineered and any cost is waste.  In short,
-   there seems definite value to non-DB persistence formats.  The closest
-   analogue to envisioned NIO use cases is HDF5.
+NIO is for use by programmer data analysts..perhaps advanced programmers who
+think they can IO optimize better than query analyzers or who have custom
+analytics or other needs to integrate with "real" prog.lang libraries that is
+all too painful in SQL/SQL stored procedures (the latter of which are often very
+non-DB portable).  Repayment for low-levelness is true zero overhead IO (and
+easy access to SIMD speeds, as yet another example).  Updates are also often
+rare to never; Yet analyses can hit large data sets hundreds if not hundreds of
+thousands of times.  So, vectors/tables/tensors are apt while ACID is
+over-engineered and any cost is waste.  There may be a way to get mostly what
+you want IO-wise from LMDB but specifying structure of the data will still need
+something like NIO anyway.  In short, there seems definite value to non-DB
+persistence formats.  The closest analogue to envisioned NIO use cases is HDF5.
 
-8) Ok..Why not HDF5?
+## 8 - Ok..Why not HDF5?
 
-   HDF5 heralds from NetCDF and earlier formats all designed to work with very
-   limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
-   Consequently, these formats re-create archive functionality (like tar/zip)
-   instead of just using the filesystem.  The 1980s are mostly behind us all.
-   Using regular files has many charms.  Not the least charm is that users all
-   know how to find & manage files & directories.  This includes many & varied
-   compression programs to compress files - not just library access to codecs
-   but programs like zstd xyz or lz4 pdq etc.  Bundling functionality in HDF5
-   might *seem* nice, but can also be a limiting luxury trap, e.g. to support
-   compression libs, ACLs, rsync optimization or all other things files & dirs
-   provide.  Meanwhile, files & dirs are universal; Users know what to do with
-   tar/zip archive files or with dirs of files they want to bundle.
+HDF5 heralds from NetCDF and earlier formats all designed to work with very
+limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
+Consequently, these formats re-create archive functionality (like tar/zip)
+instead of just using the filesystem.  The 1980s are mostly behind us all.
+Using regular files has many charms.  Not the least charm is that users all know
+how to find & manage files & directories within already hierarchical file
+systems.  This includes many & varied compression programs to compress files -
+not just library access to codecs but programs like zstd xyz or lz4 pdq etc.
+Bundling functionality in HDF5 might *seem* nice, but can also be a limiting
+luxury trap, e.g. to support compression libs, ACLs, rsync optimization or all
+other things files & dirs provide.  Meanwhile, files & dirs are universal; Users
+know what to do with tar/zip archive files or with dirs of files they want to
+bundle.
 
-9) Doesn't KDB/APL derivative xyz do this already?
+## 9 - Doesn't KDB/APL derivative xyz do this already?
 
-   Somewhat, but not fully.  For example, back around the turn of the 2010
-   decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
-   multi-threaded decompression via backing store IO >20x less.  Nothing like
-   this was at all available for kdb, though it has surely grown support for
-   more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
-   and better factoring wins the day.  To do this with the NIO model is easy.
-   Similar comments probably apply to other efforts like Apache Parquet&Arrow.
+Somewhat, but not fully.  For example, back around the turn of the 2010
+decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
+multi-threaded decompression via backing store IO >20x less.  Nothing like
+this was at all available for kdb, though it has surely grown support for
+more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
+and better factoring wins the day.  To do this with the NIO model is easy.
+Similar comments probably apply to other efforts like Apache Parquet&Arrow.
 
-   As far as I can tell, NIO is alone in striving for a flexible column/vector
-   |matix|tensor "store" that strives to just solve **just one simple problem**:
-   not parsing & reparsing and understands filesystems are already hierarchical
-   (and some even support random access to compressed data, but streaming
-   row-at-a-time perf is usually better).  All that said, the NIO solution is
-   *so* simple that it seems not improbable *someone* else has devised a close
-   analogue.
+As far as I can tell, NIO is alone in striving for a flexible column/vector
+|matrix|tensor "store" that strives to just solve **just one simple problem**:
+not parsing & re-parsing and running "live" right off the files, but solve
+that problem as generally as possible.  All that said, the NIO solution is
+*so* simple that it seems not improbable *someone* else has devised a close
+analogue, especially in a simplified variant, such as only column stores.
 
-10) Ok..Why not a full object graph?
+## 10 - Ok..Why not a full object graph?
 
-   This could be a good addition.  Generalizing how string repositories work to
-   allow more arbitrary pointers may not even be hard.  Always insert-at-end/
-   mark deleted with some kind of eventual GC may retain a mostly usable "run
-   right off of files" for broader use cases, but notably will need parallel
-   GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
-   this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
-   for decades without this feature.
+This could be a good addition.  Generalizing how string repositories work to
+allow more arbitrary pointers may not even be hard.  Always insert-at-end/
+mark deleted with some kind of eventual GC may retain a mostly usable "run
+right off of files" for broader use cases, but notably will need parallel
+GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
+this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
+for decades without this feature.
 
-11) Why no bit fields?
+## 11 - Why no bit fields?
 
-   This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
-   on prefix multipliers might work as a syntax.  The problem is mostly that it
-   is much less obvious what zip, rip, cut and similar transformations mean in
-   the presence of bit fields.  And obviousness is good.
+This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
+on prefix multipliers might work as a syntax.  The problem is mostly that it
+is much less obvious what zip, rip, cut and similar transformations mean in
+the presence of bit fields.  And obviousness is good.
 
-12) What about filename limits, like < 255 chars?
+## 12 - What about filename limits, like \< 255 chars?
 
-   If you are packing that many fields into single rows then you are almost
-   certainly on the wrong track, if for no other reason than IO bw and the
-   extraordinary unlikelihood you need all those fields in every table scan.
-   In any event, you can still use dot files.
+If you are packing that many fields into single rows then you are almost
+certainly on the wrong track, if for no other reason than IO bw and the
+extraordinary unlikelihood you need all those fields in every table scan.
+In any event, you can still use dot files.
