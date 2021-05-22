@@ -679,7 +679,8 @@ iterator elts(slices: Strings, bound: int): (int, int) =
 proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
   ##
-  ## Slice specification is `[a][:[b]]`, like Python (incl negatives).
+  ## Slice specification is `[a][:[b]]`, like Python (incl negatives).  Can
+  ## either pass|drop but not both at once.  Multiple slices are "set unioned".
   if paths.len > 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
   var cPass = int(pass.len > 0)
@@ -993,8 +994,8 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "names" : "pre.N names for output files"}],
     [zip   , help={"paths" : "[paths: 2|more paths to NIO files]"}],
     [cut   , help={"paths" : "{paths: 1 path to a NIO file}",
-                   "drop"  : "drop/delete field slice [a[%]]:[b[%]]",
-                   "pass"  : "pass/propagate field slice [a[%]]:[b[%]]"}],
+                   "drop"  : "drop/delete field slice [a][:[b]]",
+                   "pass"  : "pass/propagate field slice [a][:[b]]"}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
