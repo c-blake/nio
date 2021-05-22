@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is presently far from exhaustive.
 d="/tmp/tn" # test nio dir
-#nio=... # Might $nio everywhere confuse some, example code-wise?
+#nio=... # $nio everywhere might confuse some, example code-wise?
 if [ -r "$d" -a -w "$d" -a -x "$d" -a -d "$d" ]; then
     cd "$d" || exit 1
 else
@@ -69,6 +69,8 @@ nio p strs6C.Ni@strs.N6C%s
 nio me .Nifd9c
 nio me -c%z .Nifd9c
 echo # last should have had no newline
+
+nio def .Nifd9c
 
 #XXX add tests for under/overflow checking
 

@@ -704,12 +704,13 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
           return 1
 
 proc tails*(head=0, tail=10, compl=false, paths: Strings): int =
-  ## Generalized tail(1)-like filter; -h10 -t10 will pass *both* head & tail,
-  ## while -h10 -t10 --compl will pass its complement (the "main body" of a
-  ## distribution if the rows are sorted).  -ch10 is like tail -n+10.
+  ## Generalized tail(1)-like filter
+  ##
+  ## -h10 -t10 will pass *both* head & tail, -h10 -t10 --compl will pass the
+  ## "main body" of a distribution if the rows are sorted.  -ch10 =~ tail -n+10.
   discard
 
-proc typedef*(names: Strings = @[], lang="nim", paths: Strings): int =
+proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
   ## print prog `lang` type defs for NIO rows from extensions in `paths`.
   ##
   ## E.g.: `fooBar.Nif` -> `struct fooBar { unsigned int foo; float bar; };`
@@ -962,7 +963,7 @@ when isMainModule:
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
           if bns in ["load1", "fromSV", "meta", "print", "zip", "rip", "cut",
-                     "moments", "typedef"]: # allow n-print, etc. hardlinks
+                     "tails", "moments", "deftype"]:  # allow n-foo.. hardlinks
             result.add bn[2..^1]
         return result & cmdline
       let underJoin = strutils.toUpperAscii(cmdNames.join("_"))
@@ -1003,13 +1004,13 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "drop"  : "drop/delete field slice [a][:[b]]",
                    "pass"  : "pass/propagate field slice [a][:[b]]"}],
     [tails , help={"paths" : "{paths: 1|more NIO paths}",
-                   "head"  : "initial fence post",
-                   "tail"  : "final fence post",
+                   "head"  : "initial fence post; 0=>none",
+                   "tail"  : "final fence post; 0=>none",
                    "compl" : "pass complement/inside of fence posts"},
             short={"help": '?'}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
-    [typedef,help={"paths" : "[paths: 1|more paths to NIO files]",
+    [deftype,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
                    "lang"  : "programming language"}])
