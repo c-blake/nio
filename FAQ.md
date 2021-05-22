@@ -1,8 +1,8 @@
-## 0 - Hey!  This FAQ is more like a design document than "frequent" questions.
+### 0 - Hey!  This FAQ is more like a design document than "frequent" questions.
 
 That's not a question. ;-)  Also, please just forgive the poetic license.
 
-## 1 - What is NIO?
+### 1 - What is NIO?
 
 "Nio" is a wrath-filled & muscular but "benevolent" King guardian of the Buddha,
 outside many Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix
@@ -22,12 +22,12 @@ into heterogeneous program variables.  Data may not fit in memory and being able
 to mmap & go lets one be "fluid" about data/program lifetime & computations,
 subdividing however is convenient.
 
-### 1a - Why not bio for binary IO?
+#### 1a - Why not bio for binary IO?
 
 To avoid confusion with block/buffered IO which is "similar but different" in
 the same context and focus on the main points of nativeness/number-hood.
 
-## 2 - How can it be "programming language agnostic" if it uses C type names?
+### 2 - How can it be "programming language agnostic" if it uses C type names?
 
 Dependence upon C is only mnemonic.  C's ubiquity at the system level means
 most/almost all prog.langs have exposure to C, e.g. for foreign function
@@ -35,7 +35,7 @@ interfaces.  A great many programmers who would never call themselves "C
 programmers" nevertheless find the above table easy.  I have accessed NIO files
 from C, C++, Python, and Nim.  The format is all the same.
 
-## 3 - NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
+### 3 - NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
 
 Architecture neutrality was always over-rated for files for data analysis or
 programmatic interaction, the main use case of NIO.  Neutrality has become ever
@@ -54,7 +54,7 @@ compiler mediated access, though it may still be "simpler".  Nothing can be all
 things to all folks in all circumstances.  As they say, your mileage may vary,
 but those are many "ands" and perfect is the enemy of the good.
 
-## 4 - Why is the type syntax so darn terse?  Why no file headers?
+### 4 - Why is the type syntax so darn terse?  Why no file headers?
 
 People use terse codes for outputs (like printf).  Why not for inputs?  The
 input side is simpler since there is no base-10/16/.. variation.
@@ -72,7 +72,7 @@ users confront & thus quickly learn/memorize row format syntax.  Row format
 transformations (such as combining columns) render explicitly.  Being explicit
 has pros as well as cons & we won't settle that debate here.
 
-## 5 - What about case-insensitive file systems?
+### 5 - What about case-insensitive file systems?
 
 I never use these myself and fail to see the appeal, but there are (at least)
 two kinds of case-insensitivity: A) fully forgetful and B) store/present with
@@ -87,7 +87,7 @@ users can simply say `nio p dateFoo` or otherwise `nOpen("dateFoo")`.  Note the
 text after [@%] is really only special `nio print` syntax and stripped by `nio
 print`.  The file could also contain just "if".
 
-## 6 - What do you mean "NIO formalizes/generalizes existing practice"?
+### 6 - What do you mean "NIO formalizes/generalizes existing practice"?
 
 Unix /var/run/utmp & /var/log/wtmp have had this format for decades.  This sort
 of works as a poor man's utmpdump/last:
@@ -111,7 +111,7 @@ such as the NIO suffix format suffices to write *general* tools that can handle
 any layout, transformation, multiple OSes, etc. as well as avoiding mucking bout
 with `hexdump`, `od`, etc.
 
-## 7 - Why not a relational database like SQLite/MySql/etc.?
+### 7 - Why not a relational database like SQLite/MySql/etc.?
 
 NIO is for use by programmer data analysts..perhaps advanced programmers who
 think they can IO optimize better than query analyzers or who have custom
@@ -126,7 +126,7 @@ you want IO-wise from LMDB but specifying structure of the data will still need
 something like NIO anyway.  In short, there seems definite value to non-DB
 persistence formats.  The closest analogue to envisioned NIO use cases is HDF5.
 
-## 8 - Ok..Why not HDF5?
+### 8 - Ok..Why not HDF5?
 
 HDF5 heralds from NetCDF and earlier formats all designed to work with very
 limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
@@ -142,7 +142,7 @@ other things files & dirs provide.  Meanwhile, files & dirs are universal; Users
 know what to do with tar/zip archive files or with dirs of files they want to
 bundle.
 
-## 9 - Doesn't KDB/APL derivative xyz do this already?
+### 9 - Doesn't KDB/APL derivative xyz do this already?
 
 Somewhat, but not fully.  For example, back around the turn of the 2010
 decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
@@ -159,7 +159,7 @@ that problem as generally as possible.  All that said, the NIO solution is
 *so* simple that it seems not improbable *someone* else has devised a close
 analogue, especially in a simplified variant, such as only column stores.
 
-## 10 - Ok..Why not a full object graph?
+### 10 - Ok..Why not a full object graph?
 
 This could be a good addition.  Generalizing how string repositories work to
 allow more arbitrary pointers may not even be hard.  Always insert-at-end/
@@ -169,14 +169,14 @@ GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
 this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
 for decades without this feature.
 
-## 11 - Why no bit fields?
+### 11 - Why no bit fields?
 
 This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
 on prefix multipliers might work as a syntax.  The problem is mostly that it
 is much less obvious what zip, rip, cut and similar transformations mean in
 the presence of bit fields.  And obviousness is good.
 
-## 12 - What about filename limits, like \< 255 chars?
+### 12 - What about filename limits, like \< 255 chars?
 
 If you are packing that many fields into single rows then you are almost
 certainly on the wrong track, if for no other reason than IO bw and the
