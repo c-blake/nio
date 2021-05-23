@@ -228,26 +228,28 @@ means big loops with low complexity data.  Low complexity data is not usually
 too hamstrung by weak types.
 
 Also, adding a type tag is not a crazy application of the above question's zip.
-If you want then you can pair up everything .Nififif for a triple of distinct
-floats with, say, units of measure encoded as the preceding integer.  You just
-need a higher level of the system to interpret or enforce the types.  It would,
-of course, be more efficient to add this extra metadata just once not for each
-record, though..maybe as a paired .Txyz file or as another row in the dotfile.
+If you want then you can pair up everything .NCCff for a pair of distinct floats
+with, say, units of measure encoded as the short integers.  You just need a
+higher level of the system to interpret or enforce the types.  It would be more
+efficient to add this extra metadata just once not for each record..maybe as a
+paired .Txyz file or as another row in the dotfile.
 
 ### 16 - Why so many string repository styles?
 
 Because no one can really agree on what is convenient and text varies so much.
-Length-prefixed is the most general 8-bit clean format, but is harder to edit
-by hand.  Delimited is nice, but not 8-bit clean.  Fixed width is 8-bit clean
-and even affords smaller integer row number indices, but then is fixed width,
-meaning it has to truncate and takes up a lot of space.
+Length-prefixed is the most general autonomous 8-bit clean format, but is harder
+to edit by hand.  Delimited is nice, but not 8-bit clean.  Fixed width is 8-bit
+clean and even affords smaller integer row number indices, but then is fixed
+width, meaning it has to truncate and takes up a lot of space.
 
-There is actually (at least) one more unrepresented style that is useful but
-slow, namely newline-delimited-but-line-number-indexed (rather than byte offset-
-indexed).  With this, you can just fire up a text editor and hack away on string
-definitions with no regard to keeping string lengths the same.  The downside is
-that, at load time, you must parse the newlines in the file which can take time
-for large repositories.
+There are actually (at least) two more unrepresented useful styles.  The first
+is newline-delimited-but-line-number-indexed (rather than byte offset-indexed).
+With this, you can just fire up a text editor and hack away on string defs with
+no regard to keeping string lengths the same.  The downside is that, at load
+time, you must parse the newlines in the file which can take time for large
+repositories.  The second is back-to-back undelimited string data with external
+length, index data.  This is as fast & general as length-prefixed, but is also
+non-autonomous - external data is needed to identify string boundaries.
 
 ### 17 - This is all hopelessly hard to use compared to SQL
 
