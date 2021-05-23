@@ -6,9 +6,7 @@ and easy to remember (I think) because it is derived from the C programming
 language family.  Most programmers have those basic "CPU types" memorized.
 With the lone exception of long double (an already exceptional thing), the type
 code is just the first letter of each C type.  Capitals are unsigned while
-lowercase are signed.  That's it.
-
-The full syntax is one or more:
+lowercase are signed.  That's it.  The full syntax is one or more:
 ```
   [<COUNT[,..]>]<c|C|s|S|i|I|l|L|f|d|g>
 ```
@@ -21,18 +19,18 @@ where
   f: float          d: double           g: long double
 ```
 The number of rows is inferred from the file size (but could be a length-prefix
-in a messaging context).  Some examples:
+in some message buffer context).  Some examples:
 ```
   hey.NS        a column-vector (Nx1 matrix) of unsigned shorts
   foo.N10f      an Nx10 matrix of floats
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
 ```
-I have found this setup to be quite usable, flexible, and efficient.  It can
-perhaps cure you from your likely addiction of parsing & re-parsing ASCII
-numbers which is up to hundreds of times slower than modern SIMD FP operations.
-(Seriously, SIMD's are L1 cache bandwidth which are order 100s of GB/s while
-parsing at even 1 GB/s is a challenge and printing/formatting is even slower.)
+I have found this setup to be usable, flexible, & efficient.  It can perhaps
+cure you from your likely addiction of parsing & re-parsing ASCII numbers which
+is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
+SIMD's are L1 cache bandwidth which are order 100s of GB/s while parsing at even
+1 GB/s is a challenge; Printing/binary->ASCIII is even slower.)
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is a [cligen](https://github.com/c-blake/cligen)
@@ -40,12 +38,12 @@ multi-command.  So the shortest unique prefix for subcommand names (and long
 option names) is sufficient.  The
 [FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) has more motivation.
 
-While one can do a few things with the `nio` command, the main point of the
-design is to be extendable by actual programmers doing `import nio` and nOpen,
-read, write, mOpen to mmap the whole thing, etc.  Such extended tools/logic must
-have their own documentation, but they can share the `n-foo` namespace if they
-want.  Note that `nio zip` is named after functional PL terms|real world
-clothing zippers and is unrelated to data compression.  Convenience tools live
+While one can do a few things with the `nio` command, the main point of this
+design is to be extendable by actual programmers doing `import nio` and `nOpen`,
+read, write, `mOpen` to mmap the whole thing, etc.  Such extended tools/logic
+must have their own documentation, but they can share the `n-foo` namespace if
+they want.  (Note that `nio zip` is named after functional PL terms|real world
+clothing zippers and is unrelated to data compression.)  Convenience tools live
 in `utils/`.  E.g., `transpose` is often useful in the context of schema writing
 (as in `c2tsv < foo | head | transpose > editMe.schema`).
 
@@ -60,7 +58,7 @@ $n nio && $n utils/c2tsv && $n utils/tabGen &&
   install -cm755 nio utils/c2tsv utils/tabGen ~/bin
 ```
 After that, you can save this blurb to some demo.sh and run "sh demo.sh":
-```
+```sh
 #!/bin/sh
 t=/usr/bin/time
 tabGen 1_000_000 4 > f 2> f.sc        # generate million*4 table
