@@ -924,21 +924,21 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
 import stats
-type MomKind = enum moN="n", moMin="min", moMax="max", moSum="sum",
-                    moAvg="avg", moSdev="sdev", moSkew="moew", moKurt="kurt"
+type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
+                    mkAvg="avg", mkSdev="sdev", mkSkew="skew", mkKurt="kurt"
 
-proc fmtStat(rs: RunningStat, mo: MomKind): string =
-  case mo
-  of moN:    $rs.n
-  of moMin:  $rs.min
-  of moMax:  $rs.max
-  of moSum:  $rs.sum
-  of moAvg:  $rs.mean
-  of moSdev: $rs.standardDeviation
-  of moSkew: $rs.skewness
-  of moKurt: $rs.kurtosis
+proc fmtStat(rs: RunningStat, mk: MomKind): string =
+  case mk
+  of mkN:    $rs.n
+  of mkMin:  $rs.min
+  of mkMax:  $rs.max
+  of mkSum:  $rs.sum
+  of mkAvg:  $rs.mean
+  of mkSdev: $rs.standardDeviation
+  of mkSkew: $rs.skewness
+  of mkKurt: $rs.kurtosis
 
-proc moments*(fmt="%.6f", stats: set[MomKind] = {moMin, moMax}, paths: Strings): int =
+proc moments*(fmt="%.4g", stats: set[MomKind]={mkMin,mkMax},paths:Strings): int=
   ## print selected moments over all columns of all `paths`.
   for path in paths:                    # NOTE: This is intended as an easy,
     var inp = nOpen(path)               #..but not useless example calculation.
@@ -947,14 +947,12 @@ proc moments*(fmt="%.6f", stats: set[MomKind] = {moMin, moMax}, paths: Strings):
     block fileLoop:
       while true:
         for j in 0 ..< sts.len:
-          if not inp.read(num):
-            break fileLoop
-          if not num.isnan:
-            sts[j].push num
+          if not inp.read(num): break fileLoop
+          if not num.isnan: sts[j].push num
     for j in 0 ..< sts.len:
       outu path, ":", j
-      for mo in [moN, moMin, moMax, moSum, moAvg, moSdev, moSkew, moKurt]:
-        if mo in stats: outu " ", $mo, ": ", fmtStat(sts[j], mo)
+      for mk in [mkN, mkMin, mkMax, mkSum, mkAvg, mkSdev, mkSkew, mkKurt]:
+        if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk)
       outu "\n"
 
 when isMainModule:
