@@ -164,6 +164,8 @@ proc initIORow*(fmt: string, endAt: var int): IORow =
   if result.cols.len == 0:
     raise newException(IOError, "no columns in fmt: " & fmt & fmtUse)
 
+#XXX Add row structure; row0: just numeric format; row1: nio print fmt; row3: an
+# optional schema-generated C struct to access; Rest of file: optnl Nim obj def.
 proc dotContents(path: string): string =
   for line in lines(path): result.add line.commentStrip
 
@@ -685,7 +687,7 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   let cPass = int(not (drop.len > 0))
   let fields = if drop.len > 0: drop else: pass
   var inp = nOpen(paths[0])
-  var colSet: HashSet[int]              # Q: Tensors aided by flat view?
+  var colSet: HashSet[int]              #XXX tensors need a flat view
   for (a,b) in fields.elts(inp.rowFmt.cols.len):
     for j in a..<b: colSet.incl j
   var buf: string
@@ -715,7 +717,7 @@ proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
   ## E.g.: `fooBar.Nif` -> `struct fooBar { unsigned int foo; float bar; };`
   ## These types allow treating memory mapped files as unchecked arrays or ease
   ## row-wise calculation/streamed IO.
-  case lang.toLowerASCII: #Q: Require schema to do this for nicer names?
+  case lang.toLowerASCII:
   of "nim":
     let ntype: array[IOKind, string] = ["int8", "uint8", "int16", "uint16",
       "int32", "uint32", "int64", "uint64", "float32", "float64", "float80"]
