@@ -102,10 +102,10 @@ d.Nf:0 min: -16.26732063293457 max: 25.47092437744141
 0inputs+0outputs (0major+377minor)pagefaults 0swaps
 ```
 Performance savvy readers may note, of the final line, that 40 ms for 4 million
-numbers is kind weak performance.  10 nanosec/number or 50 clock cycles/num or
-lowly 16 MB/40ms = 400 MB/s is not great for what could be just a few adds,
-squares/etc. in a perfectly predictable and vectorizable pipeline.  This is
-because I was lazy doing `nio moments` and just used stdlib `stats.RunningStat`
-which is not well speed optimized.  More careful code should at least saturate
-single core L3 cache bandwidth which is about 30 GB/s or 75x faster.  Parallel
-code should be able to hit ~1.5x that or more depending on CPU/RAM/etc.
+numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
+16 MB/40ms = 400 MB/s is not great for what could be a few adds, squares/etc. in
+a perfectly predictable & vectorizable pipeline.  This is because I was lazy
+doing `nio moments` and just used stdlib `stats.RunningStat` which is not well
+speed optimized.  More careful code should at least saturate single core L3
+cache bandwidth which is about 30 GB/s or 75x faster.  Parallel code should be
+able to hit ~1.5x that or more depending on CPU/RAM/etc.
