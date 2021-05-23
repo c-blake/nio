@@ -655,7 +655,7 @@ proc rip*(input: string, names: Strings): int =
 proc zip*(paths: Strings): int =
   ## opposite of `rip`; like `paste` but for rows from native files in `paths`.
   if paths.len < 2: erru "`zip` needs 2 or more NIO paths\n"; return 1
-  var fs = newSeq[NFile](paths.len)
+  var fs = newSeq[NFile](paths.len)     #XXX smarten Re: merging dot files.
   for i, p in paths: fs[i] = nOpen(p)
   var buf: string
   block outer:
