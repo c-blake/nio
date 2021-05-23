@@ -8,7 +8,7 @@
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 import strutils, math, os, strformat {.all.}, # only for proc formatInt
-       tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt]
+       tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
@@ -320,7 +320,6 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       off += len
       yield (k, off0)
 
-#Q: per mp, bind len,ptr Ncols for non-autonomous repos? E.g. "@repo,L,P%s".
 proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   ## REPOs can be byte-delimited *.Dn* | length-prefixed *.Li* with byte-offset
   ## pointer values or fixed width like *.N16c* with row index vals.  There are
@@ -846,6 +845,8 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ## and length-prefixed *strings.LS*.
   type Col = tuple[inCode:char; f:File; xfm:Transform; kout:IOKind; count:int]
   if schema.len == 0: erru "Cannot infer schema; Provide one\n"; return 1
+  let sep = initSep("white")
+  var scols: seq[string]
   var cols: seq[Col]
   var pp, outBase, outType: string
   var shrd = "strings"
@@ -866,11 +867,12 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
     elif line.startsWith("--nHeader"): nHdr  = parseInt(sarg)
     elif line.startsWith("--maxLog" ): mxLg  = parseInt(sarg)
     elif line.startsWith("--zip"    ): doZip = true
+#   elif line.startsWith("--dotfs"  ): dotfs = true #XXX auto dot files
     elif line.startsWith("--shared" ): shrd  = sarg
-    else: #XXX Requires exactly 1 char dlm for schema text cols; mslice.splitr?
-      let scols = strutils.split(line, Whitespace, maxSplit=3)
+    else:
+      sep.split(line, scols, n=4)
       if scols.len > 0:
-        if scols[0] != "_":             # Q: Allow zipped notation? fooBar.Nif?
+        if scols[0] != "_":
           if scols.len < 3:
             raise newException(ValueError,&"{schema}:{slno} < 3 cols")
           c.kout = ioCodeK(scols[1][^1])

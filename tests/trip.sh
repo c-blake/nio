@@ -99,15 +99,15 @@ out=$(nio f -oszip.schema)
 nio f -szip.schema /dev/stdin < data > $out
 
 cat > rip.schema <<EOF
---nHeader=0                  # number of rows which are headers
---shared=rstrings.LS         # name of any common strings file
-qty	i	d            # parse input as decimal; emit uint32
-Px	f	f            # parse as float32; emit float32
-Ign	i	x @.         # ignore an input column
-Id	8C	c            # embedded char arrays pad-clipped but can
-Date	i	x @dates.N9c #..be transformed via intern into *fixed*
-City	i	x @cities.Dn #..or *variable width* repositories,
-Note	i	x @.         #..with maybe a shared common string repo.
+--nHeader=0              # number of rows which are headers
+--shared=rstrings.LS     # name of any common strings file
+qty    i    d            # parse input as decimal; emit uint32
+Px     f    f            # parse as float32; emit float32
+Ign    i    x @.         # ignore an input column
+Id    8C    c            # embedded char arrays pad-clipped but can
+Date   i    x @dates.N9c #..be transformed via intern into *fixed*
+City   i    x @cities.Dn #..or *variable width* repositories,
+Note   i    x @.         #..with maybe a shared common string repo.
 EOF
 
 nio f -srip.schema "" < data    # empty string another way to indicate stdin
