@@ -114,7 +114,7 @@ nio f -srip.schema "" < data    # empty string another way to indicate stdin
 
 mv Ign.Ni Ign
 echo i@%s > .Ign
-nio p -a rstrings.LS Ign
+nio p -a rstrings.LS Ign Note.Ni@%s
 
 nio z chF2.Ni4c Date.Ni > f3.Ni4Ci
 nio c -d 0 f3.Ni4Ci | nio p .N4Ci
@@ -129,5 +129,3 @@ nio c -d 1:-1 f3.Ni4Ci | nio p .Nii
 nio c -d 2:-1 f3.Ni4Ci | nio p .Ni4Ci
 #nio c -d 1:   f3.Ni4Ci | nio p .Ni  # XXX broken
 #nio c -d 0:   f3.Ni4Ci | nio p .Ni  # XXX broken
-
-nio p Note.Ni@notez.LS%s #XXX broken; index in Note.Ni seems off by 1 slot
