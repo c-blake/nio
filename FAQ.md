@@ -230,7 +230,9 @@ too hamstrung by weak types.
 Also, adding a type tag is not a crazy application of the above question's zip.
 If you want then you can pair up everything .Nififif for a triple of distinct
 floats with, say, units of measure encoded as the preceding integer.  You just
-need a higher level of the system to interpret or enforce the types.
+need a higher level of the system to interpret or enforce the types.  It would,
+of course, be more efficient to add this extra metadata just once not for each
+record, though..maybe as a paired .Txyz file or as another row in the dotfile.
 
 ### 16 - Why so many string repository styles?
 
