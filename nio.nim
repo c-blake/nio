@@ -430,16 +430,16 @@ proc index*(r: var Repo, ixOut: pointer, k: string, lno: int) =
   except:                               # novel key
     if r.mode == rmIndex: retNA         # missing && !up -> NA index
     case r.kind                         # update in-memory Table & repo
-    of rkFixWid: i = r.tab.len.Ix; r.tab[k] = i; r.f.urite k
-    of rkDelim : i = r.off; r.tab[k] = i; r.f.urite k, r.dlm; r.off += (k.len+1).Ix
+    of rkFixWid: i = r.tab.len.Ix; r.tab[k] = i; r.f.urite k; r.off = i + 1
+    of rkDelim : i = r.off; r.tab[k] = i; r.f.urite k, r.dlm; r.off += Ix(k.len+1)
     of rkLenPfx:  # convert length to output type, write, then write key
       i = r.off; r.tab[k] = i
-      r.off += (k.len + ioSize[r.lenK]).Ix
+      r.off += Ix(k.len + ioSize[r.lenK])
       var n = k.len; var nbuf: array[8, char] # IO buffers for length
       convert(r.lenK, lIk, nbuf[0].addr, n.addr)
       r.f.nurite r.lenK, nbuf[0].addr
       r.f.urite k
-    if i == Ix.high: erru &"repo {r.path} at pointer size limit\n"
+    if r.off < i: erru &"pointer overflow for repo {r.path}\n"
   convert(r.kout, IxIk, ixOut, i.addr)  # convert pointer type
 
 type #*** FORMAT NUMBERS TO ASCII PRIMARILY FOR DEBUGGING/SLOPPY EXPORT
