@@ -674,7 +674,7 @@ iterator elts(slices: Strings, bound: int): (int, int) =
     if a < 0: a.inc bound
     if b < 0: b.inc bound
     if b < a: b = a + 1
-    yield (a, b)
+    yield (a, min(b, bound - 1))
 
 proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
@@ -683,7 +683,7 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   ## either pass|drop but not both at once.  Multiple slices are "set unioned".
   if paths.len > 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
-  var cPass = int(pass.len > 0)
+  let cPass = int(not (drop.len > 0))
   let fields = if drop.len > 0: drop else: pass
   var inp = nOpen(paths[0])
   var colSet: HashSet[int]              # Q: Tensors aided by flat view?
