@@ -29,7 +29,7 @@ type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
     mode:    FileMode   # fm(Read|Write|ReadWrite|ReadWriteExisting|Append)
     m*:      mf.MemFile ## for memory mapped IO
     f*:      File       ## for C stdio streams (e.g. pipes)
-    rowFmt:  IORow      # row format for IO
+    rowFmt*: IORow      # row format for IO
     off,j,k: int        # next byte offset into `mf`; next col,subcol in row
 
   float80* {.importc: "long double".} = object  ## C backend long double type
