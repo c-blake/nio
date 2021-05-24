@@ -164,8 +164,7 @@ proc initIORow*(fmt: string, endAt: var int): IORow =
   if result.cols.len == 0:
     raise newException(IOError, "no columns in fmt: " & fmt & fmtUse)
 
-#XXX Add row structure; row0: just numeric format; row1: nio print fmt; row3: an
-# optional schema-generated C struct to access; Rest of file: optnl Nim obj def.
+#XXX Add $pfx$kind${sep}foo meta file|dirs for kind="fmt","out".. Eg: .fmt/foo
 proc dotContents(path: string): string =
   for line in lines(path): result.add line.commentStrip
 
