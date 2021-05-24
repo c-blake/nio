@@ -137,19 +137,17 @@ analogue to envisioned NIO use cases is HDF5.
 
 ### 8 - Ok..Why not HDF5?
 
-HDF5 heralds from NetCDF and earlier formats all designed to work with very
-limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3 filenames or VMS limits.
-Consequently, these formats re-create archive functionality (like tar/zip)
-instead of just using the filesystem.  The 1980s are mostly behind us all.
-Using regular files has many charms.  Not the least charm is that users all know
-how to find & manage files & directories within already hierarchical file
-systems.  This includes many & varied compression programs to compress files -
-not just library access to codecs but programs like zstd xyz or lz4 pdq etc.
-Bundling functionality in HDF5 might *seem* nice, but can also be a limiting
-luxury trap, e.g. to support compression libs, ACLs, rsync optimization or all
-other things files & dirs provide.  Meanwhile, files & dirs are universal; Users
-know what to do with tar/zip archive files or with dirs of files they want to
-bundle.
+Files & directories are a done deal.  HDF5 heralds from NetCDF & earlier formats
+designed to work with very limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3
+filenames/VMS limits.  Consequently, these formats re-create/duplicate archive
+functions (like tar/cpio/zip) instead of just using the FS.  Using regular files
+has many charms, not the least of which is that users all know without any more
+instruction how to list, find & manage files & directories within the already
+hierarchical file system.  This includes many & varied compression programs -
+not only library access to codecs but programs like zstd xyz or lz4 pdq etc.
+Functionality bundles *seem* nice, but can also be a limiting luxury trap, e.g.
+to support compression libs, ACLs, rsync optimization, encryption, or all other
+things provided for files & dirs.  Orthogonality/independence is good.
 
 ### 9 - Doesn't KDB/APL derivative xyz do this already?
 
