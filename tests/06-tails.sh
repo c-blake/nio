@@ -7,10 +7,6 @@ ns="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 6 17 18 19"
 # first test mmap/rand access impls
 (for extra in "" "-c" "-r" "-rc"; do
   for n in $ns; do
-    echo x=$extra h=$n t=0
-    nio t $extra -h$n $t.Ni | nio p .Ni
-    echo x=$extra h=0 t=$n
-    nio t $extra -t$n $t.Ni | nio p .Ni
     for m in $ns; do
       echo x=$extra h=$m t=$n
       nio t $extra -h$m -t$n $t.Ni | nio p .Ni
@@ -21,10 +17,6 @@ done) > tailsMap
 # then streaming impls
 (for extra in "" "-c" "-r" "-rc"; do
   for n in $ns; do
-    echo x=$extra h=$n t=0
-    nio t $extra -h$n $t.Ni | nio p .Ni
-    echo x=$extra h=0 t=$n
-    nio t $extra -t$n $t.Ni | nio p .Ni
     for m in $ns; do
       echo x=$extra h=$m t=$n
       cat $t.Ni | nio t $extra -h$m -t$n .Ni | nio p .Ni
