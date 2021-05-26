@@ -203,8 +203,6 @@ proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
                          allowRemap=allowRemap, mapFlags=mapFlags)
     except:
       result.f = open(path, mode, max(8192, result.rowFmt.bytes))
-#Q: Parse {[a]:[b]} row slice fmt here & adjust start,len? headTail filtering?
-#   or just rely on accessing language being able to range/slice?
   if rest != nil: rest[] = rst
 
 proc close*(nf: var NFile) =
@@ -703,12 +701,74 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
         if stdout.uriteBuffer(buf[offs[j]].addr, ns[j]) < ns[j]:
           return 1
 
-proc tails*(head=0, tail=10, compl=false, paths: Strings): int =
-  ## Generalized tail(1)-like filter
+proc tailsOuter(nf: NFile, head=0, tail=0, repeat=false): int =
+  let m = nf.rowFmt.bytes
+  if not nf.m.mem.isNil:
+    let n = nf.m.size div m
+    if not repeat and head + tail >= n: # head & tail === `cat`
+      if stdout.uriteBuffer(nf.m.mem, nf.m.size) < nf.m.size: return 1
+    else:
+      let head = min(n, head); let tail = min(n, tail)
+      if stdout.uriteBuffer(nf.m.mem, m*head) < m*head: return 1
+      let adr = cast[pointer](cast[int](nf.m.mem) +% (n - tail) * m)
+      if stdout.uriteBuffer(adr, m*tail) < m*tail: return 1
+  elif nf.f != nil:
+    var hBuf = newString(m * head)      # could do LCM(m, head) in a loop
+    if head > 0:
+      let nH = nf.f.ureadBuffer(hBuf[0].addr, hBuf.len)
+      if nH < 0: return 1
+      if stdout.uriteBuffer(hBuf[0].addr, nH) < nH: return 1
+      hBuf.setLen nH
+    if tail > 0: # unknown row count => row@a time IO into matrix buf
+      var tBuf = newString(tail * m)
+      let i0 = hBuf.len div m
+      var i = i0; var j = 0
+      if repeat:
+        let n = min(hBuf.len, tBuf.len) # copy needed data from END of hBuf
+        tBuf[0..<n] = hBuf[^n..^1]      #..into START of running tBuf.
+        j = (n div m) mod tail          # set j as if that was done row-by-row
+      while nf.f.ureadBuffer(tBuf[j * m].addr, m) == m:
+        i.inc; j.inc
+        if j >= tail: j = 0
+      let n = min(tail, if repeat: i else: i - i0) - j
+      if stdout.uriteBuffer(tBuf[j*m].addr, n*m) < n*m: return 1 # older [j:j+n]
+      if stdout.uriteBuffer(tBuf[ 0 ].addr, j*m) < j*m: return 1 # newer [:j]
+
+proc tailsInner(nf: var NFile, head=0, tail=0): int =
+  let m = nf.rowFmt.bytes               # write [head:-tail]
+  if not nf.m.mem.isNil:
+    let n = nf.m.size div m
+    if (let amt = n - head - tail; amt > 0):
+      let adr = cast[pointer](cast[int](nf.m.mem) +% head * m)
+      if stdout.uriteBuffer(adr, amt*m) < amt*m: return 1
+  else:
+    if tail > 0: # High resource case
+      var buf, huge: string             # huge O(input - (head+tail)) buf
+      var i = 0                         # final value is total num of rows
+      while nf.read(buf):               # unknown row count => row@a time IO
+        if i >= head: huge.add buf
+        i.inc
+      let n = max(0, i - head - tail)
+      if huge.len > 0 and stdout.uriteBuffer(huge[0].addr, n*m) < n*m: return 1
+    else: # Low resource case; Could use /dev/null to do 2 sendfile's on Linux
+      var hBuf = newString(m * head)    # could do LCM(m, head) in a loop
+      if head == 0 or nf.f.ureadBuffer(hBuf[0].addr, hBuf.len) == hBuf.len:
+        var tBuf = newString(65536)     # switch to big buffer for IO loop
+        while true:                     # just read & write until EOF
+          let n = nf.f.ureadBuffer(tBuf[0].addr, tBuf.len)
+          if n > 0: (if stdout.uriteBuffer(tBuf[0].addr, n) < n: return 1)
+          if n < tBuf.len: break
+
+proc tails*(head=0, tail=0, compl=false, repeat=false, paths: Strings): int =
+  ## Generalized tail(1); Does both head & tail of streams w/o tee FIFO.
   ##
   ## -h10 -t10 will pass *both* head & tail, -h10 -t10 --compl will pass the
-  ## "main body" of a distribution if the rows are sorted.  -ch10 =~ tail -n+10.
-  discard
+  ## "main body" of a distribution (if rows are sorted).  -ch10 =~ tail -n+11.
+  for path in paths:
+    var nf = nOpen(path) # inner/complementary mode cannot repeat rows
+    if compl: (if nf.tailsInner(head, tail) != 0: return 1)
+    else    : (if nf.tailsOuter(head, tail, repeat) != 0: return 1)
+    nf.close
 
 proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
   ## print prog `lang` type defs for NIO rows from extensions in `paths`.
@@ -1007,7 +1067,8 @@ if AT=="" %s renders as a number via `fmTy`""",
     [tails , help={"paths" : "{paths: 1|more NIO paths}",
                    "head"  : "initial fence post; 0=>none",
                    "tail"  : "final fence post; 0=>none",
-                   "compl" : "pass complement/inside of fence posts"},
+                   "compl" : "pass complement/inside of fence posts",
+                   "repeat": "repeat rows when head+tail>=n"},
             short={"help": '?'}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
