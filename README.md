@@ -26,6 +26,8 @@ in some message buffer context).  Some examples:
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
 ```
+While learning the syntax is needed to use streaming/pipe style calculation, you
+can also stow the format inside a file of a parallel name (e.g. "foo" & ".foo").
 I have found this setup to be usable, flexible, & efficient.  It can perhaps
 cure you from your likely addiction of parsing & re-parsing ASCII numbers which
 is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
