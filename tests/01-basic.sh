@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-. ${0%1-basic.sh}setup.sh
+. ${0%01-basic.sh}setup.sh
 
 (echo 1.23; echo 4.56; echo 7.89) | nio l -if -of > kk.Nf
 nio p kk.Nf

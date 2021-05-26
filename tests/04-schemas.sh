@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-. ${0%4-schemas.sh}setup.sh
+. ${0%04-schemas.sh}setup.sh
 
 #XXX add tests for under/overflow checking
 

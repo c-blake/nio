@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-. ${0%5-cut.sh}setup.sh
+. ${0%05-cut.sh}setup.sh
 
 nio z chF2.Ni4c Date.Ni > f3.Ni4Ci
 nio c -d 0 f3.Ni4Ci | nio p .N4Ci

@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-. ${0%3-meta.sh}setup.sh
+. ${0%03-meta.sh}setup.sh
 
 nio me .Nifd9c
 nio me -c%z .Nifd9c

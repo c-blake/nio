@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-. ${0%2-strings.sh}setup.sh
+. ${0%02-strings.sh}setup.sh
 
 (echo hi
  echo neighborino
