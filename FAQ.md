@@ -8,7 +8,7 @@ That's not a question. ;-)  Also, please just forgive the poetic license.
 guardians](https://en.wikipedia.org/wiki/Nio) of the Buddha, outside many
 Buddhist temples.  Homonymic "Neo" is the messiah in The Matrix trilogy and a
 Nim linear algebra package. ;)  (And you can pronounce it like "eye-oh" if you
-want).
+prefer).
 
 This NIO is a "Native/Numerical IO" system.  It consists of a library and a set
 of command-line tools designed to standardize & simplify manipulation of simple

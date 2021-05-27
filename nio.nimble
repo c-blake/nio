@@ -1,7 +1,7 @@
 # Package
 version     = "0.1.0"
 author      = "Charles Blake"
-description = "Numerical/Native binary IO library & tools"
+description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
 
 # Deps
