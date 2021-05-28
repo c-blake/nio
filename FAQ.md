@@ -118,7 +118,20 @@ such as the NIO suffix format suffices to write *general* tools that can handle
 any layout, transformation, multiple OSes, etc. as well as avoiding mucking bout
 with `hexdump`, `od`, etc.
 
-### 7 - Why not a relational database like SQLite/MySql/etc.?
+### 7 - Why not Pandas/R dataframes/Excel/JSON/XML/etc.?
+
+The culture in this space is not to run directly off of stored files, but to
+re-parse them constantly.  While they may be better than, well nothing at all,
+this is a fundamentally expensive way to go and works well only for very small
+data.  They often are like re-making a filesystem in program memory.  Why not
+just use the existing FS?  Why not fully "save the answer" so almost no re-doing
+of work is needed?  Data analysis is usually not like "emacs" where you can have
+some very long running program loaded up in a costly way just once.  Imposing
+such restrictions to acquire performance seems quite unnatural.  As explained
+in the readme these costs can be factors of 100s..1000s.  Such ratios may well
+be the diference between "fitting" on one fast server vs needing a big cluster.
+
+### 8 - Why not a relational database like SQLite/MySql/etc.?
 
 NIO is for use by programmer data analysts..perhaps advanced programmers who
 think they can IO optimize better than query analyzers or who have custom
@@ -129,13 +142,13 @@ out of PostGres.  Trying to build some machine learning algo as part of a stored
 procedure sounds like a nightmare.  Repayment for low-levelness is true zero
 overhead IO (and easy access to SIMD speeds).  Updates are also often rare to
 never; Yet analyses can hit large data sets 100s if not 100s of thousands of
-times.  So, vectors/tables/tensors are apt while ACID is over-engineered and any
-cost is waste.  There may be a way to get mostly what you want IO-wise from LMDB
-but specifying structure of the data will still need something like NIO anyway.
-In short, there seems definite value to non-DB persistence formats.  The closest
-analogue to envisioned NIO use cases is HDF5.
+times.  So, vectors/tables/tensors are apt while ACID transactions are over-
+engineered.  Any cost is waste.  There may be a way to get mostly what you want
+IO-wise from LMDB but specifying structure of the data will still need something
+like NIO anyway.  In short, there seems definite value to non-DB persistence
+formats.  The closest analogue to envisioned NIO use cases is HDF5.
 
-### 8 - Ok..Why not HDF5?
+### 9 - Ok..Why not HDF5?
 
 Files & directories are a done deal.  HDF5 heralds from NetCDF & earlier formats
 designed to work with very limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3
@@ -149,7 +162,7 @@ Functionality bundles *seem* nice, but can also be a limiting luxury trap, e.g.
 to support compression libs, ACLs, rsync optimization, encryption, or all other
 things provided for files & dirs.  Orthogonality/independence is good.
 
-### 9 - Doesn't KDB/APL derivative xyz do this already?
+### 10 - Doesn't KDB/APL derivative xyz do this already?
 
 Somewhat, but not fully.  For example, back around the turn of the 2010
 decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
@@ -162,11 +175,11 @@ Similar comments probably apply to other efforts like Apache Parquet&Arrow.
 As far as I can tell, NIO is alone in striving for a flexible column/vector
 |matrix|tensor "store" that strives to just solve **just one simple problem**:
 not parsing & re-parsing and running "live" right off the files, but solve
-that problem as generally as possible.  All that said, the NIO solution is
-*so* simple that it seems not improbable *someone* else has devised a close
-analogue, especially in a simplified variant, such as only column stores.
+that problem as generally as is easy.  All that said, the NIO solution is *so*
+simple that it seems not improbable *someone* else has devised a close analogue,
+especially in a simplified variant, such as only column stores.
 
-### 10 - Ok..Why not a full object graph?
+### 11 - Ok..Why not a full object graph?
 
 This could be a good addition.  Generalizing how string repositories work to
 allow more arbitrary pointers may not even be hard.  Always insert-at-end/
@@ -174,23 +187,24 @@ mark deleted with some kind of eventual GC may retain a mostly usable "run
 right off of files" for broader use cases, but notably will need parallel
 GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
 this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
-for decades without this feature.
+for near a half century without this feature and object-relational mappings
+are usually considered thorny.
 
-### 11 - Why no bit fields?
+### 12 - Why no bit fields?
 
 This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
 on prefix multipliers might work as a syntax.  The problem is mostly that it
 is much less obvious what zip, rip, cut and similar transformations mean in
 the presence of bit fields.  And obviousness is good.
 
-### 12 - What about filename limits, like \< 255 chars?
+### 13 - What about filename limits, like \< 255 chars?
 
 If you are packing that many fields into single rows then you (or some upstream
 dependency you have) are almost certainly on the wrong track, if for no other
 reason than IO bw and the extraordinary unlikelihood you need all those fields
 in every table scan.  In any event, you can still use dot files.
 
-### 13 - Why don't you just always do column IO?
+### 14 - Why don't you just always do column IO?
 
 Column stores became all the rage in the 2010s and it's true in 2002 when I
 first started doing things like this they had charm (and still do) for some
@@ -209,14 +223,14 @@ analysis needs "when it matters" at large scales.  At large scales things can
 take hours, days, or weeks and factors of 2-10x can make enormous usability
 differences.  So, no compromise access can be critical.
 
-### 14 - Why don't you just always do simple tensor IO like x.N10,10f?
+### 15 - Why don't you just always do simple tensor IO like x.N10,10f?
 
 This special case, like column IO, can be exactly what you want sometimes.
 Other times it can be helpful to zip tensors with identifying tags or other
 metadata..perhaps only transiently, but transiently is "enough" to need support
 in the format.
 
-### 15 - Isn't the "type system" barely worthy of the name?
+### 16 - Isn't the "type system" barely worthy of the name?
 
 Yes & no.  It's basically the CPU type system (sans less portable latterday SIMD
 types) rather than a more sophisticated programming language type system.  How
@@ -232,7 +246,7 @@ higher level of the system to interpret or enforce the types.  It would be more
 efficient to add this extra metadata just once not for each record..maybe as a
 paired .Txyz file or as another row in the dotfile.
 
-### 16 - Why so many string repository styles?
+### 17 - Why so many string repository styles?
 
 Because no one can really agree on what is convenient and text varies so much.
 Length-prefixed is the most general autonomous 8-bit clean format, but is harder
@@ -249,7 +263,7 @@ repositories.  The second is back-to-back undelimited string data with external
 length, index data.  This is as fast & general as length-prefixed, but is also
 non-autonomous - external data is needed to identify string boundaries.
 
-### 17 - This is all hopelessly hard to use compared to SQL
+### 18 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
@@ -269,7 +283,7 @@ NIO is just a supplementary point in the design space rather than an outright
 replacement.  Not appealing to all in all cases is just another way of saying
 "Yup.  It's software." ;)
 
-### 18 - Ok.  I am *so* sold, BUT what about *my* programming language?
+### 19 - Ok.  I am *so* sold, BUT what about *my* programming language?
 
 Hey..Glad you like the idea (and even read to the end).  There are only so many
 hours in the day, though.  My hope is that the core idea is simple enough to be
