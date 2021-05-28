@@ -301,6 +301,6 @@ is the row stream/mmap interfaces and your own code which may not need little
 generality.  OTOH, maybe there are dozens of general things to do.  Have at it.
 
 NIO is so simple/easy that its main value to the world might not be *any* one
-implementation, tool, or libraray, but merely some standard suffix syntax/naming
+implementation, tool, or library, but merely some standard suffix syntax/naming
 convention.  Stick to that convention and the world benefits from any/all impls
 in any/all PLs, like CSV or TSV or whatever, but with no per-datum parsing.
