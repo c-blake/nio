@@ -190,12 +190,35 @@ this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
 for near a half century without this feature and object-relational mappings
 are usually considered thorny.
 
-### 12 - Why no bit fields?
+### 12 - Why no bit fields/discriminated unions/even fancier things?
 
-This is a good question.  ".N3:i5:i" instead of ".NC" with some prohibition
-on prefix multipliers might work as a syntax.  The problem is mostly that it
-is much less obvious what zip, rip, cut and similar transformations mean in
-the presence of bit fields.  And obviousness is good.
+This is a good question.  Choosing the best least common denominator is hard.
+".N3:i5:i" instead of ".NC" with some prohibition on prefix multipliers might
+work as a syntax for bit fields.  Discriminated unions (Nim's "variants")
+might be .N?C10C for a 10Byte union.  One problem is that it is much less
+obvious what zip, rip, cut, and similar transforms mean in the presence of
+either.  Obviousness is good, as are general tools.
+
+Another problem is portability.  While available in C/C++/Nim/.., they may
+well be unavailable in NumPy/Julia/R/..  The fanciness just slightly exceeds
+the floor of what many PLs consider necessary.  If you are willing to give up
+the general tools & portability then you may be able to retain other nice
+aspects of NIO & handle these with a native typedef/object and some kind of
+sizeof, losing only data file portability to other PLs (or maybe to other
+compilers within the same PL).  At this point the value of language-external
+format collapses.
+
+{ `R` does not do `float32` - to use NIO, you need `double` everywhere.
+Similar comments apply to `unsigned`.  So, some might say the type system is
+already "a half-step too fancy", but no `float` is a rare choice (one that has
+aged poorly with SIMD popularity) and support for `unsigned` is easy to both
+do & understand. }
+
+In any event, the way to handle these cases is probably just a barely
+descriptive NIO format with higher-level interpretation, as with strings.
+Sadly, the interpretation is fancier than "pointers are repo indices".
+(Well, with discriminated unions you might just have however many files
+with the concrete types.)
 
 ### 13 - What about filename limits, like \< 255 chars?
 
