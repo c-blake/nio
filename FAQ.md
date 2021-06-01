@@ -286,7 +286,36 @@ repositories.  The second is back-to-back undelimited string data with external
 length, index data.  This is as fast & general as length-prefixed, but is also
 non-autonomous - external data is needed to identify string boundaries.
 
-### 18 - This is all hopelessly hard to use compared to SQL
+### 18 Why no variable width inline strings like protobufs/flatbuffers/etc.?
+
+NIO embraces files & directories (and their context) which, again, is a done
+deal rather than trying to make "autonomous buffers".  Fixed size records allow
+easy random access and fast subset access is viewed as important..say take the
+last 1% of rows or a randomized 1% subsample.  To preserve this w/inline VW
+strings, you need (at least) a separate global index telling offsets of records
+as well as a (probably) in-record index telling the start of fields (at least
+after the first inline string).  While the latter could precede each row, that'd
+be somewhat expensive in space (possibly doubling if average pointer size =~
+average datum size).
+
+If one shares some string repo across many fields then one can compare for
+equality by pointer, sometimes called string interning.  This optimization falls
+naturally out of the repository arrangement.  The indirection is potentially
+costly, but for many analyses one would often prefer class numbers anyway
+(another way to think of interning is like an "automatic enum") for all the
+internal calculation only stringifying at the end.  So, the indirection is
+helpful for many use cases, especially with indirect fixed-width strings where
+it is cheap to make the pointer a row number that can be thought of like a file
+descriptor or other "only as big as needed" label.
+
+If one can ensure sort order on the repo all in-set string compares can even be
+reduced to integer compares.  That is rather costly requiring either another
+level of indirection (say via a B-tree which itself might have a level or three)
+or a batch sort with a re-org of all the pointers which is only practical for
+truly static data.  Since NIO is not a string-focused facility, this is unikely
+to be popular feature anyway.
+
+### 19 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
@@ -294,23 +323,15 @@ DBs and the access/query parts.  So, you could think of it as a way to layer
 building a DB in such a way that preserves no compromise access by programmers
 willing to put in some effort.  E.g., query language-like functionality can be
 layered on top, and more transactional ideas could be stuffed in underneath,
-hopefully optionally to preserve efficiency.
+hopefully optionally to preserve efficiency.  NIO is just a supplementary point
+in the design space rather than an outright replacement.  Not appealing to all
+in all cases is just another way of saying "Yup.  It's software." ;)
 
-In the 1980s, there used to be a popular access mode called Embedded SQL which
-had a similar compiler-mediated field access but backed by some connection to a
-database back-end.  NIO is a simpler way to achieve that which is less reliant
-upon compiler integration, but also more manual, but also providing "more
-random" access than the streaming query result pattern of Embedded SQL.
-
-NIO is just a supplementary point in the design space rather than an outright
-replacement.  Not appealing to all in all cases is just another way of saying
-"Yup.  It's software." ;)
-
-### 19 - Ok.  I am *so* sold, BUT what about *my* programming language?
+### 20 - Ok.  I am *so* sold, BUT what about *my* programming language?
 
 Hey..Glad you like the idea (and even read to the end).  There are only so many
 hours in the day, though.  My hope is that the core idea is simple enough to be
-replicated in any PL with any kind of low level IO.  The core filename extension
+replicated in any PL with any kind of low-level IO.  The core filename extension
 parser, `nio.initIORow`, is like 25 lines of non-comment Nim.
 
 The missing value|N/A convention is perhaps less critical in a first pass.  A
