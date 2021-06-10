@@ -4,7 +4,7 @@ type Log = enum eachSub, totalSubs
 
 proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
             nl='\n', NlSub=" ", log: set[Log]={}, si="stdin", bSz=65536,
-            addEmpty=false): int =
+            raw=false, addEmpty=false): int =
   ## Convert quoted/escaped CSV on stdin to IANA *strictly separated TSV* on
   ## stdout via Nim stdlib `parsecsv`.  Ease of IANA TSV parsing & pipeline
   ## parallelism imply you should implement higher level ideas (header/table
@@ -31,9 +31,9 @@ proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
               fix.add NlSub
               if eachSub in log: erru &"{si}:{rNo} {c.repr} substitution\n"
             else: fix.add c
-          stdout.urite fix
+          stdout.urite (if raw: fix else: fix.strip)
         else:
-          stdout.urite fld
+          stdout.urite (if raw: fld else: fld.strip)
         if i < p.row.len - 1:
           stdout.urite tab
     if addEmpty:
@@ -44,15 +44,16 @@ proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
     erru &"{si}: {totNl} \\n substitutions {totTab} \\t substitutions\n"
 
 when isMainModule: import cligen; dispatch c2tsvs, help = {
-  "comma" : "CSV delimiter",
-  "quote" : "CSV quote character",
-  "escape": "CSV escape character",
-  "skip"  : "skip leading whitespace",
-  "tab"   : "output field delimiter byte (e.g. '\\\\t')",
-  "TabSub": "how to spell output delim inside fields",
-  "nl"    : "output record terminator byte",
-  "NlSub" : "how to spell output termin inside fields",
-  "si"    : "StdIn name for name:lineNumber messages",
-  "log"   : "stderr log {eachSub, totalSubs}",
-  "bSz"   : "size of IO buffers (in bytes)",
+  "comma"   : "CSV delimiter",
+  "quote"   : "CSV quote character",
+  "escape"  : "CSV escape character",
+  "skip"    : "skip leading whitespace",
+  "tab"     : "output field delimiter byte (e.g. '\\\\t')",
+  "TabSub"  : "how to spell output delim inside fields",
+  "nl"      : "output record terminator byte",
+  "NlSub"   : "how to spell output termin inside fields",
+  "si"      : "StdIn name for name:lineNumber messages",
+  "log"     : "stderr log {eachSub, totalSubs}",
+  "bSz"     : "size of IO buffers (in bytes)",
+  "raw"     : "don't strip leading/trailing field space",
   "addEmpty": "add extra field delim pre-NL (term v dlm)"}
