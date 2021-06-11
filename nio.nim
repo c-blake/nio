@@ -882,7 +882,6 @@ proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   except: discard
   result = if info.id.device == 0: fmWrite else: fmAppend
 
-from posix import popen # does Windows really not have this?
 from cligen/argcvt import unescape
 proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
@@ -964,9 +963,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
     return
   for path in SVs:                      # Now the actual parsing part!
     var lno = 1
-    let inpFile = if pp.len > 0: popen(pp % [path], "r")
-                  elif path.len == 0 or path == "/dev/stdin": stdin
-                  else: open(path)
+    let inpFile = pp.popenr(path)
     for row in lines(inpFile):
       if lno > nHdr:                    # skip however many header rows
         var cix = 0
@@ -976,7 +973,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
             inp.parse path, lno, c.inCode, c.kout, c.f, c.xfm, c.count
           cix.inc
       lno.inc
-    inpFile.close
+    discard inpFile.pclose(pp)
   for c in cols:
     if c.xfm != xfm0 and c.xfm != nil: c.xfm(nil, "", 0)   # close `Transform`s
     if c.f != nil and c.f != stdout: c.f.close
