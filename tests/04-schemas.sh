@@ -10,7 +10,7 @@ cat > zip.schema <<EOF
 --maxLog=100                 # limit same-kind log messages
 --shared=zstrings.LS         # name of any common strings file
 --zip                        # stdout zip mode not default rip mode
-#name NC SC TRANSFORM:args   # NC=NIOcode; SC=(scan|src)Code like scan1
+#name	NC	SC TRANSFORM:args # NC=NIOcode; SC=(scan|src)Code like scan1
 qty	i	d            # parse input as decimal; emit uint32
 Px	f	f            # parse as float32; emit float32
 _	ignore               # ignore an input column
