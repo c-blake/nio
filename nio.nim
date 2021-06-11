@@ -7,7 +7,7 @@
 ## <~~> *"idDayPrice.N2sf"*. N/A = NaN|signed.low|unsigned.high.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
-import strutils, math, os, strformat {.all.}, # only for proc formatInt
+import strutils, math, os, times, strformat {.all.}, # only for proc formatInt
        tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
@@ -979,6 +979,68 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
     if c.f != nil and c.f != stdout: c.f.close
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
+proc inferT*(ext=".sc", pre="", delim='\0', nHdr=1, timeFmts: Strings = @[],
+             iType='i', fType='f', sType="i.Dn", SVs: Strings): int =
+  ## infer (approximate 4-type) schemas from strict TSV (e.g. from c2tsv)
+  ##
+  ## Types are assigned in (depending on consistent parsability as such) the
+  ## order: [time, int, float, string] where (time means each format, in order).
+  let sIType = sType[0]; let sExt = sType[1..^1]  #XXX error check
+  var hdrs: seq[string]
+  var i: BiggestInt
+  var f: BiggestFloat
+  var empty, iOk, fOk, tOk: seq[int]
+  let m = timeFmts.len
+  proc zero(x: var seq[int], m=1) = x.setLen 0; x.setLen hdrs.len*m
+  proc check(s: string, j: int) =
+    if s.len > 0:
+      for k, timeFmt in timeFmts:
+        try:
+          discard parse(s, timeFmt)
+          tOk[m*j + k].inc
+        except: discard
+      if s.parseBiggestInt(i)   == s.len: iOk[j].inc
+      if s.parseBiggestFloat(f) == s.len: fOk[j].inc
+    else: empty[j].inc
+
+  for path in SVs:
+    var lno = 1
+    let inpFile = pre.popenr(path)
+    for row in lines(inpFile):
+      if lno == 1:
+        hdrs = row.split(delim); tOk.zero m; iOk.zero; fOk.zero; empty.zero
+      if lno > nHdr:                    # skip however many header rows
+        var j = 0
+        for inp in row.split(delim):
+          if j + 1 > hdrs.len:
+            raise newException(IOError, &"too many columns >{j+1} @line:{lno}")
+          inp.check j
+          j.inc
+        if j < hdrs.len:
+          raise newException(IOError, &"too few columns {j} @line:{lno}")
+      lno.inc
+    discard inpFile.pclose(pre)
+    let o = open(path & ext, fmWrite)
+    o.write &"""
+# This is a parsing schema for nio fromSV.
+--nHeader={nHdr}                      # number of rows which are headers
+--delim={delim}                      # NUL is c2tsv output delimiter
+#name NC SC TRANSFORM:args       # NC=NIOcode;SC=(scan|src)Code like scan1
+"""
+    for j, hdr in hdrs:
+      o.write hdr, "\t"
+      var isT = false
+      for k, timeFmt in timeFmts:
+        if lno - 1 - nHdr - empty[j] == tOk[j] and tOk[j] > 0:
+          o.write "l\tx\tT" & timeFmt; isT = true; break
+      if not isT:
+        if lno - 1 - nHdr - empty[j] == iOk[j] and iOk[j] > 1:
+          o.write iType, "\td"    # assume decimal
+        elif lno - 1 - nHdr - empty[j] == fOk[j] and fOk[j] > 1:
+          o.write fType, "\tf"
+        else: o.write &"{sIType}\tx @{hdr}{sExt}"
+      o.write '\n'
+
 import stats
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
                     mkAvg="avg", mkSdev="sdev", mkSkew="skew", mkKurt="kurt"
@@ -1020,8 +1082,8 @@ when isMainModule:
         let bn = paramStr(0).lastPathPart
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
-          if bns in ["load1", "fromSV", "meta", "print", "zip", "rip", "cut",
-                     "tails", "moments", "deftype"]:  # allow n-foo.. hardlinks
+          if bns in ["load1", "inferT", "fromSV", "meta", "print", "zip", "rip",
+                     "cut", "tails", "moments", "deftype"]: # allow n-foo links
             result.add bn[2..^1]
         return result & cmdline
       let underJoin = strutils.toUpperAscii(cmdNames.join("_"))
@@ -1040,6 +1102,15 @@ when isMainModule:
                    "oCode" : "Usual [**cCsSiIlLfdg**] NIO storage code",
                    "xform" : "TransformParams; Eg. @file.[NDL].. {NOUP}",
                    "count" : "Output size; Only works for 'c'"}],
+    [inferT, help={"SVs"     : "[?SVs: input paths; empty|\"-\"=stdin]",
+                   "ext"     : "parsing schema written to inp.`suffix`",
+                   "pre"     : "use `popen(pre%inp)` intead of `open(inp)`",
+                   "delim"   : "strict TSV field delimiter",
+                   "nHdr"    : "number of header lines (1st must be name)",
+                   "timeFmts": "`times` module formats to try in order",
+                   "iType"   : "integer nio code",
+                   "fType"   : "float nio code",
+                   "sType"   : "nio sting code (iCode.repoExt)"}],
     [fromSV, help={"SVs"   : "[?SVs: input paths; empty|\"-\"=stdin]",
                    "onlyOut": "only parse schema & gen output name",
                    "nameSep": "string to separate schema col names",
