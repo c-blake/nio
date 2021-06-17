@@ -819,12 +819,13 @@ type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
 proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
            xfm: Transform, cnt=1) {.inline.} =
+  let inp = strutils.strip(inp)
   var nS: int                         # widest types for number parsing
   var nU: uint
   var nF: float
   var obuf: array[16, char]             # actual output buffer
   template p(fn, n, k, low, high) =
-    if strutils.strip(inp).fn(n) != inp.len:
+    if inp.fn(n) != inp.len:
       raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
     let lo = type(n)(low[kout.int shr 1])
     let hi = type(n)(high[kout.int shr 1])
@@ -846,7 +847,7 @@ proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
   of 'd': (if kout.isSigned: p(parseInt,nS,lIk,lowS,highS) else: p(parseUInt,nU,LIk,lowU,highU))
   of 'h': (if kout.isSigned: p(parseHex,nS,lIk,lowS,highS) else: p(parseHex ,nU,LIk,lowU,highU))
   of 'f':
-    if strutils.strip(inp).parseFloat(nF) != inp.len:
+    if inp.parseFloat(nF) != inp.len:
       raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
     convert kout, dik, obuf[0].addr, nF.addr
   of 'x': xfm obuf[0].addr, inp, lno
