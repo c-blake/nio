@@ -239,7 +239,7 @@ template defr(T) =
   proc read*(nf: var NFile, da: var T, naCvt=false): bool =
     var sk: IOKind
     if nf.read(sk, sBuf):
-      convert(da.codeOf, sk, da.addr, sBuf[0].addr, naCvt)
+      convert da.codeOf, sk, da.addr, sBuf[0].addr, naCvt
       result = true
 
 defr(uint8);defr(uint16);defr(uint32);defr(uint64); defr(float32)
@@ -271,7 +271,7 @@ proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
     raise newException(ValueError, &"{path}: impure tensors unsupported")
   tsr.m = mf.open(path)
   if tsr.m.size mod fmt.bytes != 0:
-    mf.close(tsr.m)
+    mf.close tsr.m
     raise newException(ValueError, &"{path}: file size indivisible by row size")
   tsr.d = @[ tsr.m.size div fmt.bytes ] & fmt.cols[0].cnts
 
@@ -388,7 +388,7 @@ proc `[]`*(at: Repo, i: Ix): string =
     n = Ix(cast[uint](e) - cast[uint](p))
   of rkLenPfx:                  # Here `i` is a byte offset to length field
     let pL = cast[pointer](cast[uint](at.m.mem) + i)
-    convert(IxIk, at.lenK, n.addr, pL)
+    convert IxIk, at.lenK, n.addr, pL
     p = cast[pointer](cast[uint](at.m.mem) + i + ioSize[at.lenK].Ix)
   result.setLen n
   copyMem result[0].addr, p, n
@@ -434,11 +434,11 @@ proc index*(r: var Repo, ixOut: pointer, k: string, lno: int) =
       i = r.off; r.tab[k] = i
       r.off += Ix(k.len + ioSize[r.lenK])
       var n = k.len; var nbuf: array[8, char] # IO buffers for length
-      convert(r.lenK, lIk, nbuf[0].addr, n.addr)
+      convert r.lenK, lIk, nbuf[0].addr, n.addr
       r.f.nurite r.lenK, nbuf[0].addr
       r.f.urite k
     if r.off < i: erru &"pointer overflow for repo {r.path}\n"
-  convert(r.kout, IxIk, ixOut, i.addr)  # convert pointer type
+  convert r.kout, IxIk, ixOut, i.addr   # convert pointer type
 
 type #*** FORMAT NUMBERS TO ASCII PRIMARILY FOR DEBUGGING/SLOPPY EXPORT
   Formatter* = object
@@ -531,12 +531,12 @@ proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
   let radix = fmtr.radix[j]
   if k in ioFloats:                     # SOME FLOAT TYPE
     var value: float64          #XXX port my C float80 to (prs|fmt)BiggestFloat
-    convert(dIk, k, value.addr, s[0].unsafeAddr, naCvt)
+    convert dIk, k, value.addr, s[0].unsafeAddr, naCvt
     result.formatFloat(value, fmtr.ffmode[j], spec)
   else:
     var value: uint64                   # SOME INTEGRAL TYPE, INCLUDING PTR
     if k.isNA(s[0].unsafeAddr): result.add fmtr.na; return
-    convert(LIk, k, value.addr, s[0].unsafeAddr, naCvt)
+    convert LIk, k, value.addr, s[0].unsafeAddr, naCvt
     let at = if fmtr.ats[j + 1].isNil: fmtr.ats[0] else: fmtr.ats[j + 1]
     if spec.typ == 's' and at != nil:   # STRING
       var value = at[value.Ix]          # Q: %r & lift for general indirect?
@@ -830,7 +830,7 @@ proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
     let hi = type(n)(high[kout.int shr 1])
     if n < lo: erru &"{name}:{lno} \"{inp}\" underflows\n"; n = lo
     if n > hi: erru &"{name}:{lno} \"{inp}\" overflows\n";  n = hi
-    convert(kout, k, obuf[0].addr, n.addr)
+    convert kout, k, obuf[0].addr, n.addr
 
   if inp.len == 0:                      # empty string ==> N/A
     setNA kout, obuf[0].addr
@@ -848,8 +848,8 @@ proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
   of 'f':
     if strutils.strip(inp).parseFloat(nF) != inp.len:
       raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
-    convert(kout, dik, obuf[0].addr, nF.addr)
-  of 'x': xfm(obuf[0].addr, inp, lno)
+    convert kout, dik, obuf[0].addr, nF.addr
+  of 'x': xfm obuf[0].addr, inp, lno
   else: raise newException(IOError, &"{inCode}: inCode not in [bodhfx]")
   outp.nurite kout, obuf[0].addr
 
@@ -874,7 +874,7 @@ proc load1*(inCode, oCode: char; xform="", count=1): int =
   while stdin.readLine(inp):
     inp.parse "stdin", lno, inCode, kout, stdout, xfm, count
     lno.inc
-  if inCode == 'x': xfm(nil, "", 0)     # tell Transform to close
+  if inCode == 'x': xfm nil, "", 0      # tell Transform to close
 
 proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   var info: FileInfo
@@ -975,7 +975,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
       lno.inc
     discard inpFile.pclose(pp)
   for c in cols:
-    if c.xfm != xfm0 and c.xfm != nil: c.xfm(nil, "", 0)   # close `Transform`s
+    if c.xfm != xfm0 and c.xfm != nil: c.xfm nil, "", 0 # close `Transform`s
     if c.f != nil and c.f != stdout: c.f.close
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
