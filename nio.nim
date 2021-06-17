@@ -980,7 +980,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
 proc inferT*(ext=".sc", pre="", delim='\0', nHdr=1, timeFmts: Strings = @[],
-             iType='i', fType='f', sType="i.Dn", SVs: Strings): int =
+         iType='i', fType='f', sType="i.Dn", guess="f\tf", SVs: Strings): int =
   ## infer (approximate 4-type) schemas from strict TSV (e.g. from c2tsv)
   ##
   ## Types are assigned in (depending on consistent parsability as such) the
@@ -1038,6 +1038,7 @@ proc inferT*(ext=".sc", pre="", delim='\0', nHdr=1, timeFmts: Strings = @[],
           o.write iType, "\td"    # assume decimal
         elif lno - 1 - nHdr - empty[j] == fOk[j] and fOk[j] > 1:
           o.write fType, "\tf"
+        elif lno - 1 - nHdr == empty[j]: o.write guess
         else: o.write &"{sIType}\tx @{hdr}{sExt}"
       o.write '\n'
 
@@ -1110,7 +1111,8 @@ when isMainModule:
                    "timeFmts": "`times` module formats to try in order",
                    "iType"   : "integer nio code",
                    "fType"   : "float nio code",
-                   "sType"   : "nio sting code (iCode.repoExt)"}],
+                   "sType"   : "nio sting code (iCode.repoExt)",
+                   "guess"   : "guess type (output,input) for all empty"}],
     [fromSV, help={"SVs"   : "[?SVs: input paths; empty|\"-\"=stdin]",
                    "onlyOut": "only parse schema & gen output name",
                    "nameSep": "string to separate schema col names",
