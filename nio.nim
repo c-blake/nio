@@ -319,11 +319,13 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       off += len
       yield (k, off0)
 
+var openRepos*: Table[string, Repo]
 proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   ## REPOs can be byte-delimited *.Dn* | length-prefixed *.Li* with byte-offset
   ## pointer values or fixed width like *.N16c* with row index vals.  There are
   ## 3 open modes: mmap & go read-only, tab-building indexing, and full updates.
   if path.len == 0: return
+  if path in openRepos: return openRepos[path]
   let cols = strutils.split(path, maxSplit=1)
   let path = cols[0]
   new result
@@ -368,9 +370,11 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
      (result.f = mkdirOpen(path, openMode); result.f == nil):
     result.mode = rmIndex; erru &"{path}: cannot append; indexing anyway\n"
   for k, i in result.keysAtOpen: result.tab[k] = i
+  openRepos[path] = result
 
 proc close*(at: var Repo) =
   if at.m.mem != nil: mf.close(at.m); at.m.mem = nil
+  if at.path in openRepos: openRepos.del at.path
 
 proc `[]`*(at: Repo, i: Ix): string =
   if i == IxNA: return at.na

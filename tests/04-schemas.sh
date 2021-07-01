@@ -45,6 +45,8 @@ mv Ign.Ni Ign
 echo i@%s > .Ign
 nio p -a rstrings.LS Ign Note.Ni@%s
 
+# Another variation parsing the same data, but here rather than a global string
+# repository, we use 4 identically named per-field repos.
 cat > sstr.sc <<EOF
 --nHeader=0                  # number of rows which are headers
 --zip                        # stdout zip mode not default rip mode
