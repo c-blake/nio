@@ -1076,7 +1076,7 @@ proc moments*(fmt="%.4g", stats: set[MomKind]={mkMin,mkMax},paths:Strings): int=
       outu "\n"
 
 when isMainModule:
-  import cligen, cligen/cfUt, os
+  import cligen, cligen/cfUt
 
   proc mergeParams(cmdNames: Strings, cmdLine=commandLineParams()): Strings =
     if cmdNames.len > 0:
