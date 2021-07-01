@@ -980,7 +980,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
     if c.f != nil and c.f != stdout: c.f.close
   if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
 
-proc inferT*(ext=".sc", pre="", delim='\0', nHdr=1, timeFmts: Strings = @[],
+proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
          iType='i', fType='f', sType="i.Dn", guess="f\tf", SVs: Strings): int =
   ## infer (approximate 4-type) schemas from strict TSV (e.g. from c2tsv)
   ##
