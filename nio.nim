@@ -897,7 +897,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ##   --nHeader=1                  # number of rows which are headers
   ##   --maxLog=100                 # limit same-kind log messages
   ##   --zip                        # stdout zip mode not default rip mode
-  ##   --shared=strings             # name of any common strings file
+  ##   --shared=strings.LS          # name of any common strings file
   ##   #name NC SC TRANSFORM:args   # NC=NIOcode; SC=(load|src)Code like load1
   ##   qty   i  d                   # parse input as decimal; emit uint32
   ##   Px    f  f                   # parse as float32; emit float32
@@ -905,7 +905,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ##   Id    8C c                   # embedded char arrays pad-clipped but can
   ##   Date  s  x  @dates.N9c       #..be transformed via intern into *fixed*
   ##   City  s  x  @cities.Dn       #..or *variable width* repositories,
-  ##   Note  i  x  @.LS             #..with maybe a shared common string repo.
+  ##   Note  i  x  @@               #..with maybe a shared common string repo.
   ## create/appends *qtyPxIdDateCityNote.Nif8C2si*, *dates.N9c*, *cities.Dn*
   ## and length-prefixed *strings.LS*.
   type Col = tuple[inCode:char; f:File; xfm:Transform; kout:IOKind; count:int]
@@ -953,7 +953,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
             if not onlyOut: c.f = open(path, path.maybeAppend)
           if scols.len > 3:
             if not onlyOut:
-              if scols[3].startsWith("@."):
+              if scols[3].startsWith("@@"):
                 if xfm0 == nil: 
                   xfm0 = initXfm(c.inCode, c.kout, "@" & shrd)
                   c.xfm = xfm0
