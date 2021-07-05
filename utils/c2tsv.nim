@@ -21,9 +21,9 @@ proc c2tsv(tab='\0', TabSub=" ", nl='\n', NlSub=" ", log: set[Log]={},
   if tab in TabSub: erru &"`TabSub` must not contain `tab`\n"; return 1
   if nl  in NlSub : erru &"`NlSub` must not contain `nl`\n"; return 1
   var s     = sFEnd             # current parser state
-  var rNo   = 1                 # 1-origin input line/record/row number
+  var rNo   = 1'u64             # 1-origin input line/record/row number
   var fNo   = 0                 # 0-origin field number within row
-  var totNl, totTab: int        # counters for in-field delim statistics
+  var totNl, totTab: uint64     # counters for in-field delim statistics
   var buffr = newString(bSz)    # input buffer
   var inBuf = cast[cstring](buffr[0].addr)
   discard c_setvbuf(stdout, nil, 0, bSz.csize_t)  # match output w/input
