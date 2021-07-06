@@ -830,7 +830,7 @@ proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
   var obuf: array[16, char]             # actual output buffer
   template p(fn, n, k, low, high) =
     if inp.fn(n) != inp.len:
-      raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
+      raise newException(IOError, &"stdin:{lno}: {inCode} {kout} !=~ \"{inp}\"")
     let lo = type(n)(low[kout.int shr 1])
     let hi = type(n)(high[kout.int shr 1])
     if n < lo: erru &"{name}:{lno} \"{inp}\" underflows\n"; n = lo
@@ -920,8 +920,9 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   var mxLg = 100  
   var doZip: bool
   var xfm0: Transform = nil
-  var slno = 1
+  var slno = 0
   for line in lines(schema):
+    inc slno
     var c: Col                          # in loop re-inits each time
     let line = line.commentStrip
     let mcols = line.split({'=', ':'})  # parse schema-level arg
@@ -962,6 +963,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
           elif c.inCode == 'x':
             raise newException(ValueError, "'x' but no tranform arguments")
         cols.add c
+  if slno == 0: erru "Empty schema; Provide a real one\n"; return 1
   if onlyOut:
     if doZip: outu outBase, ".N", outType, '\n'
     else: erru &"--onlyOut makes sense only for --zip schemas\n"
