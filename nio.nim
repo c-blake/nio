@@ -821,8 +821,8 @@ proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
 import parseutils
 type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
-proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
-           xfm: Transform, cnt=1) {.inline.} =
+proc parse(inp, pathName: string; lno: int; colName: string; inCode: char;
+           kout: IOKind; outp=stdout, xfm: Transform, cnt=1) {.inline.} =
   let inp = strutils.strip(inp)
   var nS: int                         # widest types for number parsing
   var nU: uint
@@ -830,11 +830,12 @@ proc parse(inp, name: string; lno: int; inCode: char; kout: IOKind; outp=stdout,
   var obuf: array[16, char]             # actual output buffer
   template p(fn, n, k, low, high) =
     if inp.fn(n) != inp.len:
-      raise newException(IOError, &"stdin:{lno}: {inCode} {kout} !=~ \"{inp}\"")
+      raise newException(IOError,
+            &"stdin:{lno}: col:{colName} ic:{inCode} oc:{kout} !=~ \"{inp}\"")
     let lo = type(n)(low[kout.int shr 1])
     let hi = type(n)(high[kout.int shr 1])
-    if n < lo: erru &"{name}:{lno} \"{inp}\" underflows\n"; n = lo
-    if n > hi: erru &"{name}:{lno} \"{inp}\" overflows\n";  n = hi
+    if n < lo: erru &"{pathName}:{lno} \"{inp}\" underflows\n"; n = lo
+    if n > hi: erru &"{pathName}:{lno} \"{inp}\" overflows\n";  n = hi
     convert kout, k, obuf[0].addr, n.addr
 
   if inp.len == 0:                      # empty string ==> N/A
@@ -877,7 +878,7 @@ proc load1*(inCode, oCode: char; xform="", count=1): int =
   var inp: string
   var lno = 1
   while stdin.readLine(inp):
-    inp.parse "stdin", lno, inCode, kout, stdout, xfm, count
+    inp.parse "stdin", lno, "COL0", inCode, kout, stdout, xfm, count
     lno.inc
   if inCode == 'x': xfm nil, "", 0      # tell Transform to close
 
@@ -908,7 +909,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   ##   Note  i  x  @@               #..with maybe a shared common string repo.
   ## create/appends *qtyPxIdDateCityNote.Nif8C2si*, *dates.N9c*, *cities.Dn*
   ## and length-prefixed *strings.LS*.
-  type Col = tuple[inCode:char; f:File; xfm:Transform; kout:IOKind; count:int]
+  type Col = tuple[name: string; inCode:char; f:File; xfm:Transform; kout:IOKind; count:int]
   if schema.len == 0: erru "Cannot infer schema; Provide one\n"; return 1
   let sep = initSep("white")
   var scols: seq[string]
@@ -941,6 +942,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
         if scols[0] != "_":
           if scols.len < 3:
             raise newException(ValueError,&"{schema}:{slno} < 3 cols")
+          c.name = scols[0]
           c.kout = ioCodeK(scols[1][^1])
           c.inCode = scols[2][0]
           c.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
@@ -977,7 +979,7 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
         for inp in row.split(dlm):
           let c = cols[cix]
           if c.f != nil:
-            inp.parse path, lno, c.inCode, c.kout, c.f, c.xfm, c.count
+            inp.parse path, lno, c.name, c.inCode, c.kout, c.f, c.xfm, c.count
           cix.inc
       lno.inc
     discard inpFile.pclose(pp)
