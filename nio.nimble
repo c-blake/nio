@@ -1,9 +1,9 @@
 # Package
-version     = "0.1.1"
+version     = "0.1.2"
 author      = "Charles Blake"
 description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
 
 # Deps
 requires    "nim >= 1.5.1"
-requires    "cligen >= 1.5.4"
+requires    "cligen >= 1.5.5"
