@@ -184,7 +184,7 @@ especially in a simplified variant, such as only column stores.
 This could be a good addition.  Generalizing how string repositories work to
 allow more arbitrary pointers may not even be hard.  Always insert-at-end/
 mark deleted with some kind of eventual GC may retain a mostly usable "run
-right off of files" for broader use cases, but notably will need parallel
+right off of files" for broader use cases, but notably will need to mimic
 GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
 this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
 for near a half century without this feature and object-relational mappings
@@ -200,7 +200,7 @@ obvious what zip, rip, cut, and similar transforms mean in the presence of
 either.  Obviousness is good, as are general tools.
 
 Another problem is portability.  While available in C/C++/Nim/.., they may
-well be unavailable in NumPy/Julia/R/..  The fanciness just slightly exceeds
+well be unavailable in NumPy/Julia/R/.. This fanciness just slightly exceeds
 the floor of what many PLs consider necessary.  If you are willing to give up
 the general tools & portability then you may be able to retain other nice
 aspects of NIO & handle these with a native typedef/object and some kind of
@@ -227,7 +227,7 @@ dependency you have) are almost certainly on the wrong track, if for no other
 reason than IO bw and the extraordinary unlikelihood you need all those fields
 in every table scan.  In any event, you can still use dot files.
 
-### 14 - Why don't you just always do column IO?
+### 14 - Why don't you just *always* do column IO?
 
 Column stores became all the rage in the 2010s and it's true in 2002 when I
 first started doing things like this they had charm (and still do) for some
@@ -315,7 +315,26 @@ or a batch sort with a re-org of all the pointers which is only practical for
 truly static data.  Since NIO is not a string-focused facility, this is unikely
 to be popular feature anyway.
 
-### 19 - This is all hopelessly hard to use compared to SQL
+### 19 What about "schema versioning"/evolution?
+
+Since files are autonomous, you can usually just add new columns as new files
+with compatible indexing.  This gives you schema addition with no need to even
+version and "duck type" checking of what is available via fileExists API calls.
+This is especially easy if you are doing a pure-column files setup, but is also
+fine with various tables.  You can even add columns in batches as new tables.
+
+*Deleting* columns is not easy this way, but then again this also tends to be
+a disaster.  In particular you need to ensure no code anywhere is using what
+you are deleting.  That is enough work/risk that you should maybe just rename
+the directory/type itself.
+
+In any case, you could always just drop a `version` file in the directory if
+you think some string can capture the needed labeling.  Note that semantics
+are often not fully covered by types and can bit you, such as a differential
+field becoming a cumulative field.  At some level you do need to understand
+data that you calculate against.
+
+### 20 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
@@ -327,7 +346,7 @@ hopefully optionally to preserve efficiency.  NIO is just a supplementary point
 in the design space rather than an outright replacement.  Not appealing to all
 in all cases is just another way of saying "Yup.  It's software." ;)
 
-### 20 - Ok.  I am *so* sold, BUT what about *my* programming language?
+### 21 - Ok.  I am *so* sold, BUT what about *my* programming language?
 
 Hey..Glad you like the idea (and even read to the end).  There are only so many
 hours in the day, though.  My hope is that the core idea is simple enough to be
