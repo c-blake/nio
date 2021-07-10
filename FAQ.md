@@ -54,11 +54,10 @@ needed this capability in decades using these ideas, though I am not averse to
 some PR for it.
 
 While rare today, if you really have a cluster of heterogeneously endian
-machines all computing against shared data and you cannot store two copies then
+machines all computing against shared data ***and*** cannot store 2 copies then
 NIO may not add much value over other approaches since it loses full optimizing
-compiler mediated access, though it may still be "simpler".  Nothing can be all
-things to all folks in all circumstances.  As they say, your mileage may vary,
-but those are many "ands" and perfect is the enemy of the good.
+compiler mediated access, though it may still be "simpler".  Those are both
+"big ands", though (meaning "rare in practice") esp. in the 2020s & beyond.
 
 ### 4 - Why is the type syntax so darn terse?  Why no file headers?
 
