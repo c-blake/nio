@@ -889,7 +889,7 @@ proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   result = if info.id.device == 0: fmWrite else: fmAppend
 
 from cligen/argcvt import unescape
-proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
+proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
   ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
   ##
   ## An example schema file (with default values but for `outSfx`):
@@ -922,7 +922,14 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   var doZip: bool
   var xfm0: Transform = nil
   var slno = 0
+  var didDir = false                    # Flag to only do mkdir/chdir once
+  var oldDir = getCurrentDir()          # For restoring if called as a library
   for line in lines(schema):
+    if dir.len > 0 and not didDir:      # Done here so users need no special
+      discard existsOrCreateDir(dir)    #..instructions Re: schema path.
+      try: setCurrentDir dir
+      except: erru &"Cannot cd to {dir}!\n"; return 1
+      didDir = true
     inc slno
     var c: Col                          # in loop re-inits each time
     let line = line.commentStrip
@@ -986,7 +993,10 @@ proc fromSV*(schema="", nameSep="", onlyOut=false, SVs: Strings): int =
   for c in cols:
     if c.xfm != xfm0 and c.xfm != nil: c.xfm nil, "", 0 # close `Transform`s
     if c.f != nil and c.f != stdout: c.f.close
-  if xfm0 != nil: xfm0(nil, "", 0)        # close common `Transform`
+  if xfm0 != nil: xfm0(nil, "", 0)      # close common `Transform`
+  if dir.len > 0:                       # Restore; if called as library API
+    try: setCurrentDir oldDir
+    except: erru &"Cannot revert cd back to {oldDir}!\n"; return 1
 
 proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
          iType='i', fType='f', sType="i.Dn", guess="f\tf", SVs: Strings): int =
@@ -1125,6 +1135,7 @@ when isMainModule:
     [fromSV, help={"SVs"   : "[?SVs: input paths; empty|\"-\"=stdin]",
                    "onlyOut": "only parse schema & gen output name",
                    "nameSep": "string to separate schema col names",
+                   "dir"    : "maybe create&chdir here; SVs may need '..'",
                    "schema": "path to the parsing schema file"}],
     [meta  , help={"nios"  : "paths to NIO files",
                    "format": """%[nrwzb]: name,rows,width,rowSize,lastBaseType
