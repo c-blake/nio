@@ -329,18 +329,17 @@ a disaster.  In particular you need to ensure no code anywhere is using what
 you are deleting.  That is enough work/risk that you should maybe just rename
 the directory/type itself.
 
-In any case, you could always just drop a `version` file in the directory if
-you think some string can capture the needed labeling.  Note that semantics
-are often not fully covered by types and can bit you, such as a differential
-field becoming a cumulative field.  At some level you do need to understand
-data that you calculate against.
+Semantics often not fully covered by types can also bite, e.g. a differential
+field becoming a cumulative field.  At some level, you must understand data that
+you calculate against.  In any case, you can always just drop a `.VERSION` file
+in the directory if you think some string can capture the needed labeling.
 
 ### 20 - This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
 DBs and the access/query parts.  So, you could think of it as a way to layer
-building a DB in such a way that preserves no compromise access by programmers
+building a DB in such a way that preserves no compromise IO by programmers
 willing to put in some effort.  E.g., query language-like functionality can be
 layered on top, and more transactional ideas could be stuffed in underneath,
 hopefully optionally to preserve efficiency.  NIO is just a supplementary point
