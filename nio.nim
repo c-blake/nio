@@ -788,7 +788,7 @@ proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
     for path in paths:
       let (_, baseName, _) = path.splitPathName
       let (_, fmt, _) = metaData(path)
-      outu &"type {baseName} = object " & "{.packed.}\n"
+      outu &"type {baseName}" & " {.packed.} = object\n"
       for c in fmt.cols:
         let nm = if i < names.len: names[i] else: "field" & $i
         outu &"    {nm}: "
