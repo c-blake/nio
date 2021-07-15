@@ -161,7 +161,7 @@ Functionality bundles *seem* nice, but can also be a limiting luxury trap, e.g.
 to support compression libs, ACLs, rsync optimization, encryption, or all other
 things provided for files & dirs.  Orthogonality/independence is good.
 
-### 10 - Doesn't KDB/APL derivative xyz do this already?
+### 10 - Don't KDB/APL derivative xyz/Tea Files do this already?
 
 Somewhat, but not fully.  For example, back around the turn of the 2010
 decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
@@ -170,6 +170,9 @@ this was at all available for kdb, though it has surely grown support for
 more compression modes.  Like HDF5, kdb is "overly bundled" in its concept
 and better factoring wins the day.  To do this with the NIO model is easy.
 Similar comments probably apply to other efforts like Apache Parquet&Arrow.
+[Tea Files](http://discretelogics.com/teafiles/) are quite similar in spirit,
+but not tensor-rank general and oriented too specifically against time as a
+primary table key.
 
 As far as I can tell, NIO is alone in striving for a flexible column/vector
 |matrix|tensor "store" that strives to just solve **just one simple problem**:
