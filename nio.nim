@@ -984,6 +984,9 @@ proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
       if lno > nHdr:                    # skip however many header rows
         var cix = 0
         for inp in row.split(dlm):
+          if cix == cols.len:
+            erru &"{path}:{lno}: ignoring columns past {cols.len + 1}\n"
+            break
           let c = cols[cix]
           if c.f != nil:
             inp.parse path, lno, c.name, c.inCode, c.kout, c.f, c.xfm, c.count
