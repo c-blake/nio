@@ -8,7 +8,7 @@
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 import strutils, math, os, times, strformat {.all.}, # only for proc formatInt
-       tables, sets, system.ansi_C, cligen/[osUt, strUt, fileUt, mslice]
+       tables, sets, system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
@@ -340,7 +340,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   except: discard
   let openMode = if result.mode == rmUpdate and info.id.device == 0: fmWrite
                  else: fmAppend
-  if info.size > result.off.high.int:
+  if info.size > type(result.off).high.int:
     raise newException(ValueError, &"{path}: too big for index pointer sizes")
   result.off = info.size.Ix
   let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else: mf.open(path)
@@ -1110,7 +1110,7 @@ when isMainModule:
       var cfPath = getEnv(underJoin & "_CONFIG")      # See if cfg file redirect
       if cfPath.len == 0:                             #..else use getConfigDir.
         cfPath = getConfigDir() / cmdNames[0] / "config"   # See if dir w/cfg
-        if not existsFile(cfPath): cfPath = cfPath[0..^8]  #..else use file.
+        if not fileExists(cfPath): cfPath = cfPath[0..^8]  #..else use file.
       result.add cfToCL(cfPath, if cmdNames.len > 1: cmdNames[1] else: "",
                         quiet=true, noRaise=true)
       result.add envToCL(underJoin)     # Finally add $NIO_PRINT..
