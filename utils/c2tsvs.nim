@@ -1,4 +1,4 @@
-import strformat, parsecsv, streams, strutils, cligen/osUt
+import std/[strformat, parsecsv, streams, strutils], cligen/osUt
 
 type Log = enum eachSub, totalSubs
 

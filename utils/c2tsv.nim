@@ -4,7 +4,7 @@
 # copying down. Delims & quotes can only be 1-byte, but elsewise UTF-8 agnostic.
 # 2-byte CRLF can be split across reads which is handled by 'CR' DFA states.
 
-import posix, strformat, cligen/osUt # osUt: uriteBuffer, erru, outu, c_setvbuf
+import std/[posix, strformat], cligen/osUt # uriteBuffer, erru, outu, c_setvbuf
 
 type Log      = enum eachSub, totalSubs
 type DFAState = enum sFEnd, sNonQuo, sQuo, sQuoInQuo, sCRAtEnd, sCRInQuo

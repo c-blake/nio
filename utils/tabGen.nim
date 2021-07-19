@@ -1,4 +1,4 @@
-import os, strutils, random
+import std/[os, strutils, random]
 # randomize()
 let n = if paramCount() > 0: parseInt(paramStr(1)) else: 30
 let m = if paramCount() > 1: parseInt(paramStr(2)) else: 10
