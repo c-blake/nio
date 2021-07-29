@@ -49,9 +49,9 @@ proc decode(decIx: int; path: string) = # Use above table to execvp a decoder
     elif stdinName.len > 0: dc.av[dc.inputSlot] = stdinName
     else: quit(&"catz: decoder {dc.av[0]} needs a path but has none", 2)
   if catz_stderr.len > 0:               #Q: optionally open per-path file?
-    let fd = open(catz_stderr, O_WRONLY or O_APPEND or O_CREAT, 0o666)
+    let fd = open(catz_stderr.cstring, O_WRONLY or O_APPEND or O_CREAT, 0o666)
     if fd != cint(-1): discard dup2(fd, cint(2))
-  discard execvp(dc.av[0], allocCStringArray(dc.av))
+  discard execvp(dc.av[0].cstring, allocCStringArray(dc.av))
   quit(&"catz: decoder \"{dc.av[0]}\": {errstr()}", 1)
 
 proc sfx2ix(file: string): int =        # find decoder from sfx/extension
