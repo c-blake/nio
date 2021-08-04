@@ -209,6 +209,17 @@ proc close*(nf: var NFile) =
   if not nf.m.mem.isNil: mf.close nf.m
   if not nf.f.isNil: close nf.f
 
+proc save*[T](x: openArray[T], path: string, fmt=".Nxxx") =
+  ## Blast some whole openArray of objects to a file.  You must currently give
+  ## a correct numeric format suffix.
+  if fmt == ".Nxxx":
+    raise newException(ValueError, "format suffix cannot yet be inferred")
+  var f = open(path & fmt, fmWrite)
+  let n = T.sizeof * x.len
+  if f.writeBuffer(x[0].unsafeAddr, n) < n:
+    raise newException(ValueError, "nio.save: short write")
+  f.close
+
 proc read*(nf: var NFile, buf: var string, sz=0): bool =
   ## Read `sz` bytes (a whole row by default); Returns false on short read/EOF.
   ## `while nf.read(buf): ..`
