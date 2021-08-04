@@ -277,6 +277,27 @@ proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
 
 proc close*(tsr: var IOTensor) = mf.close(tsr.m)
 
+func len*(nf: NFile): int =
+  if nf.m.mem.isNil:
+    raise newException(ValueError, "non-mmapped file")
+  nf.m.size div nf.rowFmt.bytes
+
+func `[]`*(nf: NFile, i: int): pointer =
+  ## Returns pointer to the i-th row of a file opened with whatever row format
+  ## and whatever *mode* (eg. fmReadWrite).  Cast it to an appropriate Nim type:
+  ##   `let p = cast[ptr MyType](nfil[17]); echo p.myField; p.bar=2 #May SEGV!`.
+  if nf.m.mem.isNil:
+    raise newException(ValueError, "non-mmapped file")
+  let m = nf.rowFmt.bytes
+  if i >=% nf.m.size div m:
+    raise newException(IndexDefect, formatErrorIndexBound(i, nf.m.size div m))
+  cast[pointer](cast[ByteAddress](nf.m.mem) + i*m)
+
+func `[]`*(nf: NFile; T: typedesc; i: int): T =
+  ## Returns i-th row of a file opened with whatever row format *copied* into
+  ## `result`.  E.g.: `echo nfil[float, 17]`.
+  cast[ptr T](nf[i])[]
+
 type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
   Ix* = uint32                  # max file size for repos is 4 GiB/GiEntry
   RepoKind* = enum rkFixWid, rkDelim, rkLenPfx
