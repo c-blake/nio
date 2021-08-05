@@ -324,6 +324,10 @@ template toOA*[T](fa: FileArray[T]): untyped =
   ## Allow RO slice access like `myFileArray.toOA[^9..^1]` for a "tail".
   toOpenArray[T](cast[ptr UncheckedArray[T]](fa.nf.m.mem), 0, fa.len - 1)
 
+template toOpenArray*[T](fa: FileArray[T]): untyped =
+  ## Some people enjoy longer idents
+  toOpenArray[T](cast[ptr UncheckedArray[T]](fa.nf.m.mem), 0, fa.len - 1)
+
 iterator items*[T](fa: FileArray[T]): T =
   for b in countup(0, fa.nf.m.size, T.sizeof):
     yield cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + b)[]
