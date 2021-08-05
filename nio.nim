@@ -609,6 +609,13 @@ proc formatFloat(result: var string, value: float64, ffmode: FloatFormatMode,
   let res = alignString(f, spec.minimumWidth, align, spec.fill)
   result.add if spec.typ in {'A'..'Z'}: toUpperAscii(res) else: res
 
+proc formatFloat*(result: var string, value: float64, fmt=".04g") =
+  let spec = parseStandardFormatSpecifier(fmt, 0, true)
+  formatFloat(result, value, spec.ffmode, spec)
+
+proc formatFloat*(value: float64, fmt: string): string = # E.g. ".4g"
+ formatFloat(result, value, fmt)
+
 import unicode
 proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
           naCvt=false) =
@@ -1149,18 +1156,18 @@ import stats
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
                     mkAvg="avg", mkSdev="sdev", mkSkew="skew", mkKurt="kurt"
 
-proc fmtStat(rs: RunningStat, mk: MomKind): string =
+proc fmtStat(rs: RunningStat, mk: MomKind, fmt: string): string =
   case mk
-  of mkN:    $rs.n
-  of mkMin:  $rs.min
-  of mkMax:  $rs.max
-  of mkSum:  $rs.sum
-  of mkAvg:  $rs.mean
-  of mkSdev: $rs.standardDeviation
-  of mkSkew: $rs.skewness
-  of mkKurt: $rs.kurtosis
+  of mkN:    rs.n.float64        .formatFloat(fmt)
+  of mkMin:  rs.min              .formatFloat(fmt)
+  of mkMax:  rs.max              .formatFloat(fmt)
+  of mkSum:  rs.sum              .formatFloat(fmt)
+  of mkAvg:  rs.mean             .formatFloat(fmt)
+  of mkSdev: rs.standardDeviation.formatFloat(fmt)
+  of mkSkew: rs.skewness         .formatFloat(fmt)
+  of mkKurt: rs.kurtosis         .formatFloat(fmt)
 
-proc moments*(fmt="%.4g", stats: set[MomKind]={mkMin,mkMax},paths:Strings): int=
+proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
   ## print selected moments over all columns of all `paths`.
   for path in paths:                    # NOTE: This is intended as an easy,
     var inp = nOpen(path)               #..but not useless example calculation.
@@ -1174,7 +1181,7 @@ proc moments*(fmt="%.4g", stats: set[MomKind]={mkMin,mkMax},paths:Strings): int=
     for j in 0 ..< sts.len:
       outu path, ":", j
       for mk in [mkN, mkMin, mkMax, mkSum, mkAvg, mkSdev, mkSkew, mkKurt]:
-        if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk)
+        if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk, fmt)
       outu "\n"
 
 when isMainModule:
