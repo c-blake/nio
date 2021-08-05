@@ -47,12 +47,14 @@ option names) is sufficient.  The
 
 While one can do a few things with the `nio` command, the main point of this
 design is to be extendable by actual programmers doing `import nio` and `nOpen`,
-read, write, `mOpen` to mmap the whole thing, etc.  Such extended tools/logic
-must have their own documentation, but they can share the `n-foo` namespace if
-they want.  (Note that `nio zip` is named after functional PL terms|real world
-clothing zippers and is unrelated to data compression.)  Convenience tools live
-in `utils/`.  E.g., `transpose` is often useful in the context of schema writing
-(as in `c2tsv < foo | head | transpose > editMe.schema`).
+read, write, `mOpen`, etc.  Such extended tools/logic must have its own
+documentation, but they can share an `n-foo` namespace if they want.  (Note that
+`nio zip` is named after functional PL terms|real world clothing zippers and is
+unrelated to data compression.)  Convenience tools live in `utils/`.  E.g.,
+`transpose` is often useful in the context of schema writing (as in `c2tsv < foo
+| head | transpose > editMe.sc`).
+
+------------------------------------------
 
 Here is a little usage vignette using simulated data.  First we will show some
 steps and then explain things.  To start, you will first need to compile &
@@ -106,6 +108,9 @@ d.Nf:0 min: -16.27 max: 25.47
 0.04user 0.00system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 18268maxresident)k
 0inputs+0outputs (0major+377minor)pagefaults 0swaps
 ```
+
+------------------------------------------
+
 Performance savvy readers may note, of the final line, that 40 ms for 4 million
 numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
 16 MB/40ms = 400 MB/s is not great for what could be vectorized min/max in a
