@@ -303,6 +303,8 @@ type
 
 func initFileArray*[T](nf: NFile): FileArray[T] =
   ## An init from NFile in case you want to nf.close before program exit.
+  if T.sizeof != nf.rowFmt.bytes:
+    raise newException(ValueError, "path rowFmt.bytes != FileArray T.sizeof")
   result.nf = nf
 
 proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newFileSize = -1,
