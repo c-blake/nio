@@ -127,7 +127,7 @@ $t favg [a-d].Nf                    # Does 100 loops by default!
 Compiling `demo/favg` with `-d:danger` for me results in a run-time on that same
 machine of 0.045 sec for 100 passes or 0.45 ms/pass.  This is 40ms/.45=~ ***90X
 faster*** or about 16/.45 = 35.5GB/s.  Memory BW on this particular 5 year old
-Linux box tops out at ~45GB/s (with 3 cores pulling).
+Linux box that tops out at ~45GB/s (with 3 cores pulling).
 
 It is straightforward but maybe too demo-messy to break up the loop into `p`
 big sections & total over processes/threads to realize that last 1.3x speed-up.
