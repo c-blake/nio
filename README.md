@@ -54,7 +54,7 @@ unrelated to data compression.)  Convenience tools live in `utils/`.  E.g.,
 `transpose` is often useful in the context of schema writing (as in `c2tsv < foo
 | head | transpose > editMe.sc`).
 
-------------------------------------------
+### Usage Vignette
 
 Here is a little usage vignette using simulated data.  First we will show some
 steps and then explain things.  To start, you will first need to compile &
@@ -108,8 +108,7 @@ d.Nf:0 min: -16.27 max: 25.47
 0.04user 0.00system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 18268maxresident)k
 0inputs+0outputs (0major+377minor)pagefaults 0swaps
 ```
-
-------------------------------------------
+### Going Faster
 
 Performance savvy readers may note, of the final line, that 40 ms for 4 million
 numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
@@ -119,6 +118,7 @@ and just used stdlib `stats.RunningStat` which is not well speed optimized.
 
 `demo/datGen` shows how easy it is to just ***stay in binary the whole time***:
 ```sh
+#!/bin/sh
 t=/usr/bin/time
 $t datGen 1_000_000 4               # generates abcd.Nffff
 $t nio rip -i abcd.Nffff a b c d    # rip apart into column files
