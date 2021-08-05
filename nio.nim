@@ -266,28 +266,7 @@ proc nurite*(f: File, kout: IOKind, buf: pointer) =
   ## Numeric unlocked write to stdio `f`.
   discard f.uriteBuffer(buf, ioSize[kout])
 
-type #*** MEMORY MAPPED IO SECTION
-  IOTensor* = object
-    m*:   mf.MemFile  ## backing file
-    t*:   IOKind      ## single IOKind, e.g. fIk for .N128,128f
-    fmt*: IORow       ## parsed row format
-    d*:   seq[int]    ## dimensions
-
-proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
-            offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
-  let (path, fmt, _) = metaData(path) #XXX match any filled in IOTensor fields
-  tsr.fmt = fmt                       #.. add DATA_PATH search; also for nOpen
-  tsr.t = fmt.cols[0].iok             #.. add indexing/slicing ops or maybe..
-  if fmt.cols.len != 1:               #.. just numnim/neo/Arraymancer compat.
-    raise newException(ValueError, &"{path}: impure tensors unsupported")
-  tsr.m = mf.open(path)
-  if tsr.m.size mod fmt.bytes != 0:
-    mf.close tsr.m
-    raise newException(ValueError, &"{path}: file size indivisible by row size")
-  tsr.d = @[ tsr.m.size div fmt.bytes ] & fmt.cols[0].cnts
-
-proc close*(tsr: var IOTensor) = mf.close(tsr.m)
-
+#*** MEMORY MAPPED IO SECTION
 func len*(nf: NFile): int =
   if nf.m.mem.isNil:
     raise newException(ValueError, "non-mmapped file")
@@ -308,6 +287,72 @@ func `[]`*(nf: NFile; T: typedesc; i: int): T =
   ## Returns i-th row of a file opened with whatever row format *copied* into
   ## `result`.  E.g.: `echo nfil[float, 17]`.
   cast[ptr T](nf[i])[]
+
+type
+  FileArray*[T] = object ## For *typed* external arrays of general records
+    nf*: NFile # whole NFile here allows .close & maybe MemFile.resize niceness
+
+  IOTensor* = object  ## Specialization for single-IOKind-base-types
+    m*:   mf.MemFile  ## backing file
+    t*:   IOKind      ## single IOKind, e.g. fIk for .N128,128f
+    fmt*: IORow       ## parsed row format
+    d*:   seq[int]    ## dimensions
+
+func initFileArray*[T](nf: NFile): FileArray[T] =
+  ## An init from NFile in case you want to nf.close before program exit.
+  result.nf = nf
+
+proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newFileSize = -1,
+              allowRemap=false, mapFlags=cint(-1), rest: ptr string=nil) =
+  ## A var init from nOpen params for, e.g. init of FileArray fields in objects.
+  fa = initFileArray[T](nOpen(path, mode, newFileSize,
+                              allowRemap, mapFlags, rest))
+
+proc initFileArray*[T](path: string, mode=fmRead, newFileSize = -1,
+                       allowRemap=false, mapFlags=cint(-1),
+                       rest: ptr string=nil): FileArray[T] =
+  ## The most likely entry point.  Note that `result.close` is both allowed and
+  ## encouraged if you finish with data prior to program exit.
+  result.init path, mode, newFileSize, allowRemap, mapFlags, rest
+
+proc close*[T](fa: var FileArray[T]) = close fa.nf
+
+func len*[T](fa: FileArray[T]): int =
+  ## Returns length of `fa` in units of T.sizeof records.  Since this does a
+  ## divmod, you should save an answer rather than re-calling if appropriate.
+  if fa.nf.m.mem.isNil:
+    raise newException(ValueError, "uninitialized FileArray[T]")
+  if fa.nf.m.size mod T.sizeof != 0:
+    raise newException(ValueError, "FileArray[T] size non-multiple of T.sizeof")
+  fa.nf.m.size div T.sizeof
+
+func `[]`*[T](fa: FileArray[T], i: int): T =
+  ## Returns i-th row of `r` copied into `result`.
+  if fa.nf.m.mem.isNil:
+    raise newException(ValueError, "uninitialized FileArray[T]")
+  let m = T.sizeof
+  if i * m >=% fa.nf.m.size:
+    raise newException(IndexDefect,formatErrorIndexBound(i, fa.nf.m.size div m))
+  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
+
+proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
+            offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
+  let (path, fmt, _) = metaData(path) #XXX match any filled in IOTensor fields
+  tsr.fmt = fmt                       #.. add DATA_PATH search; also for nOpen
+  tsr.t = fmt.cols[0].iok             #.. add indexing/slicing ops or maybe..
+  if fmt.cols.len != 1:               #.. just numnim/neo/Arraymancer compat.
+    raise newException(ValueError, &"{path}: impure tensors unsupported")
+  tsr.m = mf.open(path)
+  if tsr.m.size mod fmt.bytes != 0:
+    mf.close tsr.m
+    raise newException(ValueError, &"{path}: file size indivisible by row size")
+  tsr.d = @[ tsr.m.size div fmt.bytes ] & fmt.cols[0].cnts
+
+proc mOpen*(path: string, mode=fmRead, mappedSize = -1, offset=0,
+            newFileSize = -1, allowRemap=false, mapFlags=cint(-1)): IOTensor =
+  result.mOpen path, mode, mappedSize, offset, newFileSize, allowRemap, mapFlags
+
+proc close*(tsr: var IOTensor) = mf.close(tsr.m)
 
 type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
   Ix* = uint32                  # max file size for repos is 4 GiB/GiEntry
