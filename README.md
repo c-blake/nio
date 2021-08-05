@@ -83,7 +83,7 @@ $t nio zip a.Nf b.Nf > ab.Nff         # stitch cols together
 nio pr ab.Nff%.9f%.5f | head -n3      # print those, too
 $t nio moments [a-z].N*               # compute some summary stats
 ```
-and get output that looks like this:
+and get output that looks like this (i7-6700k @4.7GHz; 8MiB L3):
 ```
 a,b,c,d
 2.380153181848329,-2.279945642690398,-0.6395001602969651,7.233130606792596
