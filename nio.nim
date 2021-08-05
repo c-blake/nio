@@ -317,6 +317,10 @@ proc initFileArray*[T](path: string, mode=fmRead, newFileSize = -1,
 
 proc close*[T](fa: var FileArray[T]) = close fa.nf
 
+template toOA*[T](fa: FileArray[T]): untyped =
+  ## Allow RO slice access like `myFileArray.toOA[^9..^1]` for a "tail".
+  toOpenArray[T](cast[ptr UncheckedArray[T]](fa.nf.m.mem), 0, fa.len - 1)
+
 func len*[T](fa: FileArray[T]): int =
   ## Returns length of `fa` in units of T.sizeof records.  Since this does a
   ## divmod, you should save an answer rather than re-calling if appropriate.
