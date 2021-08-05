@@ -267,23 +267,26 @@ proc nurite*(f: File, kout: IOKind, buf: pointer) =
   discard f.uriteBuffer(buf, ioSize[kout])
 
 #*** MEMORY MAPPED IO SECTION
-func len*(nf: NFile): int =
-  if nf.m.mem.isNil:
-    raise newException(ValueError, "non-mmapped file")
+func len*(nf: NFile): int {.inline.} =
+  when not defined(danger):
+    if nf.m.mem.isNil:
+      raise newException(ValueError, "non-mmapped file")
   nf.m.size div nf.rowFmt.bytes
 
-func `[]`*(nf: NFile, i: int): pointer =
+func `[]`*(nf: NFile, i: int): pointer {.inline.} =
   ## Returns pointer to the i-th row of a file opened with whatever row format
   ## and whatever *mode* (eg. fmReadWrite).  Cast it to an appropriate Nim type:
   ##   `let p = cast[ptr MyType](nfil[17]); echo p.myField; p.bar=2 #May SEGV!`.
-  if nf.m.mem.isNil:
-    raise newException(ValueError, "non-mmapped file")
+  when not defined(danger):
+    if nf.m.mem.isNil:
+      raise newException(ValueError, "non-mmapped file")
   let m = nf.rowFmt.bytes
-  if i >=% nf.m.size div m:
-    raise newException(IndexDefect, formatErrorIndexBound(i, nf.m.size div m))
+  when not defined(danger):
+    if i >=% nf.m.size div m:
+      raise newException(IndexDefect, formatErrorIndexBound(i, nf.m.size div m))
   cast[pointer](cast[ByteAddress](nf.m.mem) + i*m)
 
-func `[]`*(nf: NFile; T: typedesc; i: int): T =
+func `[]`*(nf: NFile; T: typedesc; i: int): T {.inline.} =
   ## Returns i-th row of a file opened with whatever row format *copied* into
   ## `result`.  E.g.: `echo nfil[float, 17]`.
   cast[ptr T](nf[i])[]
@@ -321,22 +324,35 @@ template toOA*[T](fa: FileArray[T]): untyped =
   ## Allow RO slice access like `myFileArray.toOA[^9..^1]` for a "tail".
   toOpenArray[T](cast[ptr UncheckedArray[T]](fa.nf.m.mem), 0, fa.len - 1)
 
-func len*[T](fa: FileArray[T]): int =
+iterator items*[T](fa: FileArray[T]): T =
+  for b in countup(0, fa.nf.m.size, T.sizeof):
+    yield cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + b)[]
+
+iterator pairs*[T](fa: FileArray[T]): (int, T) =
+  let m = T.sizeof
+  for i in countup(0, fa.nf.m.size div m):
+    yield (i, cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[])
+
+func len*[T](fa: FileArray[T]): int {.inline.} =
   ## Returns length of `fa` in units of T.sizeof records.  Since this does a
   ## divmod, you should save an answer rather than re-calling if appropriate.
-  if fa.nf.m.mem.isNil:
-    raise newException(ValueError, "uninitialized FileArray[T]")
-  if fa.nf.m.size mod T.sizeof != 0:
-    raise newException(ValueError, "FileArray[T] size non-multiple of T.sizeof")
+  when not defined(danger):
+    if fa.nf.m.mem.isNil:
+      raise newException(ValueError, "uninitialized FileArray[T]")
+  when not defined(danger):
+    if fa.nf.m.size mod T.sizeof != 0:
+      raise newException(ValueError, "FileArray[T] size non-multiple of T.sizeof")
   fa.nf.m.size div T.sizeof
 
-func `[]`*[T](fa: FileArray[T], i: int): T =
+func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
-  if fa.nf.m.mem.isNil:
-    raise newException(ValueError, "uninitialized FileArray[T]")
+  when not defined(danger):
+    if fa.nf.m.mem.isNil:
+      raise newException(ValueError, "uninitialized FileArray[T]")
   let m = T.sizeof
-  if i * m >=% fa.nf.m.size:
-    raise newException(IndexDefect,formatErrorIndexBound(i, fa.nf.m.size div m))
+  when not defined(danger):
+    if i * m >=% fa.nf.m.size:
+      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
 
 proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
