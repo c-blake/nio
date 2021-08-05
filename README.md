@@ -56,13 +56,13 @@ in `utils/`.  E.g., `transpose` is often useful in the context of schema writing
 
 Here is a little usage vignette using simulated data.  First we will show some
 steps and then explain things.  To start, you will first need to compile &
-install in your $PATH utils/tabGen.nim.  Something like this may do the trick:
+install in your $PATH demo/tabGen.nim.  Something like this may do the trick:
 ```sh
 git clone https://github.com/c-blake/nio
 cd nio
 n="nim c -d:danger"
-$n nio && $n utils/c2tsv && $n utils/tabGen &&
-  install -cm755 nio utils/c2tsv utils/tabGen ~/bin
+$n nio && $n utils/c2tsv && $n demo/tabGen &&
+  install -cm755 nio utils/c2tsv demo/tabGen ~/bin
 ```
 After that, you can save this blurb to some demo.sh and run "sh demo.sh":
 ```sh
@@ -99,18 +99,38 @@ f.sc
 2.380153179	-2.27995
 -0.025225345	2.21177
 0.161657065	3.55054
-a.Nf:0 min: -4.771832466125488 max: 4.811161041259766
-b.Nf:0 min: -9.17171573638916 max: 10.99259853363037
-c.Nf:0 min: -11.8895788192749 max: 16.49841499328613
-d.Nf:0 min: -16.26732063293457 max: 25.47092437744141
+a.Nf:0 min: -4.772 max: 4.811
+b.Nf:0 min: -9.172 max: 10.99
+c.Nf:0 min: -11.89 max: 16.50
+d.Nf:0 min: -16.27 max: 25.47
 0.04user 0.00system 0:00.04elapsed 97%CPU (0avgtext+0avgdata 18268maxresident)k
 0inputs+0outputs (0major+377minor)pagefaults 0swaps
 ```
 Performance savvy readers may note, of the final line, that 40 ms for 4 million
 numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
-16 MB/40ms = 400 MB/s is not great for what could be a few adds, squares/etc. in
-a perfectly predictable & vectorizable pipeline.  This is because I was lazy
-doing `nio moments` and just used stdlib `stats.RunningStat` which is not well
-speed optimized.  More careful code should at least saturate single core L3
-cache bandwidth which is about 30 GB/s or 75x faster.  Parallel code should be
-able to hit ~1.5x that or more depending on CPU/RAM/etc.
+16 MB/40ms = 400 MB/s is not great for what could be vectorized min/max in a
+perfectly predictable pipeline.  This is because I was lazy doing `nio moments`
+and just used stdlib `stats.RunningStat` which is not well speed optimized.
+
+`demo/datGen` shows how easy it is to just ***stay in binary the whole time***
+and `:
+```sh
+t=/usr/bin/time
+$t datGen 1_000_000 4               # generates abcd.Nffff
+$t nio rip -i abcd.Nffff a b c d    # rip apart into column files
+$t favg [a-d].Nf                    # Does 100 loops by default!
+```
+Compiling `demo/favg` with `-d:danger` for me results in a run-time on that same
+machine of 0.045 sec for 100 passes or 0.45 ms/pass.  This is 40ms/.45=~ ***90X
+faster*** or about 16/.45 = 35.5GB/s.  Memory BW on this particular 5 year old
+Linux box tops out at ~45GB/s (with 3 cores pulling).
+
+It is straightforward but maybe too demo-messy to break up the loop into `p`
+big sections & total over processes/threads to realize that last 1.3x speed-up.
+More recent server/HEDT models have much higher peak parallel BW/peak single
+core BW ratios than 1.3 (more like 5+X) pushing optimizers into complexities of
+parallelism simply to saturate DIMMs.  In this case with NIO because the output
+is a tiny subtotal, it's fine to first memory map files, then fork & engage
+hardware parallelism with processes via `cligen/procpool`.  Were the output
+giant, kids could write to NIO files and return pathnames.  Once you are whole
+computer/whole CPU optimizing, what idea is best quickly becomes "it depends".
