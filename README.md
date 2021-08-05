@@ -40,19 +40,21 @@ sense like the above 100s vs 1 comparison, this is "infinite GB/s".  In a more
 accurate sense, start-up cost is as fixed as opening random access files can be.
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
-for a big help dump.  `nio` is a [cligen](https://github.com/c-blake/cligen)
-multi-command.  So the shortest unique prefix for subcommand names (and long
-option names) is sufficient.  The
+for a big help dump.  `nio` is both a library usable via `import nio` and a
+[cligen](https://github.com/c-blake/cligen) multi-command.  So the shortest
+unique prefix for subcommand names (and long option names) is sufficient.  The
 [FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) has more motivation.
 
-While one can do a few things with the `nio` command, the main point of this
-design is to be extendable by actual programmers doing `import nio` and `nOpen`,
-read, write, `mOpen`, etc.  Such extended tools/logic must have its own
-documentation, but they can share an `n-foo` namespace if they want.  (Note that
-`nio zip` is named after functional PL terms|real world clothing zippers and is
-unrelated to data compression.)  Convenience tools live in `utils/`.  E.g.,
-`transpose` is often useful in the context of schema writing (as in `c2tsv < foo
-| head | transpose > editMe.sc`).
+One can do some things with the `nio` command, but the main point of the design
+is to be extensible by actual programmers `import`ing, `nOpen`/`initFileArray`
+ing, etc. or really just writing their own libs & tools either on top or off to
+the side.  Extended tools/logic must have their own documentation, but they can
+share an `n-foo` namespace if they want.  (Note that `nio zip` is named after
+functional PL terms|real world clothing zippers.  It is unrelated to data
+compression.)
+
+Convenience tools live in `utils/`.  E.g., `transpose` an be useful in the
+context of schema writing (as in `c2tsv < foo | head | transpose > editMe.sc`).
 
 ### Usage Vignette
 
