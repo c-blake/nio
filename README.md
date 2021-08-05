@@ -112,8 +112,7 @@ numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
 perfectly predictable pipeline.  This is because I was lazy doing `nio moments`
 and just used stdlib `stats.RunningStat` which is not well speed optimized.
 
-`demo/datGen` shows how easy it is to just ***stay in binary the whole time***
-and `:
+`demo/datGen` shows how easy it is to just ***stay in binary the whole time***:
 ```sh
 t=/usr/bin/time
 $t datGen 1_000_000 4               # generates abcd.Nffff
