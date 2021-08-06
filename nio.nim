@@ -1206,6 +1206,36 @@ proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
         if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk, fmt)
       outu "\n"
 
+proc emerge*(prefix="_", order: string, paths: Strings): int =
+  ## materialize data in (random access) `paths` according to `order`.
+  ## 
+  ## Output column/path structure is identical to input.  Since this routine
+  ## proceeds input-by-input for efficiency, early exit/cancellation yields
+  ## partly populated outputs.
+  var order = initFileArray[int](order) #Q: maybe int64
+  let n = order.len; let high = n - 1
+  let m = paths.len
+  var inps = newSeq[NFile](m)
+  var outs = newSeq[NFile](m)
+  var size = newSeq[int](m)
+  for j, p in paths:
+    inps[j] = nOpen(p)
+    size[j] = inps[j].rowFmt.bytes
+    if inps[j].len != n:
+      erru &"size mismatch: {p}.len = {inps[j].len} != order.len={n}\n"
+      return 1
+  for j, p in paths:
+    outs[j] = nOpen(prefix & p, fmReadWrite, newFileSize = inps[j].m.size)
+  for j in 0 ..< m:
+    for i in 0 ..< n:
+      if order[i] > high:   #Q: conditionalize on defined(danger)?
+        erru &"order[{i}] = {order[i]} out of bounds [0..{high}]\n"
+        return 1
+      copyMem outs[j][i], inps[j][order[i]], size[j]
+  for j in 0 ..< m:
+    inps[j].close; outs[j].close
+  order.close
+
 when isMainModule:
   import cligen, cligen/cfUt
 
@@ -1278,4 +1308,7 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
     [deftype,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
-                   "lang"  : "programming language"}])
+                   "lang"  : "programming language"}],
+    [emerge, help={"prefix": "output path prefix (dirs are created)",
+                   "order" : "output[i] = input[order[i]]",
+                   "paths" : "[paths: 0|more paths to NIO files]"}])
