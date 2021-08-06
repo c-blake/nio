@@ -793,7 +793,7 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
   ##
   ## Slice specification is `[a][:[b]]`, like Python (incl negatives).  Can
   ## either pass|drop but not both at once.  Multiple slices are "set unioned".
-  if paths.len > 1 or (drop.len > 0 and pass.len > 0):
+  if paths.len != 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
   let cPass = int(not (drop.len > 0))
   let fields = if drop.len > 0: drop else: pass
