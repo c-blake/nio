@@ -788,16 +788,16 @@ iterator elts(slices: Strings, bound: int): (int, int) =
     if b < a: b = a + 1
     yield (a, min(b, bound - 1))
 
-proc cut*(drop: Strings = @[], pass: Strings = @[], paths: Strings): int =
+proc cut*(drop: Strings = @[], pass: Strings = @[], path: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
   ##
   ## Slice specification is `[a][:[b]]`, like Python (incl negatives).  Can
   ## either pass|drop but not both at once.  Multiple slices are "set unioned".
-  if paths.len != 1 or (drop.len > 0 and pass.len > 0):
+  if path.len != 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
   let cPass = int(not (drop.len > 0))
   let fields = if drop.len > 0: drop else: pass
-  var inp = nOpen(paths[0])
+  var inp = nOpen(path[0])
   var colSet: HashSet[int]              #XXX tensors need a flat view
   for (a,b) in fields.elts(inp.rowFmt.cols.len):
     for j in a..<b: colSet.incl j
@@ -1264,7 +1264,7 @@ if AT=="" %s renders as a number via `fmTy`""",
     [rip   , help={"input" : "NIO file to separate",
                    "names" : "pre.N names for output files"}],
     [zip   , help={"paths" : "[paths: 2|more paths to NIO files]"}],
-    [cut   , help={"paths" : "{paths: 1 path to a NIO file}",
+    [cut   , help={"path"  : "{paths: 1 path to a NIO file}",
                    "drop"  : "drop/delete field slice [a][:[b]]",
                    "pass"  : "pass/propagate field slice [a][:[b]]"}],
     [tails , help={"paths" : "{paths: 1|more NIO paths}",
