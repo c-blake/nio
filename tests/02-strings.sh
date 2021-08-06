@@ -23,3 +23,8 @@ nio p strsLS.Ni@strs.LS%s
 
 nio l -ix -oi < strings -x@strs.N6C > strs6C.Ni
 nio p strs6C.Ni@strs.N6C%s
+
+nio z strsLS.Ni strsLS.Ni > strs2.Nii
+nio p -astrs.LS strs2.Nii%20s%10s
+
+# nio p strs2.Nii@strs.LS%s@strs.LS%s #XXX bug BUG
