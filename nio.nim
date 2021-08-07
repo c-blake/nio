@@ -787,7 +787,7 @@ iterator elts(slices: Strings, bound: int): (int, int) =
     if a < 0: a.inc bound
     if b < 0: b.inc bound
     if b < a: b = a + 1
-    yield (a, min(b, bound - 1))
+    yield (a, min(b, bound))
 
 proc cut*(drop: Strings = @[], pass: Strings = @[], path: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
