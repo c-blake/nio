@@ -19,6 +19,7 @@ type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   IOCol* = object       ## column metadata
     iok*:   IOKind      ## number kind
     cnts*:  seq[int]    ## repetition counts for each dimension
+    off*:   int         ## offset of start of column within a row
     width*: int         ## cached cnts.prod: total width of a subcol
 
   IORow* = object       ## row metadata
@@ -152,6 +153,7 @@ proc initIORow*(fmt: string, endAt: var int): IORow =
       for i in 0 ..< col.cnts.len:      # All 0s -> 1s
         if col.cnts[i] == 0: col.cnts[0] = 1
       col.width = col.cnts.prod
+      col.off = result.bytes
       result.bytes += col.width * ioSize[col.iok]
       result.cols.add col
       col.cnts = @[0]
@@ -797,24 +799,19 @@ proc cut*(drop: Strings = @[], pass: Strings = @[], path: Strings): int =
   if path.len != 1 or (drop.len > 0 and pass.len > 0):
     erru "`cut` needs exactly 1 input and not both drop&pass\n"; return 1
   let cPass = int(not (drop.len > 0))
-  let fields = if drop.len > 0: drop else: pass
   var inp = nOpen(path[0])
   var colSet: HashSet[int]              #XXX tensors need a flat view
-  for (a,b) in fields.elts(inp.rowFmt.cols.len):
+  for (a, b) in (if drop.len > 0: drop else: pass).elts(inp.rowFmt.cols.len):
     for j in a..<b: colSet.incl j
   var buf: string
-  var offs, ns: seq[int]
-  var off = 0
-  for j in 0 ..< inp.rowFmt.cols.len:
-    offs.add off
-    let n = inp.rowFmt.cols[j].width * ioSize[inp.rowFmt.cols[j].iok]
-    ns.add n
-    off.inc n
+  var pass, offs, lens: seq[int]
+  for j, c in inp.rowFmt.cols:
+    if (cPass xor (j in colSet).int) == 0: pass.add j
+    offs.add c.off
+    lens.add c.width * ioSize[c.iok]
   while inp.read(buf):
-    for j in 0 ..< inp.rowFmt.cols.len:
-      if (cPass xor (j in colSet).int) == 0:    # Passing column/field
-        if stdout.uriteBuffer(buf[offs[j]].addr, ns[j]) < ns[j]:
-          return 1
+    for j in pass:                      # Passing column/field
+      if stdout.uriteBuffer(buf[offs[j]].addr, lens[j]) < lens[j]: return 1
 
 proc tailsOuter(nf: NFile, head=0, tail=0, repeat=false): int =
   let m = nf.rowFmt.bytes
