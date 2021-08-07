@@ -733,6 +733,7 @@ proc print*(sep="\t", at="", fmTy: Strings = @[], na="", paths: Strings) =
     orow.add '\n'
     outu orow                             # cligen/osUt.urite?
 
+#*** VARIOUS CL REFORMATTING/SELECTION TOOLS: rip, zip, cut, tails
 proc rip*(input: string, names: Strings): int =
   ## rip apart all columns of `input` into files with given `names`.
   ##
@@ -884,6 +885,7 @@ proc tails*(head=0, tail=0, compl=false, repeat=false, paths: Strings): int =
     else    : (if nf.tailsOuter(head, tail, repeat) != 0: return 1)
     nf.close
 
+#*** UTILITY CODE TO GET THINGS IN/OUT OF BINARY FILES: deftype, load1, fromSV
 proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
   ## print prog `lang` type defs for NIO rows from extensions in `paths`.
   ##
@@ -1174,7 +1176,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
         else: o.write &"{sIType}\tx @{hdr}{sExt}"
       o.write '\n'
 
-import stats
+import stats #*** SLOW, DEMO CODE THAT ISN'T TOTALLY USELESS: moments
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
                     mkAvg="avg", mkSdev="sdev", mkSkew="skew", mkKurt="kurt"
 
