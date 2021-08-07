@@ -61,3 +61,6 @@ Note	i	x @sstr.N12c
 EOF
 
 nio f -s sstr.sc < data > $(nio f -o -s sstr.sc)
+
+#XXX BUG: 2nd Id prints char columns 1-by-1 not as a string.
+nio p Id.N8C qtyPxIdDateCityNote.Nif8Ciii Id.N8C
