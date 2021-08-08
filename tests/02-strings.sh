@@ -1,8 +1,8 @@
 #!/bin/sh -ex
 . ${0%02-strings.sh}setup.sh
 
-(echo hi
- echo neighborino
+(echo neighborino 
+ echo hi
  echo MoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256charsMoreThan256chars
 ) > strings
 
