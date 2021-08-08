@@ -135,6 +135,23 @@ proc convert*(dk, sk: IOKind, da, sa: pointer, naCvt=false) {.inline.} =
   of dIk: withTyped_P_NA(sk, sa, p, na, (cast[ptr float64](da)[] = p[].float64))
   of gIk: withTyped_P_NA(sk, sa, p, na, (cast[ptr float80](da)[] = p[]        ))
 
+template withTypedPtrPair(k, aP, bP, a, b, body) =
+  case k # `withTypedP(a): withTypedP(b): ..` may also work but is likely slow.
+  of cIk: (let a = cast[ptr  int8  ](aP); let b = cast[ptr  int8  ](bP); body)
+  of CIk: (let a = cast[ptr uint8  ](aP); let b = cast[ptr uint8  ](bP); body)
+  of sIk: (let a = cast[ptr  int16 ](aP); let b = cast[ptr  int16 ](bP); body)
+  of SIk: (let a = cast[ptr uint16 ](aP); let b = cast[ptr uint16 ](bP); body)
+  of iIk: (let a = cast[ptr  int32 ](aP); let b = cast[ptr  int32 ](bP); body)
+  of IIk: (let a = cast[ptr uint32 ](aP); let b = cast[ptr uint32 ](bP); body)
+  of lIk: (let a = cast[ptr  int64 ](aP); let b = cast[ptr  int64 ](bP); body)
+  of LIk: (let a = cast[ptr uint64 ](aP); let b = cast[ptr uint64 ](bP); body)
+  of fIk: (let a = cast[ptr float32](aP); let b = cast[ptr float32](bP); body)
+  of dIk: (let a = cast[ptr float64](aP); let b = cast[ptr float64](bP); body)
+  of gIk: discard #(let a=cast[ptr float80](aP); let b=cast[ptr float80](bP))
+
+proc compare*(k: IOKind; aP, bP: pointer): int {.inline.} =
+  withTypedPtrPair(k, aP, bP, a, b): result = cmp(a[], b[])
+
 #*** METADATA ACQUISITION SECTION
 proc initIORow*(fmt: string, endAt: var int): IORow =
   ## Parse NIO format string `fmt` into an `IORow`
@@ -1205,6 +1222,98 @@ proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
         if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk, fmt)
       outu "\n"
 
+type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
+  Comparator = object #*** (RADIX SORTS ARE BETTER FOR NUMBERS)
+    nf:  NFile          # backing nio file
+    at:  Repo           # indirect repository or nil if direct
+    iok: IOKind         # IO type
+    dir: bool           # embedded char array; use direct memcmp
+    off: int            # byte offset within a row
+    width: int          # length for memcmp
+    sgn: int            # sense of comparison; +1 ascending; -1 descending
+
+proc compare(cmp: Comparator; i, j: int): int =
+  let a = cast[pointer](cast[ByteAddress](cmp.nf[i]) + cmp.off)
+  let b = cast[pointer](cast[ByteAddress](cmp.nf[j]) + cmp.off)
+  if cmp.dir: cmpMem a, b, cmp.width
+  elif cmp.at.isNil: compare cmp.iok, a, b
+  else:                 # indirect case
+    var ix, jx: Ix
+    convert IxIk, cmp.iok, ix.addr, a
+    convert IxIk, cmp.iok, jx.addr, b
+    cmp cmp.at[ix], cmp.at[jx]
+
+proc compare(cmps: openArray[Comparator]; i, j: int): int =
+  for k, cmp in cmps:
+    let c = cmp.compare(i, j)
+    if c != 0: return cmp.sgn * c
+
+proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
+  var cmp: Comparator # parse {[@[..]]+-N}* and add Comparators to running list
+  cmp.nf  = nf
+  cmp.sgn = +1
+  if fmt.len == 0:
+    for c in nf.rowFmt.cols:
+      if c.cnts.len > 1 or (c.cnts[0] != 1 and c.iok != CIk):
+        raise newException(ValueError, "key too complex")
+      cmp.iok = c.iok
+      cmp.off = c.off
+      cmp.width = c.width
+      cmp.dir = cmp.iok == CIk and c.width > 1
+      r.add cmp
+  else:
+    if fmt[0] != ':':
+      erru &"expecting :<1-origin-colNum>[,...] not {fmt}\n"; return
+    for spec in fmt[1..^1].split(","):
+      cmp.at = nil
+      var str = spec
+      if spec.startsWith("@"):
+        let ix = spec.find({'0'..'9', '-', '+'}, start=1)
+        cmp.at = if ix == 1: atShr else: rOpen(spec[1..<ix])
+        if ix > 1: str = spec[ix..^1]
+      elif spec.len == 0:
+        erru &"ignoring len==0 comma-separated specifier in: {fmt}\n"; continue
+      var colNum: int           # "num" is 1-origin; "ix" is 0-origin
+      if str.parseInt(colNum) != str.len or colNum == 0:
+        erru &"ignoring 0/non-integral specifier {colNum} in: {fmt}\n"; continue
+      let cIx = abs(colNum) - 1
+      cmp.sgn = sgn(colNum)
+      cmp.iok = nf.rowFmt.cols[cIx].iok
+      cmp.off = nf.rowFmt.cols[cIx].off
+      cmp.width = nf.rowFmt.cols[cIx].width
+      cmp.dir = cmp.iok == CIk and nf.rowFmt.cols[cIx].width > 1
+      r.add cmp
+
+import algorithm
+proc order*(at="", order: string, paths: Strings): int =
+  ## write indices to make a multi-level order among `paths`.
+  ##
+  ## :commaSep{[@[..]]INT} after each input means cmp by that *1-Origin*-column
+  ## (within each file); Negative => reverse. *@[..]* prefix indicates indirect
+  ## values with shared *at* | column-specific repos.  Eg., ``at="bs.LS"``,
+  ## ``a,b,c.Niif:@-2,@as.LS+1,-3`` makes a multi-level order first descending
+  ## by `bs[]`, then ascending by `as[]`, then descending by `c`.
+  var atShr: Repo
+  try:
+    if at.len > 0: atShr = rOpen(at)                    # `nil` if at == ""
+  except: erru &"Cannot open \"{at}\"\n"; quit(1)
+  let m = paths.len
+  var nfs = newSeq[NFile](m)
+  var cmps = newSeqOfCap[Comparator](m)
+  var ofmt: string
+  var n = -1 
+  for j, path in paths:                                 # open the inputs
+    nfs[j] = nOpen(path, rest=ofmt.addr)
+    if n == -1: n = nfs[j].len
+    elif nfs[j].len != n:
+      erru &"size mismatch: {path}.len = {nfs[j].len} != earlier {n}\n"
+      return 1
+    cmps.add(nfs[j], ofmt, atShr)                       # build comparators
+  var index = newSeqOfCap[int](n)                       # make identity map
+  for i in 0..<n: index.add i                           # could be FileArray?
+  index.sort (proc(i, j: int): int = cmps.compare i, j) # do the sort
+  index.save order, ".Nl"                               # save the answer
+
 proc emerge*(prefix="_", order: string, paths: Strings): int =
   ## materialize data in (random access) `paths` according to `order`.
   ## 
@@ -1308,6 +1417,9 @@ if AT=="" %s renders as a number via `fmTy`""",
     [deftype,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
                    "lang"  : "programming language"}],
+    [order , help={"at"    : "shared default repo for @ compares",
+                   "order" : "output order file",
+                   "paths" : "[paths: 0|more paths to NIO files]"}],
     [emerge, help={"prefix": "output path prefix (dirs are created)",
                    "order" : "output[i] = input[order[i]]",
                    "paths" : "[paths: 0|more paths to NIO files]"}])
