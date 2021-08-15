@@ -344,18 +344,18 @@ func initFileArray*[T](nf: NFile): FileArray[T] =
     raise newException(ValueError, "path rowFmt.bytes != FileArray T.sizeof")
   result.nf = nf
 
-proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newFileSize = -1,
+proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newLen = -1,
               allowRemap=false, mapFlags=cint(-1), rest: ptr string=nil) =
   ## A var init from nOpen params for, e.g. init of FileArray fields in objects.
-  fa = initFileArray[T](nOpen(path, mode, newFileSize,
-                              allowRemap, mapFlags, rest))
+  ## `newLen` is in units of `T` row sizes.
+  let sz = if newLen == -1: -1 else: newLen * T.sizeof
+  fa = initFileArray[T](nOpen(path, mode, sz, allowRemap, mapFlags, rest))
 
-proc initFileArray*[T](path: string, mode=fmRead, newFileSize = -1,
-                       allowRemap=false, mapFlags=cint(-1),
-                       rest: ptr string=nil): FileArray[T] =
+proc initFileArray*[T](path: string, mode=fmRead, newLen = -1, allowRemap=false,
+                       mapFlags=cint(-1), rest: ptr string=nil): FileArray[T] =
   ## The most likely entry point.  Note that `result.close` is both allowed and
   ## encouraged if you finish with data prior to program exit.
-  result.init path, mode, newFileSize, allowRemap, mapFlags, rest
+  result.init path, mode, newLen, allowRemap, mapFlags, rest
 
 proc close*[T](fa: var FileArray[T]) = close fa.nf
 
