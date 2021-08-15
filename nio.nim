@@ -39,10 +39,10 @@ type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
 
 func isNil*(nf: NFile): bool = nf.m.mem.isNil and nf.f.isNil
 func ok*(nf: NFile): bool = not nf.isNil
-proc width*(nf: NFile): int = nf.rowFmt.bytes
+func width*(nf: NFile): int = nf.rowFmt.bytes
 
-proc low*(T: typedesc[float80]): float80 = float64.low    # float80 support
-proc high*(T: typedesc[float80]): float80 = float64.high
+func low*(T: typedesc[float80]): float80 = float64.low    # float80 support
+func high*(T: typedesc[float80]): float80 = float64.high
 converter toFloat80*(pdqr: SomeNumber): float80 = {.emit: "result = pdqr;".}
 template defc(T) {.dirty.} = # need dirty to avoid genSym so emit can work
   converter `to T`*(xyzw: float80): T = {.emit: "result = xyzw;".}
@@ -54,13 +54,13 @@ const ioCode*: array[IOKind, char] = [ 'c','C', 's','S', 'i','I', 'l','L',
 const ioSize*: array[IOKind, int] = [1,1, 2,2, 4,4, 8,8, 4,8,16]  ## type sizes
 const ioFloats* = {fIk, dIk, gIk}                                 ## float kinds
 
-proc ioCodeK*(c: char): IOKind {.inline.} =
+func ioCodeK*(c: char): IOKind {.inline.} =
   ## return IOKind correspnding to character `c`
   let ix = ioCode.find(c)
   if ix < 0: raise newException(ValueError, "expecting [cCsSiIlLfdg]")
   IOKind(ix)
 
-proc codeOf*(x: IONumber): IOKind =
+func codeOf*(x: IONumber): IOKind =
   ## return NIO code from a static Nim type
   when x is  int8  : result = cIk
   elif x is uint8  : result = CIk
@@ -74,9 +74,9 @@ proc codeOf*(x: IONumber): IOKind =
   elif x is float64: result = dIk
   elif x is float80: result = gIk
 
-proc isSigned*  (k: IOKind): bool {.inline.} = (k.int and 1) == 0
-proc isUnSigned*(k: IOKind): bool {.inline.} = (k.int and 1) == 1
-proc isFloat*   (k: IOKind): bool {.inline.} = k.int > LIk.int
+func isSigned*  (k: IOKind): bool {.inline.} = (k.int and 1) == 0
+func isUnSigned*(k: IOKind): bool {.inline.} = (k.int and 1) == 1
+func isFloat*   (k: IOKind): bool {.inline.} = k.int > LIk.int
 
 #*** MISSING VALUE CONVENTION; NA-AWARE LOW/HIGH MOSTLY FOR CLIPPING PARSED DATA
 const c_na* =  int8.low;const c_low* = int64( int8.low+1);const c_high* = int64( int8.high)
@@ -111,7 +111,7 @@ template withTyped_P_NA(k, adr, p, na, body) =
   of dIk: (let p = cast[ptr float64](adr); let na{.used.} = d_na; body)
   of gIk: (let p = cast[ptr float80](adr); let na{.used.} = g_na; body)
 
-proc isNA*(k: IOKind, adr: pointer): bool {.inline.} =
+func isNA*(k: IOKind, adr: pointer): bool {.inline.} =
   ## Test the number IO kind at `adr` against its missing/NA value
   withTyped_P_NA(k, adr, p, na):
     when declared(isnan): return if k > LIk: p[].float64.isnan else: p[] == na
@@ -157,7 +157,7 @@ proc compare*(k: IOKind; aP, bP: pointer): int {.inline.} =
   withTypedPtrPair(k, aP, bP, a, b): result = cmp(a[], b[])
 
 #*** METADATA ACQUISITION SECTION
-proc initIORow*(fmt: string, endAt: var int): IORow =
+func initIORow*(fmt: string, endAt: var int): IORow =
   ## Parse NIO format string `fmt` into an `IORow`
   if fmt.len < 1: raise newException(IOError, "empty row format")
   var col: IOCol
@@ -1251,7 +1251,7 @@ type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
     width: int          # length for memcmp
     sgn: int            # sense of comparison; +1 ascending; -1 descending
 
-proc compare(cmp: Comparator; i, j: int): int =
+func compare(cmp: Comparator; i, j: int): int =
   let a = cast[pointer](cast[ByteAddress](cmp.nf[i]) + cmp.off)
   let b = cast[pointer](cast[ByteAddress](cmp.nf[j]) + cmp.off)
   if cmp.dir: cmpMem a, b, cmp.width
@@ -1262,7 +1262,7 @@ proc compare(cmp: Comparator; i, j: int): int =
     convert IxIk, cmp.iok, jx.addr, b
     cmp cmp.at[ix], cmp.at[jx]
 
-proc compare(cmps: openArray[Comparator]; i, j: int): int =
+func compare(cmps: openArray[Comparator]; i, j: int): int =
   for k, cmp in cmps:
     let c = cmp.compare(i, j)
     if c != 0: return cmp.sgn * c
