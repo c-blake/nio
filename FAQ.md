@@ -25,6 +25,12 @@ into heterogeneous program variables.  Data may not fit in memory and being able
 to mmap & go lets one be "fluid" about data/program lifetime & computations,
 subdividing however is convenient.
 
+If your data does fit in, say /dev/shm on Unix, then you can use the filesystem
+as "new calling convention".  The cost to rebuild memory maps in some other
+process is often quite low (order 1 Python funcall) compared to whatever the
+desired calculation.  There is no burden of immediate control flow transfer,
+though.  You can re-open the files whenever is convenient.
+
 #### 1a - Why not bio for binary IO?
 
 To avoid confusion with block/buffered IO which is "similar but different" in
@@ -178,8 +184,8 @@ As far as I can tell, NIO is alone in striving for a flexible column/vector
 |matrix|tensor "store" that strives to just solve **just one simple problem**:
 not parsing & re-parsing and running "live" right off the files, but solve
 that problem as generally as is easy.  All that said, the NIO solution is *so*
-simple that it seems not improbable *someone* else has devised a close analogue,
-especially in a simplified variant, such as only column stores.
+simple that it seems not improbable *someone* else has devised a close analogue
+(especially simplified variants as above).
 
 ### 11 - Ok..Why not a full object graph?
 
@@ -190,7 +196,8 @@ right off of files" for broader use cases, but notably will need to mimic
 GC'd types like `seq` in Nim and possibly a lot of GC machinery.  PRs like
 this are welcome, but note that relDBs/HDF5/etc. have somehow been useful
 for near a half century without this feature and object-relational mappings
-are usually considered thorny.
+are usually considered thorny.  Another aspect is that simpler structures
+tend to encourage discipline rewarded via IO performance (and its converse!).
 
 ### 12 - Why no bit fields/discriminated unions/even fancier things?
 
