@@ -37,6 +37,10 @@ type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   IONumber* = SomeNumber|float80                ## all IO numbers type class
   Strings* = seq[string]                        ## alias for seq[string]
 
+func isNil*(nf: NFile): bool = nf.m.mem.isNil and nf.f.isNil
+func ok*(nf: NFile): bool = not nf.isNil
+proc width*(nf: NFile): int = nf.rowFmt.bytes
+
 proc low*(T: typedesc[float80]): float80 = float64.low    # float80 support
 proc high*(T: typedesc[float80]): float80 = float64.high
 converter toFloat80*(pdqr: SomeNumber): float80 = {.emit: "result = pdqr;".}
@@ -309,6 +313,20 @@ func `[]`*(nf: NFile; T: typedesc; i: int): T {.inline.} =
   ## Returns i-th row of a file opened with whatever row format *copied* into
   ## `result`.  E.g.: `echo nfil[float, 17]`.
   cast[ptr T](nf[i])[]
+
+iterator items*(nf: NFile): string =
+  ## iteration over untyped rows; (only MemFile IO right now, but generalizable)
+  var s = newString(nf.width)
+  for e in 0 ..< nf.len:
+    copyMem s[0].addr, nf[e], s.len
+    yield s
+
+iterator pairs*(nf: NFile): (int, string) =
+  ## indexed iteration over untyped rows, like an `openArray[T]`
+  var i = 0
+  for e in nf:
+    yield (i, e)
+    inc i
 
 type
   FileArray*[T] = object ## For *typed* external arrays of general records
