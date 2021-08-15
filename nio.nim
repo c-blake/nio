@@ -7,8 +7,8 @@
 ## <~~> *"idDayPrice.N2sf"*. N/A = NaN|signed.low|unsigned.high.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
-import strutils, math, os, times, strformat {.all.}, # only for proc formatInt
-       tables, sets, system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
+import strutils as su, math, os, times, strformat {.all.},# for proc formatInt
+       tables, sets, system/ansi_C, cligen, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
@@ -448,7 +448,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   ## 3 open modes: mmap & go read-only, tab-building indexing, and full updates.
   if path.len == 0: return
   if path in openRepos: return openRepos[path]
-  let cols = strutils.split(path, maxSplit=1)
+  let cols = su.split(path, maxSplit=1)
   let path = cols[0]
   new result
   result.path = path
@@ -949,7 +949,7 @@ type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
 proc parse(inp, pathName: string; lno: int; colName: string; inCode: char;
            kout: IOKind; outp=stdout, xfm: Transform, cnt=1) {.inline.} =
-  let inp = strutils.strip(inp)
+  let inp = su.strip(inp)
   var nS: int                         # widest types for number parsing
   var nU: uint
   var nF: float
@@ -1035,7 +1035,8 @@ proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
   ##   Note  i  x  @@               #..with maybe a shared common string repo.
   ## create/appends *qtyPxIdDateCityNote.Nif8C2si*, *dates.N9c*, *cities.Dn*
   ## and length-prefixed *strings.LS*.
-  type Col = tuple[name: string; inCode:char; f:File; xfm:Transform; kout:IOKind; count:int]
+  type Col = tuple[name: string; inCode: char; f: File;
+                   xfm: Transform; kout: IOKind; count: int]
   if schema.len == 0: erru "Cannot infer schema; Provide one\n"; return 1
   let sep = initSep("white")
   var scols: seq[string]
@@ -1162,7 +1163,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
         for inp in row.split(delim):
           if j + 1 > hdrs.len:
             raise newException(IOError, &"too many columns >{j+1} @line:{lno}")
-          strutils.strip(inp).check j
+          su.strip(inp).check j
           j.inc
         if j < hdrs.len:
           raise newException(IOError, &"too few columns {j} @line:{lno}")
@@ -1357,7 +1358,7 @@ when isMainModule:
                      "cut", "tails", "moments", "deftype"]: # allow n-foo links
             result.add bn[2..^1]
         return result & cmdline
-      let underJoin = strutils.toUpperAscii(cmdNames.join("_"))
+      let underJoin = su.toUpperAscii(cmdNames.join("_"))
       var cfPath = getEnv(underJoin & "_CONFIG")      # See if cfg file redirect
       if cfPath.len == 0:                             #..else use getConfigDir.
         cfPath = getConfigDir() / cmdNames[0] / "config"   # See if dir w/cfg
