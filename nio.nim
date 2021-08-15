@@ -1364,7 +1364,7 @@ proc emerge*(prefix="_", order: string, paths: Strings): int =
   order.close
 
 when isMainModule:
-  import cligen, cligen/cfUt
+  import cligen/cfUt
 
   proc mergeParams(cmdNames: Strings, cmdLine=commandLineParams()): Strings =
     if cmdNames.len > 0:
