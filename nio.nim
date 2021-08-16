@@ -1047,7 +1047,7 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
   ##   #name NC SC TRANSFORM:args   # NC=NIOcode; SC=(load|src)Code like load1
   ##   qty   i  d                   # parse input as decimal; emit uint32
   ##   Px    f  f                   # parse as float32; emit float32
-  ##   Junk  i  ignore              # ignore an input column
+  ##   _     ignore                 # ignore an input column
   ##   Id    8C c                   # embedded char arrays pad-clipped but can
   ##   Date  s  x  @dates.N9c       #..be transformed via intern into *fixed*
   ##   City  s  x  @cities.Dn       #..or *variable width* repositories,
