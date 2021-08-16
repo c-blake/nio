@@ -1369,6 +1369,250 @@ proc emerge*(prefix="_", order: string, paths: Strings): int =
     inps[j].close; outs[j].close
   order.close
 
+#*** HIGHER ORDER STRUCTURE APIS/TIME-SERIES MATRICES
+type AxisFile* = object     ## `AxisFile` is an NA-impossible `rkFixWid Repo`
+  ix2k*: NFile              ## file of keys such that file[ix][0..<mKy] = key
+  k2ix*: Table[string, int] ## map from key to its file[index]
+  fK*: File                 ## ordinary File for appending to axis file
+
+func nKy*(af: AxisFile): int {.inline.} = af.k2ix.len
+  ## number of keys (in rows)
+func mKy*(af: AxisFile): int {.inline.} = af.ix2k.width
+  ## width of keys (bytes)
+func `[]`*(af: AxisFile, key: string): int {.inline.} = af.k2ix[key]
+func contains*(af: AxisFile,key: string): bool {.inline.} = key in af.k2ix
+
+proc add*(af: var AxisFile, key: string) =
+  ## add `key` to an open axis index file
+  if af.fK.writeBuffer(key[0].unsafeAddr, af.mKy) != af.mKy:
+    raise newException(IOError, "cannot append; disk full?")
+  af.k2ix[key] = af.nKy
+
+proc axOpen*(path: string, fixed=false): AxisFile =
+  ## Create|open an axis index file & populate inverted map Table
+  if not fixed:
+    result.fK = open(path, fmAppend) # Creates if does not exist on Unix
+  result.ix2k = nOpen(path)
+  for i, k in pairs(result.ix2k):
+    result.k2ix[k] = i
+
+proc close*(af: var AxisFile) =
+  if not af.fK.isNil: af.fK.close
+  af.ix2k.close
+
+type StacksUpdater* = object
+  axT*, axI*: AxisFile          ## axis indices for "time" & "identity"
+  nT*, nI*, padT*, padI*: int   ## matrix dimensions & padding amounts
+  fixed*: bool                  ## fixed = read-only on axis indices
+  pfx*, idVar*: string          ## time is in path names; is in data files
+  wd*, tiDir*, itDir*: string   ## work & out dirs; ""=> skip that one.
+  inpVars*: seq[string]         ## input variables to matricize (full name)
+  outBase*: seq[string]         ## output variables (basenames; no .N*)
+  vI*, vO*, vX*: seq[NFile]     ## output matrix handles
+
+func roundUp(num, factor: int): int =
+  result = num
+  if factor > 1:
+    let remainder = num mod factor
+    if remainder != 0: result = num + factor - remainder
+
+proc known(todo: seq[string]; af: AxisFile; ask, pad: int): int =
+  result = af.nKy               # Calc total unique keys; pad if `ask` too small
+  for k in todo: (if k notin af: inc result)
+  result = if ask >= result: ask else: roundUp(result, pad)
+
+proc suOpen*(idVar: string; tms,ids: seq[string]; nT,nI, padT,padI: int;
+             ix2tm,ix2id, tiDir,itDir, wd: string; fixed=false): StacksUpdater =
+  template initAx(K, ky, kys, name) =   # OPEN AXIS INDEX FILES
+    try:
+      result.`ax K` = axOpen(`ix2 ky`, fixed)
+    except:
+      erru "cannot open ", name, " AxisFile\n"; return
+    result.`pad K` = `pad K`
+    result.`n K` = kys.known(result.`ax K`, `n K`, result.`pad K`)
+  initAx(T, tm, tms, "time")
+  initAx(I, id, ids, "id")
+  result.fixed = fixed          # read-only on indices mode or not
+  result.wd = wd
+  result.idVar = idVar
+  result.tiDir = tiDir          # defer create/open `vO` until 1st ids batch
+  result.itDir = itDir          # defer create/open `vX` until 1st ids batch
+
+proc getVars(su: var StacksUpdater, wd: string) =
+  for path in walkPatSorted(wd/"*.N*"):
+    if su.idVar notin path: su.inpVars.add path
+  for path in su.inpVars:
+    let (_, name, _) = splitPathName(path)
+    su.outBase.add name
+
+proc extantAxSpc(su: var StacksUpdater): (int, int) =
+  if su.tiDir.len > 0:
+    let pat = su.tiDir/su.outBase[0] & ".N*" & su.inpVars[0][^1]
+    let paths = walkPatSorted(pat)
+    if paths.len > 0:
+      return (int(paths[0].getFileSize) div metaData(paths[0])[1].bytes,
+              metaData(paths[0])[1].cols[0].cnts[0])
+  if su.itDir.len > 0:
+    let pat = su.itDir/su.outBase[0] & ".N*" & su.inpVars[0][^1]
+    let paths = walkPatSorted(pat)
+    if paths.len > 0:
+      return (metaData(paths[0])[1].cols[0].cnts[0],
+              int(paths[0].getFileSize) div metaData(paths[0])[1].bytes)
+
+proc maybeTouch(su: var StacksUpdater, vQ: seq[NFile], dir: string, m: int) =
+  for v, nf in vQ:
+    let pat = (dir / su.outBase[v] & ".N*") & ioCode[nf.rowFmt.cols[0].iok]
+    let paths = walkPatSorted(pat)
+    if paths.len > 0: touch paths[0]
+
+proc ensureSpace(su: var StacksUpdater; vQ: var seq[NFile];
+                 n, m: int; dir: string) =
+  createDir(dir)
+  if vQ.len == 0:       # n*m spc in vQ; Future IOTensor work can simplify this
+    for v, vi in su.vI:
+      let pat = (dir / su.outBase[v] & ".N*") & ioCode[vi.rowFmt.cols[0].iok]
+      let paths = walkPatSorted(pat)
+      if paths.len == 1:
+        vQ.add nOpen(paths[0], fmReadWrite)
+      elif paths.len > 1: erru "nmatch != 1 for {pat}\n"
+  if vQ.len > 0:
+    let tst = vQ[0]
+    if tst.len >= n and tst.width >= m * ioSize[tst.rowFmt.cols[0].iok]:
+      return            # assume if 1st big enough then rest are
+  erru &"growing space to {n},{m} in {dir}\n" # slow IO op; so tell user
+  var vN: seq[NFile]
+  for v, vi in su.vI:                         # on only 1 of the 2 axes.
+    let iok = vi.rowFmt.cols[0].iok
+    let sz = ioSize[vi.rowFmt.cols[0].iok]    # size of base type
+    let tmp = dir/("tmp_" & su.outBase[v] & ".N") & $m & ioCode[iok]
+    vN.add nOpen(tmp, fmReadWrite, n*m*sz)
+    let oldN = if vQ.len > 0: vQ[v].len else: 0
+    let oldM = if vQ.len > 0: vQ[v].width div sz else: 0
+    for i in 0 ..< oldN:
+      for j in 0 ..< oldM:
+        copyMem cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz),
+                cast[pointer](cast[ByteAddress](vQ[v][i]) + j*sz), sz
+      for j in oldM ..< m:
+        setNA iok, cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz)
+    for i in oldN ..< n:
+      for j in 0 ..< m:
+        setNA iok, cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz)
+    let nw = (dir/su.outBase[v]&".N") & $m & ioCode[iok]
+    if oldM != m:
+      let p = (dir/su.outBase[v] & ".N") & $oldM & ioCode[iok]
+      removeFile p
+    try: moveFile tmp, nw
+    except: discard
+    if vQ.len > 0: vQ[v].close
+  vQ = vN
+
+proc update*(su: var StacksUpdater, tm: string): int =
+  ## Returns number of rows incorporated into matrices
+  var t: int                    # FIRST DECIDE NEEDED tm INDEX
+  try: t = su.axT[tm]
+  except:
+    if su.fixed: erru &"ix2tm: no \"{tm}\" and static ix; skipping\n"; return 0
+    else: t = su.axT.nKy        # `add` POST-UPDATE TO MARK COMPLETION
+  var ids: NFile                # ids <- OPEN idVar
+  try: ids = nOpen(su.wd/su.idVar)
+  except: erru &"no id file: {su.wd/su.idVar}!\n"; return 0
+  if not su.fixed:              # UPDATE Id AXIS
+    for id in ids: (if id notin su.axI: su.axI.add id)
+    su.axI.fK.flushFile
+  if su.nI < su.axI.nKy:
+    su.nI = roundUp(su.axI.nKy, su.padI)
+  if su.inpVars.len == 0: su.getVars su.wd # OPEN INPUT RIP/VEC FILES
+  let (xT, xI) = su.extantAxSpc
+  su.nT = max(su.nT, xT)        # Leave alone user-over provisioned
+  su.nI = max(su.nI, xI)
+  for v in su.inpVars:
+    try   : su.vI.add nOpen(v)
+    except: return 0
+    if su.vI[^1].rowFmt.cols.len > 1 or
+       su.vI[^1].rowFmt.cols[0].width > ioSize[su.vI[^1].rowFmt.cols[0].iok]:
+      erru &"cannot make >2-D arrays for: {v}\n"; return 0
+  if su.tiDir.len>0: su.ensureSpace su.vO, su.nT, su.nI, su.tiDir #MAYBE RE-..
+  if su.itDir.len>0: su.ensureSpace su.vX, su.nI, su.nT, su.itDir #SHAPE/OPEN
+  var k = newString(ids.width)  # MAIN WORK: LOOK UP id & INJECT INTO MATRICES
+  template elt(nf; i, j, w: int): untyped =
+    cast[pointer](cast[ByteAddress](nf[i]) + j*w)
+  for j, id in ids:
+    var i: int
+    copyMem k[0].addr, id[0].unsafeAddr, ids.width
+    try: i = su.axI[k]
+    except: (if su.fixed: erru &"ix2id: no \"{k}\"\n"); continue
+    for v in 0 ..< su.inpVars.len:
+      if su.vI[v].ok:
+        let w = su.vI[v].width
+        if su.vO.len>0 and su.vO[v].ok:copyMem elt(su.vO[v],t,i,w),su.vI[v][j],w
+        if su.vX.len>0 and su.vX[v].ok:copyMem elt(su.vX[v],i,t,w),su.vI[v][j],w
+    inc result  # Since OS may not, update mtime for # files maybe written via mmap.
+  if result > 0:
+    su.maybeTouch su.vO, su.tiDir, su.nT  # best effort stamp update (mmap
+    su.maybeTouch su.vX, su.itDir, su.nI  # writes do not update file times.)
+  ids.close                     # CLOSE ALL INPUTS
+  for v in 0 ..< su.inpVars.len: su.vI[v].close
+  su.vI.setLen 0
+  if not su.fixed: su.axT.add(tm); su.axT.fK.flushFile # MARK COMPLETION
+
+proc close*(su: var StacksUpdater) =
+  for v in 0 ..< su.inpVars.len:
+    if su.vO.len > 0: su.vO[v].close
+    if su.vX.len > 0: su.vX[v].close
+  su.axT.close; su.axI.close
+
+proc getTimePaths*(pfxSfx: seq[string]): (seq[string], seq[string]) =
+  let pfxLen = pfxSfx[0].len; let sfxLen = pfxSfx[1].len + 1
+  for path in walkPatSorted(pfxSfx[0] & "*" & pfxSfx[1]):
+    let time = path[pfxLen..^sfxLen]            # EXTRACT time FROM PATH
+    if '.' in time: erru &"Inferred bad T={time} from {path}\n"; continue
+    elif time.len == 0: erru &"Inferred empty T from {path}\n"; continue
+    result[0].add time
+    result[1].add path
+
+proc upstacks*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
+    padT=1, padI=1, ix2tm="ix2tm", ix2id="ix2id", tiDir="tmId", itDir = "idTm",
+    doTs="", ids="", wd="/tmp/up", stamp="DONE", inpPat: seq[string]) =
+  ## Make/update time series matrices from per-tm cross-sectional files.
+  if inpPat.len != 1 or inpPat[0].split("@TM@").len != 2:
+    raise newException(HelpOnly, "non-option not an @TM@ pattern")
+  let (times, paths) = getTimePaths(inpPat[0].split "@TM@")
+  if times.len == 0: echo &"No inputs match {inpPat[0]}"; return
+  var su = suOpen(idVar, times, su.split(ids), nT, nI, padT, padI, ix2tm, ix2id,
+                  tiDir, itDir, wd, fixed)      # SET UP OUTPUTS
+  var didWk = false                             # LOOP OVER INPUTS
+  var t0: Time
+  try: t0 = getLastModificationTime(outDir/stamp)
+  except: discard # 0
+  var fi: FileInfo
+  for i in 0 ..< times.len:
+    let time = times[i]
+    let path = paths[i]
+    try   : fi = path.getFileInfo
+    except: erru &"could not access {path}\n"; continue
+    if doTs.len == 0: # XXX could also do any times > EndOf ix2tm mode
+      if fi.lastWriteTime < t0: continue
+    else:
+      if time notin doTs: continue              # Could preprocess -> HashSet
+    if path.getFileSize < 64:
+      stderr.write &"Skipping nearly empty {path}\n"
+      continue
+# New ids appearing & output matrix resize conservation => 2 pass: ids & data.
+# Id notin data by def. Id-segregated piped output may seem best BUT pipe writes
+# block if buffers fill. More buffering works; Buffer may as well be /dev/shm.
+    putEnv "F", path; putEnv "T", time; putEnv "OUTDIR", outDir; clearDir wd                                 # CLEAR OLD
+    if execShellCmd(cmd) != 0:                  # PASS 1: CREATE RIP/VEC FILES
+      erru &"FAILED: {cmd}\n" # Instead of fromSV NimCall run `cmd` since fromSV
+      break                   #..script wrapper|alt vector file gen may be nice.
+    if su.update(time) == 0:                    # PASS 2: INJECT RIP/VEC FILES
+      erru &"{path} Zero parsed rows; Check input filters/holiday sched\n"
+    else:
+      didWk = true
+    echo "did time: ", time
+  if didWk: touch outDir/stamp                  # Say we worked
+  else: echo &"Up to date; No inputs seem newer than {stamp}."
+  su.close
+
 when isMainModule:
   import cligen/cfUt
 
@@ -1448,4 +1692,22 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
     [emerge, help={"prefix": "output path prefix (dirs are created)",
                    "order" : "output[i] = input[order[i]]",
-                   "paths" : "[paths: 0|more paths to NIO files]"}])
+                   "paths" : "[paths: 0|more paths to NIO files]"}],
+    [upstacks, help = {
+      "cmd"   : "command to gen ripped vectors in `wd`",
+      "idVar" : "ID variable; \"\"=>1st col of 1st schema",
+      "outDir": "output dir; Can have 1 *.sc|Schema/@TM@",
+      "fixed" : "fixed ix; Do not update indices",
+      "nT"    : "pre-size matrices to >= this num Times",
+      "nI"    : "pre-size matrices to >= this num Ids",
+      "padT"  : "round time axis size up to nearest multiple",
+      "padI"  : "round id axis size up to nearest multiple",
+      "ix2tm" : "ix2tm name",
+      "ix2id" : "ix2id name",
+      "tiDir" : "tm,id output directory; \"\"=>skip",
+      "itDir" : "id,tm output directory; \"\"=>skip",
+      "doTs"  : "list of @TM@ to always do",
+      "wd"    : "work dir/tmp dir for rip/vec files",
+      "inpPat": "[/path/to/my/@TM@/data]"},
+      short = {"idVar": 'i', "ix2Tm": 'T', "ix2Id": 'I', "nT": 'n', "nI": 'm',
+               "tiDir": 'o', "itDir": 'x', "padT": 'H', "padI": 'W'}])
