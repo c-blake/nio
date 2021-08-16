@@ -7,7 +7,7 @@
 ## <~~> *"idDayPrice.N2sf"*. N/A = NaN|signed.low|unsigned.high.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
-import strutils as su, math, os, times, strformat {.all.},# for proc formatInt
+import strutils as su, math, os, times, strtabs, strformat {.all.},# for proc formatInt
        tables, sets, system/ansi_C, cligen, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
@@ -1033,7 +1033,8 @@ proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   result = if info.id.device == 0: fmWrite else: fmAppend
 
 from cligen/argcvt import unescape
-proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
+proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
+             SVs: Strings): int =
   ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
   ##
   ## An example schema file (with default values but for `outSfx`):
@@ -1052,10 +1053,12 @@ proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
   ##   City  s  x  @cities.Dn       #..or *variable width* repositories,
   ##   Note  i  x  @@               #..with maybe a shared common string repo.
   ## create/appends *qtyPxIdDateCityNote.Nif8C2si*, *dates.N9c*, *cities.Dn*
-  ## and length-prefixed *strings.LS*.
+  ## and length-prefixed *strings.LS*.  $REPS or ${REPS} is interpolated into
+  ## both the argument of --shared and post `x` schema columns.
   type Col = tuple[name: string; inCode: char; f: File;
                    xfm: Transform; kout: IOKind; count: int]
   if schema.len == 0: erru "Cannot infer schema; Provide one\n"; return 1
+  let stab = {"REPS": reps}.newStringTable
   let sep = initSep("white")
   var scols: seq[string]
   var cols: seq[Col]
@@ -1087,7 +1090,7 @@ proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
     elif line.startsWith("--maxLog" ): mxLg  = parseInt(sarg)
     elif line.startsWith("--zip"    ): doZip = true
 #   elif line.startsWith("--dotfs"  ): dotfs = true #XXX auto dot files
-    elif line.startsWith("--shared" ): shrd  = sarg
+    elif line.startsWith("--shared" ): shrd  = sarg % stab
     else:
       sep.split(line, scols, n=4)
       if scols.len > 0:
@@ -1113,7 +1116,7 @@ proc fromSV*(schema="", nameSep="", dir="", onlyOut=false, SVs: Strings): int =
                   xfm0 = initXfm(c.inCode, c.kout, "@" & shrd)
                   c.xfm = xfm0
                 else: c.xfm = xfm0
-              else: c.xfm = initXfm(c.inCode, c.kout, scols[3])
+              else: c.xfm = initXfm(c.inCode, c.kout, scols[3] % stab)
           elif c.inCode == 'x':
             raise newException(ValueError, "'x' but no tranform arguments")
         cols.add c
@@ -1406,6 +1409,7 @@ when isMainModule:
                    "onlyOut": "only parse schema & gen output name",
                    "nameSep": "string to separate schema col names",
                    "dir"    : "maybe create&chdir here; SVs may need '..'",
+                   "reps"   : "set $REPS for interpolation",
                    "schema": "path to the parsing schema file"}],
     [meta  , help={"nios"  : "paths to NIO files",
                    "format": """%[nrwzb]: name,rows,width,rowSize,lastBaseType
