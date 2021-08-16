@@ -7,3 +7,14 @@ utils/c2tsv
 utils/c2tsvs
 utils/tabGen
 utils/transpose
+demo/timeSeries/DONE
+demo/timeSeries/idTm/
+demo/timeSeries/ix2id.N8C
+demo/timeSeries/ix2tm.N15C
+demo/timeSeries/qp-stocks0
+demo/timeSeries/qp-stocks1
+demo/timeSeries/qp-stocks2
+demo/timeSeries/svlm.N8C
+demo/timeSeries/tmId/
+demo/timeSeries/trTm.N8C
+
