@@ -221,15 +221,18 @@ proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
     of fmAppend, fmWrite: result.f = stdout
     else: raise newException(ValueError, "nameless unsupported by " & $mode)
   else:
-    try:
-      result.m = mf.open(path, mode, newFileSize=newFileSize,
-                         allowRemap=allowRemap, mapFlags=mapFlags)
+    try: # XXX could get this down to 1 syscall
+      if not (mode == fmRead and path.fileExists and path.getFileSize == 0):
+        result.m = mf.open(path, mode, newFileSize=newFileSize,
+                           allowRemap=allowRemap, mapFlags=mapFlags)
+      else:
+        result.m.mem = cast[pointer](1)
     except:
       result.f = open(path, mode, max(8192, result.rowFmt.bytes))
   if rest != nil: rest[] = rst
 
 proc close*(nf: var NFile) =
-  if not nf.m.mem.isNil: mf.close nf.m
+  if not nf.m.mem.isNil and nf.m.mem != cast[pointer](1): mf.close nf.m
   if not nf.f.isNil: close nf.f
 
 proc save*[T](x: openArray[T], path: string, fmt=".Nxxx", mode=fmWrite) =
