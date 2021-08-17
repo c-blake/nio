@@ -1,6 +1,6 @@
 #!/bin/sh
-# Clear out any remnants
-rm -rf idTm tmId *.N* DONE /tmp/up/* tmId/* idTm/* qp-stocks[012]
+cd $(dirname $0)
+sh clean.sh                             # Clear out any remnants
 
 # Unpack data - timestamps on files matter for the DONE-state machine
 tar xzpf qp-stocks.tgz
@@ -27,3 +27,7 @@ echo
 nio p -ff%.2f ix2tm.N* tmId/last.N*
 echo
 nio p -ff%.2f ix2id.N* idTm/last.N*
+
+(cd idTm; ln -s ../ix2* .)  # nio.py currently needs this
+(cd tmId; ln -s ../ix2* .)  # but can/should be smarter.
+PYTHONPATH=../../utils DPATH=`pwd` python3 eg.py
