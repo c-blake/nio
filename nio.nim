@@ -1623,7 +1623,8 @@ when isMainModule:
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
           if bns in ["load1", "inferT", "fromSV", "meta", "print", "zip", "rip",
-                     "cut", "tails", "moments", "deftype"]: # allow n-foo links
+                     "cut", "tails", "moments", "deftype", "order", "emerge",
+                     "upstacks"]: # allow n-foo links
             result.add bn[2..^1]
         return result & cmdline
       let underJoin = su.toUpperAscii(cmdNames.join("_"))
