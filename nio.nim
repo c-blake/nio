@@ -1067,9 +1067,9 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
   var cols: seq[Col]
   var pp, outBase, outType: string
   var shrd = "strings"
-  var dlm  = '\0' 
-  var nHdr = 1    
-  var mxLg = 100  
+  var dlm  = '\0'
+  var nHdr = 1
+  var mxLg = 100
   var doZip: bool
   var xfm0: Transform = nil
   var slno = 0
@@ -1115,7 +1115,7 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
           if scols.len > 3:
             if not onlyOut:
               if scols[3].startsWith("@@"):
-                if xfm0 == nil: 
+                if xfm0 == nil:
                   xfm0 = initXfm(c.inCode, c.kout, "@" & shrd)
                   c.xfm = xfm0
                 else: c.xfm = xfm0
@@ -1310,7 +1310,7 @@ proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
       r.add cmp
 
 import algorithm
-proc order*(at="", order: string, paths: Strings): int =
+proc order*(at="", output: string, paths: Strings): int =
   ## write indices to make a multi-level order among `paths`.
   ##
   ## :commaSep{[@[..]]INT} after each input means cmp by that *1-Origin*-column
@@ -1326,7 +1326,7 @@ proc order*(at="", order: string, paths: Strings): int =
   var nfs = newSeq[NFile](m)
   var cmps = newSeqOfCap[Comparator](m)
   var ofmt: string
-  var n = -1 
+  var n = -1
   for j, path in paths:                                 # open the inputs
     nfs[j] = nOpen(path, rest=ofmt.addr)
     if n == -1: n = nfs[j].len
@@ -1337,11 +1337,11 @@ proc order*(at="", order: string, paths: Strings): int =
   var index = newSeqOfCap[int](n)                       # make identity map
   for i in 0..<n: index.add i                           # could be FileArray?
   index.sort (proc(i, j: int): int = cmps.compare i, j) # do the sort
-  index.save order, ".Nl"                               # save the answer
+  index.save output, ".Nl"                              # save the answer
 
 proc emerge*(prefix="_", order: string, paths: Strings): int =
   ## materialize data in (random access) `paths` according to `order`.
-  ## 
+  ##
   ## Output column/path structure is identical to input.  Since this routine
   ## proceeds input-by-input for efficiency, early exit/cancellation yields
   ## partly populated outputs.
@@ -1689,7 +1689,7 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "names" : "names for each column",
                    "lang"  : "programming language"}],
     [order , help={"at"    : "shared default repo for @ compares",
-                   "order" : "output order file",
+                   "output": "path + basename of output order file",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
     [emerge, help={"prefix": "output path prefix (dirs are created)",
                    "order" : "output[i] = input[order[i]]",
