@@ -910,7 +910,7 @@ proc tailsInner(nf: var NFile, head=0, tail=0): int =
           if n < tBuf.len: break
 
 proc tails*(head=0, tail=0, compl=false, repeat=false, paths: Strings): int =
-  ## Generalized tail(1); Does both head & tail of streams w/o tee FIFO.
+  ## generalized tail(1); Does both head & tail of streams w/o tee FIFO.
   ##
   ## -h10 -t10 will pass *both* head & tail, -h10 -t10 --compl will pass the
   ## "main body" of a distribution (if rows are sorted).  -ch10 =~ tail -n+11.
@@ -1573,7 +1573,7 @@ proc getTimePaths*(pfxSfx: seq[string]): (seq[string], seq[string]) =
 proc upstacks*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
     padT=1, padI=1, ix2tm="ix2tm", ix2id="ix2id", tiDir="tmId", itDir = "idTm",
     doTs="", ids="", wd="/tmp/up", stamp="DONE", inpPat: seq[string]) =
-  ## Make/update time series matrices from per-tm cross-sectional files.
+  ## make/update time series matrices from per-tm cross-sectional files.
   if inpPat.len != 1 or inpPat[0].split("@TM@").len != 2:
     raise newException(HelpOnly, "non-option not an @TM@ pattern")
   let (times, paths) = getTimePaths(inpPat[0].split "@TM@")
