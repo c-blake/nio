@@ -1246,6 +1246,55 @@ proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
       for mk in [mkN, mkMin, mkMax, mkSum, mkAvg, mkSdev, mkSkew, mkKurt]:
         if mk in stats: outu " ", $mk, ": ", fmtStat(sts[j], mk, fmt)
       outu "\n"
+    inp.close
+
+proc up(cell: var seq[(int, seq[RunningStat])],
+        rec: seq[(int, seq[float])], g: int64) {.inline.} =
+  if cell.len == 0:                     # establish indexing layout.  Only..
+    cell.setLen rec.len                 #..run for first row of a given group.
+    for i in 0 ..< rec.len:
+      cell[i][0] = i
+      cell[i][1].setLen rec[i][1].len
+      for j in 0 ..< rec[i][1].len:
+        cell[i][1][j].clear
+  for i in 0 ..< rec.len:               # update each running stat for this rec
+    for j in 0 ..< rec[i][1].len:
+      cell[i][1][j].push rec[i][1][j]
+
+proc Gmoment*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
+              na=0.0, paths: Strings): int =
+  ## grouped moment; Just like `moments` but `group`-keyed reduce.
+  var grpFil: NFile
+  try   : grpFil = nOpen(group)
+  except: raise newException(ValueError, &"cannot open file {group}")
+  var inps: seq[NFile]                  # Open all the inputs
+  for path in paths: inps.add nOpen(path)
+  var g: int64                          # Integer group label
+  var row: seq[float]                   # Per inp file associated data
+  var rec: seq[(int, seq[float])]       # All associated data
+  let empty: seq[(int, seq[RunningStat])] = @[ ]
+  var gstats: Table[int64, seq[(int, seq[RunningStat])]]
+  block fileLoop:                       # Breaks at whichever comes first:
+    while true:                         #.. end of group or shortest file.
+      var num: float
+      if not grpFil.read(g): break fileLoop
+      rec.setLen 0
+      for i in 0 ..< inps.len:
+        row.setLen 0
+        for j in 0 ..< inps[i].rowFmt.cols.len:
+          if not inps[i].read(num): break fileLoop
+          row.add if num.isnan: na else: num
+        rec.add (i, row)
+      gstats.mgetOrPut(g, empty).up rec, g
+  for i in 0 ..< inps.len: inps[i].close
+  for g, pathIxStats in gstats:
+    outu &"{g}:"
+    for (pathIx, sts) in pathIxStats:
+      outu &" {paths[pathIx]}:"
+      for st in sts:
+        for mk in [mkN, mkMin, mkMax, mkSum, mkAvg, mkSdev, mkSkew, mkKurt]:
+          if mk in stats: outu " ", $mk, ": ", fmtStat(st, mk, fmt)
+    outu "\n"
 
 type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
   Comparator = object #*** (RADIX SORTS ARE BETTER FOR NUMBERS)
@@ -1684,6 +1733,10 @@ if AT=="" %s renders as a number via `fmTy`""",
             short={"help": '?'}],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
+                   "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
+    [Gmoment,help={"paths" : "[paths: 1|more paths to NIO files]",
+                   "fmt"   : "Nim floating point output format",
+                   "group" : "nio file for group keys",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
     [deftype,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
