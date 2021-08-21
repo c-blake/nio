@@ -676,7 +676,7 @@ proc formatFloat*(result: var string, value: float64, fmt=".04g") =
   formatFloat(result, value, spec.ffmode, spec)
 
 proc formatFloat*(value: float64, fmt: string): string = # E.g. ".4g"
- formatFloat(result, value, fmt)
+  formatFloat(result, value, fmt)
 
 import unicode
 proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
