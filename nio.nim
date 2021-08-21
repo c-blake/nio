@@ -1261,9 +1261,9 @@ proc up(cell: var seq[(int, seq[RunningStat])],
     for j in 0 ..< rec[i][1].len:
       cell[i][1][j].push rec[i][1][j]
 
-proc Gmoment*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
-              na=0.0, paths: Strings): int =
-  ## grouped moment; Just like `moments` but `group`-keyed reduce.
+proc kred*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
+           na=0.0, paths: Strings): int =
+  ## keyed-reduce (*by group*); Right now like `moments` but per-`group`-key.
   var grpFil: NFile
   try   : grpFil = nOpen(group)
   except: raise newException(ValueError, &"cannot open file {group}")
@@ -1734,7 +1734,7 @@ if AT=="" %s renders as a number via `fmTy`""",
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
-    [Gmoment,help={"paths" : "[paths: 1|more paths to NIO files]",
+    [kred   ,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
                    "group" : "nio file for group keys",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
