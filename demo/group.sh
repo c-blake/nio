@@ -11,3 +11,6 @@ datGen $N 1 3   # generate some group labels
 nio rip -i abc.Nfff x.Nf y.Nf z.Nf
 nio zip x.Nf y.Nf > xy.Nff
 rm abc.Nfff x.Nf y.Nf
+
+# All set up.  Now fire off some group stats; just 'a'/mean here.
+nio kred -ga.Nl -s,= -sa z.Nf xy.Nff
