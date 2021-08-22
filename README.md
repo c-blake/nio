@@ -117,7 +117,8 @@ Performance savvy readers may note, of the final line, that 40 ms for 4 million
 numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
 16 MB/40ms = 400 MB/s is not great for what could be vectorized min/max in a
 perfectly predictable pipeline.  This is because I was lazy doing `nio moments`
-and just used stdlib `stats.RunningStat` which is not well speed optimized.
+and just used stdlib `stats.RunningStat` which is accuracy semi-optimized, not
+speed optimized.
 
 `demo/datGen` shows how easy it is to just ***stay in binary the whole time***:
 ```sh
