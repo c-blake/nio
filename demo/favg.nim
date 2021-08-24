@@ -1,4 +1,6 @@
+# gcc requires -ffast-math to use a "matrix" accumulation vaddps in `sum`.
 {.passC: "-O3 -ffast-math -march=native -mtune=native".}
+
 import strutils, math, cligen, nio
 
 proc favg(fmt=".5g", n=100, paths: seq[string]): int =
