@@ -360,6 +360,11 @@ proc initFileArray*[T](path: string, mode=fmRead, newLen = -1, allowRemap=false,
   ## encouraged if you finish with data prior to program exit.
   result.init path, mode, newLen, allowRemap, mapFlags, rest
 
+proc load*[T](path: string, mode=fmRead, newLen = -1, allowRemap=false,
+              mapFlags=cint(-1), rest: ptr string=nil): FileArray[T] =
+  ## Short alias for `initFileArray`.
+  result.init path, mode, newLen, allowRemap, mapFlags, rest
+
 proc close*[T](fa: var FileArray[T]) = close fa.nf
 
 template toOA*[T](fa: FileArray[T]): untyped =
