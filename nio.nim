@@ -286,7 +286,20 @@ proc readCvt*(nf: var NFile, nums: var openArray[IONumber], naCvt=false): bool =
   ## Read next `nums.len` items, converting to buf type & maybe converting NAs.
   result = true
   for i in 0 ..< nums.len:
-    if not nf.read(nums[i].addr, naCvt): return false
+    if not nf.read(nums[i], naCvt): return false
+
+proc add*[T: IONumber](buffer: var seq[T], path: string, naCvt=false) =
+  ## Append whole file `path` to type-homogeneous `seq[T]` maybe-converting NAs.
+  var nf = nOpen(path)
+  var num: array[1, T]
+  while true:
+    if not nf.readCvt(num, naCvt): break
+    buffer.add num[0]
+  nf.close
+
+proc readCvt*[T: IONumber](path: string, naCvt=false): seq[T] =
+  ## Read whole file `path` into type-homogeneous `seq[T]` maybe-converting NAs.
+  result.add path, naCvt
 
 proc nurite*(f: File, kout: IOKind, buf: pointer) =
   ## Numeric unlocked write to stdio `f`.
