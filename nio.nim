@@ -1233,7 +1233,8 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
         else: o.write &"{sIType}\tx @{hdr}{sExt}"
       o.write '\n'
 
-when (compiles do: import adix/wstats):
+const haveWStats = compiles: import adix/wstats
+when haveWStats: 
   import adix/wstats  #*** SLOW, DEMO CODE THAT ISN'T TOTALLY USELESS: moments
   type RunningStat = MovingStat[float32]
 else: import stats    # fall back to slow RunningStat
@@ -1256,7 +1257,7 @@ proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
   ## print selected moments over all columns of all `paths`.
   for path in paths:                    # NOTE: This is intended as an easy,
     var inp = nOpen(path)               #..but not useless example calculation.
-    when declared(wstats.basicStats): # optimize a couple VERY special cases
+    when haveWStats: # Optimize 2 VERY special cases; Really more as demo code.
       if inp.rowFmt.cols.len == 1 and inp.rowFmt.cols[0].cnts == @[1] and
          inp.rowFmt.cols[0].iok == fIk and stats == {mkMin,mkMax,mkAvg,mkSdev}:
         let p = cast[ptr UncheckedArray[float32]](inp.m.mem)
