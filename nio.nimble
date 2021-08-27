@@ -1,5 +1,5 @@
 # Package
-version     = "0.1.9"
+version     = "0.2.1"
 author      = "Charles Blake"
 description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
