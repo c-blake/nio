@@ -1653,7 +1653,7 @@ proc getTimePaths*(pfxSfx: seq[string]): (seq[string], seq[string]) =
     result[0].add time
     result[1].add path
 
-proc upstacks*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
+proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
     padT=1, padI=1, ix2tm="ix2tm", ix2id="ix2id", tiDir="tmId", itDir = "idTm",
     doTs="", ids="", wd="/tmp/up", stamp="DONE", inpPat: seq[string]) =
   ## make/update time series matrices from per-tm cross-sectional files.
@@ -1707,7 +1707,7 @@ when isMainModule:
           let bns = bn[2..^1]           # baseName suffix
           if bns in ["load1", "inferT", "fromSV", "meta", "print", "zip", "rip",
                      "cut", "tails", "moments", "deftype", "order", "emerge",
-                     "upstacks"]: # allow n-foo links
+                     "upstack"]: # allow n-foo links
             result.add bn[2..^1]
         return result & cmdline
       let underJoin = su.toUpperAscii(cmdNames.join("_"))
@@ -1781,7 +1781,7 @@ if AT=="" %s renders as a number via `fmTy`""",
     [emerge, help={"prefix": "output path prefix (dirs are created)",
                    "order" : "output[i] = input[order[i]]",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
-    [upstacks, help = {
+    [upstack, help = {
       "cmd"   : "command to gen ripped vectors in `wd`",
       "idVar" : "ID variable; \"\"=>1st col of 1st schema",
       "outDir": "output dir; Can have 1 *.sc|Schema/@TM@",
