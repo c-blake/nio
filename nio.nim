@@ -938,8 +938,8 @@ proc tails*(head=0, tail=0, compl=false, repeat=false, paths: Strings): int =
     else    : (if nf.tailsOuter(head, tail, repeat) != 0: return 1)
     nf.close
 
-#*** UTILITY CODE TO GET THINGS IN/OUT OF BINARY FILES: deftype, load1, fromSV
-proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
+#*** UTILITY CODE TO GET THINGS IN/OUT OF BINARY FILES: defType, load1, fromSV
+proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
   ## print prog `lang` type defs for NIO rows from extensions in `paths`.
   ##
   ## E.g.: `fooBar.Nif` -> `struct fooBar { unsigned int foo; float bar; };`
@@ -953,15 +953,17 @@ proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
     for path in paths:
       let (_, baseName, _) = path.splitPathName
       let (_, fmt, _) = metaData(path)
-      outu &"type {baseName}" & " {.packed.} = object\n"
+      result.add &"type {baseName}" & " {.packed.} = object\n"
       for c in fmt.cols:
         let nm = if i < names.len: names[i] else: "field" & $i
-        outu &"    {nm}: "
-        if   c.cnts.len > 2 : outu &"array[.., arr[{c.cnts[1]}, arr[{c.cnts[0]}, {ntype[c.iok]}]]"
-        elif c.cnts.len == 2: outu &"array[{c.cnts[1]}, array[{c.cnts[0]}, {ntype[c.iok]}]]"
-        elif c.cnts[0] > 1  : outu &"array[{c.cnts[0]}, {ntype[c.iok]}]"
-        else                : outu &"{ntype[c.iok]}"
-        outu "\n"
+        result.add &"    {nm}: "
+        if   c.cnts.len > 2 :
+          result.add &"array[.., arr[{c.cnts[1]}, arr[{c.cnts[0]}, {ntype[c.iok]}]]"
+        elif c.cnts.len == 2:
+          result.add &"array[{c.cnts[1]}, array[{c.cnts[0]}, {ntype[c.iok]}]]"
+        elif c.cnts[0] > 1  : result.add &"array[{c.cnts[0]}, {ntype[c.iok]}]"
+        else                : result.add &"{ntype[c.iok]}"
+        result.add "\n"
         i.inc
   of "c":
     let ctype: array[IOKind, string] = ["signed char", "unsigned char",
@@ -971,17 +973,17 @@ proc deftype*(names: Strings = @[], lang="nim", paths: Strings): int =
     for path in paths:
       let (_, baseName, _) = path.splitPathName
       let (_, fmt, _) = metaData(path)
-      outu &"struct {baseName} " & "{\n"
+      result.add &"struct {baseName} " & "{\n"
       for c in fmt.cols:
         let nm = if i < names.len: names[i] else: "field" & $i
-        outu &"    {ctype[c.iok]} {nm}"
-        if   c.cnts.len > 2 : outu &"[...][{c.cnts[1]}][{c.cnts[0]}]"
-        elif c.cnts.len == 2: outu &"[{c.cnts[1]}][{c.cnts[0]}]"
-        elif c.cnts[0] > 1  : outu &"[{c.cnts[0]}]"
-        outu ";\n"
+        result.add &"    {ctype[c.iok]} {nm}"
+        if   c.cnts.len > 2 : result.add &"[...][{c.cnts[1]}][{c.cnts[0]}]"
+        elif c.cnts.len == 2: result.add &"[{c.cnts[1]}][{c.cnts[0]}]"
+        elif c.cnts[0] > 1  : result.add &"[{c.cnts[0]}]"
+        result.add ";\n"
         i.inc
-      outu "} __attribute__((__packed__));\n"
-  else: erru &"unknown programming language \"{lang}\"\n"; return 1
+      result.add "} __attribute__((__packed__));\n"
+  else: erru &"unknown programming language \"{lang}\"\n"; return ""
 
 import parseutils
 type Transform = proc(ixOut: pointer, inp: string, lno: int)
@@ -1706,7 +1708,7 @@ when isMainModule:
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
           if bns in ["load1", "inferT", "fromSV", "meta", "print", "zip", "rip",
-                     "cut", "tails", "moments", "deftype", "order", "emerge",
+                     "cut", "tails", "moments", "defType", "order", "emerge",
                      "upstack"]: # allow n-foo links
             result.add bn[2..^1]
         return result & cmdline
@@ -1772,9 +1774,9 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "fmt"   : "Nim floating point output format",
                    "group" : "nio file for group keys",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
-    [deftype,help={"paths" : "[paths: 1|more paths to NIO files]",
+    [defType,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
-                   "lang"  : "programming language"}],
+                   "lang"  : "programming language"}, echoResult=true],
     [order , help={"at"    : "shared default repo for @ compares",
                    "output": "path + basename of output order file",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
