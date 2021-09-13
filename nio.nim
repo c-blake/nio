@@ -1698,6 +1698,65 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
   else: echo &"Up to date; No inputs seem newer than {stamp}."
   su.close
 
+import std/hashes
+proc qry*(prelude="", begin="", test="true", stmtInputs: seq[string], epilog="",
+          where="", nim="",run=true,args="", verbose=0, outp="/tmp/qXXX"): int =
+  ## Gen & Run a *prelude*,*begin*,*test*,*stmt*,*epilog* IOTensor "query".
+  ##
+  ## Run against similarly indexed *inputs* NIO files (> 1st of *stmtInputs*).
+  ## Likely works best for "column files" as per eg.s.  Within *test* & *stmt*:
+  ##   *qryI*: curr row index; (prefixed to help avoid `inputs` name clashes.)
+  ##   Each row has `let INP=fINPs[qryI]` bindings (from *gen-time* basenames).
+  ## A generated program is left at *outp*.nim, easily copied for "utilitizing".
+  ## Knowing AWK/Nim/`rp`, you can learn this PRONTO.  This is much like a full
+  ## table scan in SQL but fully type-check compiled with access to all of Nim.
+  ## Examples (need data):
+  ##   nio q 'echo foo' *.N*                          # Extract column as ASCII
+  ##   nio q -t'nr mod 100==0' 'echo a,b,c' *.N*      # Print each 100th a,b,c
+  ##   nio q -b'var t=0' t+=x -w'x>0' -e'echo t' *.N* # Total >0 `x` ints
+  ##   nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' *.N*
+  ## (You can re-compile generated programs with -d:danger to run fast.)
+  proc opens(inputs: seq[string]): string =
+    for j, input in inputs:
+      let tail = input.splitPath.tail; let base = input.splitFile.name
+      let rowT = $ioCodeK(tail[^1]) #NOTE: only works for IOTensor style.
+      result.add &"  var f{base}s = initFileArray[{rowT}](\"{tail}\")\n"
+  proc lets(inputs: seq[string]): string =
+    for j, input in inputs:
+      let base = input.splitFile.name
+      result.add &"    let {base} {{.used.}} = f{base}s[qryI]\n"
+  let stmt    = if stmtInputs.len > 0: stmtInputs[0]     else: ""
+  let inputs  = if stmtInputs.len > 1: stmtInputs[1..^1] else: @[]
+  if inputs.len < 1:
+    stderr.write "`qry` needs >= 1 real file input; --help says more"; quit 1
+  let base0 = inputs[0].splitFile.name
+  var program = &"""import nio
+template qryLen(x): untyped = len(x)
+{prelude} # [prelude]
+proc qryMain() = # [autoOpens]
+{inputs.opens}
+{indent(begin, 2)} # [begin]
+  for qryI in 0 ..< f{base0}s.qryLen:
+{inputs.lets} # [inputs lets]
+    if {test}: # [test] auto ()s?
+"""
+  if stmt.len == 0: program.add "      discard\n"
+  else            : program.add "      " & stmt & " # {stmt}\n"
+  program.add indent(epilog, 2)
+  program.add " # {epilogue}\nqryMain()\n"
+  let bke  = if run: "r" else: "c"
+  let args = if args.len > 0: args else: "-d:danger --gc:arc"
+  let verb = "--verbosity:" & $verbose
+  let digs = count(outp, 'X')
+  let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
+  let outp = if digs > 0: outp[0 ..< ^digs] & hsh else: outp
+  let nim  = if nim.len > 0: nim else: "nim $1 $2 $3 -o:$4 $5" % [
+                                       bke, args, verb, outp, outp]
+  let f = mkdirOpen(outp & ".nim", fmWrite)
+  f.write program
+  f.close
+  execShellCmd(nim)
+
 when isMainModule:
   import cligen/cfUt
 
@@ -1777,6 +1836,17 @@ if AT=="" %s renders as a number via `fmTy`""",
     [defType,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "names" : "names for each column",
                    "lang"  : "programming language"}, echoResult=true],
+    [qry , help={"stmtInputs": "{stmt} {input paths}",
+                  "prelude": "Nim code for prelude/imports section",
+                  "begin"  : "Nim code for begin/pre-loop section",
+                  "test"   : "Nim code for row inclusion",
+                  "epilog" : "Nim code for epilog/end loop section",
+                  "where"  : "alias for `test` (SQL addict therapy)",
+                  "nim"    : "\"\" => nim {if run: r else: c} {args}",
+                  "run"    : "Run at once using nim r .. < input",
+                  "args"   : "\"\" => -d:danger --gc:arc",
+                  "verbose": "Nim compile verbosity level",
+                  "outp"   : "output executable; .nim NOT REMOVED"}],
     [order , help={"at"    : "shared default repo for @ compares",
                    "output": "path + basename of output order file",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
