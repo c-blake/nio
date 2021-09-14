@@ -7,8 +7,8 @@
 ## <~~> *"idDayPrice.N2sf"*. N/A = NaN|signed.low|unsigned.high.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
-import strutils as su, math, os, times, strtabs, strformat {.all.},# for proc formatInt
-       tables, sets, system/ansi_C, cligen, cligen/[osUt, strUt, fileUt, mslice]
+import strutils as su, math, os, times, strtabs, strformat {.all.},#`formatInt`
+       tables, sets, system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
@@ -1660,7 +1660,7 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
     doTs="", ids="", wd="/tmp/up", stamp="DONE", inpPat: seq[string]) =
   ## make/update time series matrices from per-tm cross-sectional files.
   if inpPat.len != 1 or inpPat[0].split("@TM@").len != 2:
-    raise newException(HelpOnly, "non-option not an @TM@ pattern")
+    raise newException(ValueError, "non-option not @TM@ pattern; See --help.")
   let (times, paths) = getTimePaths(inpPat[0].split "@TM@")
   if times.len == 0: echo &"No inputs match {inpPat[0]}"; return
   var su = suOpen(idVar, times, su.split(ids), nT, nI, padT, padI, ix2tm, ix2id,
@@ -1758,7 +1758,7 @@ proc qryMain() = # [autoOpens]
   execShellCmd(nim)
 
 when isMainModule:
-  import cligen/cfUt
+  import cligen, cligen/cfUt
 
   proc mergeParams(cmdNames: Strings, cmdLine=commandLineParams()): Strings =
     if cmdNames.len > 0:
