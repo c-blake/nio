@@ -1236,7 +1236,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
       o.write '\n'
 
 const haveAdix = compiles: import adix/stat
-when haveAdix:                        	#*** NOT TOTALLY USELESS DEMO: moments
+when haveAdix:                          #*** NOT TOTALLY USELESS DEMO: moments
   import adix/stat
   type RunningStat = MovingStat[float32]
 else: import stats    # fall back to slow RunningStat
