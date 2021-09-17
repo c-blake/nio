@@ -1055,7 +1055,7 @@ proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   except: discard
   result = if info.id.device == 0: fmWrite else: fmAppend
 
-from cligen/argcvt import unescape
+from cligen/argcvt import unescape  # pulls in much, but impacts comptime little
 proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
              SVs: Strings): int =
   ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
