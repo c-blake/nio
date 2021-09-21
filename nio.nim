@@ -54,6 +54,11 @@ const ioCode*: array[IOKind, char] = [ 'c','C', 's','S', 'i','I', 'l','L',
 const ioSize*: array[IOKind, int] = [1,1, 2,2, 4,4, 8,8, 4,8,16]  ## type sizes
 const ioFloats* = {fIk, dIk, gIk}                                 ## float kinds
 
+let nim2nio* = {"int8"   : 'c', "uint8"  : 'C', "int16": 's', "uint16": 'S',
+                "int32"  : 'i', "uint32" : 'I', "int64": 'l', "uint64": 'L',
+                "float32": 'f', "float64": 'd', "float80": 'g', "int": 'l',
+                "uint": 'L', "float": 'd', "char": 'C', "byte": 'C'}.toTable
+
 func ioCodeK*(c: char): IOKind {.inline.} =
   ## return IOKind correspnding to character `c`
   let ix = ioCode.find(c)
@@ -235,12 +240,48 @@ proc close*(nf: var NFile) =
   if not nf.m.mem.isNil and nf.m.mem != cast[pointer](1): mf.close nf.m
   if not nf.f.isNil: close nf.f
 
-proc save*[T](x: openArray[T], path: string, fmt=".Nxxx", mode=fmWrite) =
-  ## Blast some whole openArray of objects to a file.  You must currently give
-  ## a correct numeric format suffix.
-  if fmt == ".Nxxx":
-    raise newException(ValueError, "format suffix cannot yet be inferred")
-  var f = open(path & fmt, mode)
+template arrayBase[I, T](a: typedesc[array[I, T]]): untyped = T
+proc makeSuffix[T](result: var string, x: T, inArray=false) =
+  when T is tuple or T is object:
+    if inArray:
+      raise newException(ValueError, "array[N, obj|tup] is unsupported")
+    for e in x.fields:          # could maybe do 2-passes to count and for
+      result.makeSuffix e       #..the special case of 1 field just unbox.
+  elif T is array:
+    if inArray: result.add ','
+    result.add $(T.high - T.low + 1)
+    var x: arrayBase(T)         # Use devious `arrayBase` to handle tensors
+    result.makeSuffix x, inArray=true
+  else:
+    try   : result.add nim2nio[$type(T)]
+    except: raise newException(ValueError, "missing type key: "&repr($type(T)))
+
+proc makeName[T](result: var string, key: string, x: T, sep=",") =
+  when T is tuple or T is object:
+    for k, e in x.fieldPairs:
+      result.makeName k, e, sep
+  else:
+    if result.len > 0: result.add sep
+    result.add key
+
+proc typedPath*[T: tuple|object|array|IONumber](path="", sep=","): string =
+  ## Automatic suffix|basename simply by not providing in the passed `path`;
+  ## E.g. `"./.Nl"` (gen name), `"./foo"` (gen sfx), or `"./"` (gen both).
+  var (dir, name, ext) = splitPathName(path)
+  if ".N" notin ext:
+    ext.add ".N"
+    var x: T
+    ext.makeSuffix x
+  if name.len == 0:
+    var x: T
+    name.makeName "field", x, sep
+  if dir.len > 0: dir/(name & ext)
+  else: name & ext #XXX Would be nice to detect&report missing {.packed.} pragma
+
+proc save*[T: tuple|object|array|IONumber](x: openArray[T], path="",
+           mode=fmWrite, sep: static[string]=",") =
+  ## Blast `x` to a file with optionally generated path a la `typedPath`.
+  var f = open(typedPath[T](path, sep), mode)
   let n = T.sizeof * x.len
   if f.writeBuffer(x[0].unsafeAddr, n) < n:
     raise newException(ValueError, "nio.save: short write")
@@ -1421,7 +1462,7 @@ proc order*(at="", output: string, paths: Strings): int =
   var index = newSeqOfCap[int](n)                       # make identity map
   for i in 0..<n: index.add i                           # could be FileArray?
   index.sort (proc(i, j: int): int = cmps.compare i, j) # do the sort
-  index.save output, ".Nl"                              # save the answer
+  index.save output                                     # save the answer
 
 proc emerge*(prefix="_", order: string, paths: Strings): int =
   ## materialize data in (random access) `paths` according to `order`.
