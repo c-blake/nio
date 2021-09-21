@@ -460,6 +460,28 @@ func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
       raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
 
+func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
+  ## Returns i-th row of `r` copied into `result`.
+  when not defined(danger):
+    if fa.nf.m.mem.isNil:
+      raise newException(ValueError, "uninitialized FileArray[T]")
+  let m = T.sizeof
+  when not defined(danger):
+    if i * m >=% fa.nf.m.size:
+      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
+  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
+
+func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
+  ## Returns i-th row of `r` copied into `result`.
+  when not defined(danger):
+    if fa.nf.m.mem.isNil:
+      raise newException(ValueError, "uninitialized FileArray[T]")
+  let m = T.sizeof
+  when not defined(danger):
+    if i * m >=% fa.nf.m.size:
+      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
+  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[] = val
+
 proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
             offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
   let (path, fmt, _) = metaData(path) #XXX match any filled in IOTensor fields
