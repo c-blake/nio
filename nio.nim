@@ -1300,7 +1300,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
 
 when defined(useAdix):                  #*** NOT TOTALLY USELESS DEMO: moments
   import adix/stat
-  type RunningStat = MovingStat[float32]
+  type RunningStat = MovingStat[float32,uint32]
 else: import stats    # fall back to slow RunningStat
 
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
