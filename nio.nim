@@ -482,6 +482,13 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
       raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[] = val
 
+proc `$`*[M](x: array[M, char]): string =
+  ## Sometimes `x=initFileArray[array[z,char]]("x.NzC"); echo x[i]` is nice.
+  let m = M.high + 1
+  result = (newStringOfCap m)
+  copyMem result[0].addr, x[0].unsafeAddr, m
+  result.setLen result[0].addr.cstring.cstrlen
+
 proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
             offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
   let (path, fmt, _) = metaData(path) #XXX match any filled in IOTensor fields
