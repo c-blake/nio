@@ -1279,9 +1279,10 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
       lno.inc
     discard inpFile.pclose(pre)
     let o = open(path & ext, fmWrite)
+    let pp = if pre.len > 0: &"\n--preproc={pre}     # preprocess" else: ""
     o.write &"""
 # This is a parsing schema for nio fromSV.
---nHeader={nHdr}                      # number of rows which are headers
+--nHeader={nHdr}                      # number of rows which are headers{pp}
 --delim={delim}                      # NUL is c2tsv output delimiter
 #name	NC	SC TRANSFORM:args # NC=NIOcode;SC=(scan|src)Code like scan1
 """
