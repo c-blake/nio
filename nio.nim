@@ -1242,7 +1242,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
   ## Types are assigned in (depending on consistent parsability as such) the
   ## order: [time, int, float, string] where (time means each format, in order).
   ##
-  ## E.g.: `nio i -p'c2tsv<$1' foo.csv` will generate `foo.sc`.
+  ## E.g.: `nio i -p'c2tsv<$1' foo.csv; nio f -sfoo.sc foo.csv` infers&parses.
   let sIType = sType[0]; let sExt = sType[1..^1]  #XXX error check
   var hdrs: seq[string]
   var i: BiggestInt
