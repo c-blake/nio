@@ -1863,7 +1863,7 @@ when isMainModule:
                    "timeFmts": "`times` module formats to try in order",
                    "iType"   : "integer nio code",
                    "fType"   : "float nio code",
-                   "sType"   : "nio sting code (iCode.repoExt)",
+                   "sType"   : "nio string code (iCode.repoExt)",
                    "guess"   : "guess type (output,input) for all empty"}],
     [fromSV, help={"SVs"   : "[?SVs: input paths; empty|\"-\"=stdin]",
                    "onlyOut": "only parse schema & gen output name",
