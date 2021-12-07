@@ -1854,7 +1854,7 @@ when isMainModule:
                    "lang"  : "programming language"}, echoResult=true],
     [inferT, help={"SVs"     : "[?SVs: input paths; empty|\"-\"=stdin]",
                    "ext"     : "parsing schema written to inp.`suffix`",
-                   "pre"     : "use `popen(pre%inp)` intead of `open(inp)`",
+                   "pre"     : "use `popen(pre%inp)` instead of `open(inp)`",
                    "delim"   : "strict TSV field delimiter",
                    "nHdr"    : "number of header lines (1st must be name)",
                    "timeFmts": "`times` module formats to try in order",
