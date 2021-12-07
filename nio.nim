@@ -1241,6 +1241,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
   ##
   ## Types are assigned in (depending on consistent parsability as such) the
   ## order: [time, int, float, string] where (time means each format, in order).
+  ## E.g.: `nio i -p'c2tsv<$1' foo.csv`
   let sIType = sType[0]; let sExt = sType[1..^1]  #XXX error check
   var hdrs: seq[string]
   var i: BiggestInt
@@ -1281,7 +1282,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
 # This is a parsing schema for nio fromSV.
 --nHeader={nHdr}                      # number of rows which are headers
 --delim={delim}                      # NUL is c2tsv output delimiter
-#name NC SC TRANSFORM:args       # NC=NIOcode;SC=(scan|src)Code like scan1
+#name\tNC\tSC TRANSFORM:args # NC=NIOcode;SC=(scan|src)Code like scan1
 """
     for j, hdr in hdrs:
       o.write hdr, "\t"
