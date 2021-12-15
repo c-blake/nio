@@ -61,7 +61,7 @@ $ nio q -b'gbSetup("id1")' 'gB(\`+=\`)' -ereport id1.Ni v1.Nf
 
 with maybe a `~/.config/nio` file with -p'import groupBy', `import pandasALike`
 or something like that.  The idea being some `gB` macro/template might work with
-any incremental operator, like RunningStat.push or whatnot.
+any incremental operator, like `adix/stats.MovingStat.push` or whatnot.
 
 OR you might Step 6': take the /tmp/qC3D.nim program as a template and hack away
 at it.
