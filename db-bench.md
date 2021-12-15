@@ -1,6 +1,7 @@
 Some feedback from people has seemed to be not really understanding how to
-replicate certain styles of analysis with these tools.  Some timing results for
-other approaches are here: https://h2oai.github.io/db-benchmark/
+replicate certain styles of analysis with these tools which begs a question
+for a worked out concrete problem.  That was done by others here:
+https://h2oai.github.io/db-benchmark/ and we just replicate that in nio.
 
 Step 1. Make a CSV data set.
 
