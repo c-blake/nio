@@ -56,14 +56,16 @@ If this comes up a lot, then you could Step 6. Abstract at the library level.
 E.g., you could pretty easily reduce the above query to something like
 
 ```
-$ nio q -b'gbSetup("id1")' 'gB(\`+=\`)' -ereport id1.Ni v1.Nf
+$ nio q -b'gbSetup("id1", `+=`)' 'gBadd()' -ereport id1.Ni v1.Nf
 ```
 
-with maybe a `~/.config/nio` file with -p'import groupBy', `import pandasALike`
-or something like that.  The idea being some `gB` macro/template might work with
-any incremental operator, like `adix/stats.MovingStat.push` or whatnot.
+with maybe a `~/.config/nio` file with `-p'import groupBy'` or maybe
+`import pandasALike` or something like that.  The idea being some `gB`
+macro/template might work with any incremental operator, like `+=` or
+`adix/stats.MovingStat.push` or whatnot and `gbSetup` just sets up some
+flag that `report` can consult to produce the right thing.
 
-OR you might Step 6': take the /tmp/qC3D.nim program as a template and hack away
-at it.
+OR you might Step 6': take the /tmp/qC3D.nim program as a template and hack
+away at it.
 
 You could potentially take Step 6'' and do a bunch of in Nim macro abstraction.
