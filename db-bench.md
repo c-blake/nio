@@ -1,7 +1,9 @@
 Some feedback from people has seemed to be not really understanding how to
 replicate certain styles of analysis with these tools which begs a question
 for a worked out concrete problem.  That was done by others here:
-https://h2oai.github.io/db-benchmark/ and we just replicate that in nio.
+https://h2oai.github.io/db-benchmark/ and we just replicate that in nio.  (You
+have to click on the 5GB button to see comparable numbers, but on a different
+machine.)
 
 Step 1. Make a CSV data set.
 
@@ -41,17 +43,15 @@ $ nio q -b'var gs: seq[float]; let ids=initFileArray[array[16,char]]("id1.N16C")
 If you care about run times on "big" data then it is faster to do an optimized
 compile first and then run that, but this is less "REPL/ad hoc", naturally.
 
+Step 5.: ***Now time it*** more for real:
 ```
 $ nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC3D.nim
-```
-***Now time it***:
-```
 $ /usr/bin/time /tmp/qC3D > out
 0.08user 0.03system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 783212maxresident)k
 0inputs+0outputs (0major+12329minor)pagefaults 0swaps
 ```
 
-If this comes up a lot, then you could Step 5. Abstract at the library level.
+If this comes up a lot, then you could Step 6. Abstract at the library level.
 E.g., you could pretty easily reduce the above query to something like
 
 ```
@@ -62,7 +62,7 @@ with maybe a `~/.config/nio` file with -p'import groupBy', `import pandasALike`
 or something like that.  The idea being some `gB` macro/template might work with
 any incremental operator, like RunningStat.push or whatnot.
 
-OR you might Step 5': take the /tmp/qC3D.nim program as a template and hack away
+OR you might Step 6': take the /tmp/qC3D.nim program as a template and hack away
 at it.
 
-You could potentially take Step 5'' and do a bunch of in Nim macro abstraction.
+You could potentially take Step 6'' and do a bunch of in Nim macro abstraction.
