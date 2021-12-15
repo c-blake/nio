@@ -50,6 +50,7 @@ $ /usr/bin/time /tmp/qC3D > out
 0.08user 0.03system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 783212maxresident)k
 0inputs+0outputs (0major+12329minor)pagefaults 0swaps
 ```
+--------------------------------
 
 If this comes up a lot, then you could Step 6. Abstract at the library level.
 E.g., you could pretty easily reduce the above query to something like
