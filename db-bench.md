@@ -65,7 +65,7 @@ macro/template might work with any incremental operator, like `+=` or
 `adix/stats.MovingStat.push` or whatnot and `gbSetup` just sets up some
 flag that `report` can consult to produce the right thing.
 
-OR you might Step 6': take the /tmp/qC3D.nim program as a template and hack
+OR you might Step 6': take the `/tmp/qC3D.nim` program as a template and hack
 away at it.
 
 You could potentially take Step 6'' and do a bunch of in Nim macro abstraction.
