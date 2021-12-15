@@ -59,7 +59,7 @@ $ nio q -b'var g=IGrouper("id1",`+=`)' 'g.add(id1,v1)' -eg.report id1.Ni v1.Nf
 ```
 with maybe a `~/.config/nio` file with `-p'import groupBy'` or something like
 that.  The idea being some constructor/add pair might work with any incremental
-operator, like `+=` or `adix/stats.MovingStat.push` or whatnot and besides dense
+operator, like `+=` or `adix/stat.MovingStat.push` or whatnot and besides dense
 integer `IGrouper` there might be an `HGrouper` for hash keys instead.
 
 OR you might Step 6': take the `/tmp/qC3D.nim` program as a template & hack away
