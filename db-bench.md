@@ -53,19 +53,14 @@ $ /usr/bin/time /tmp/qC3D > out
 --------------------------------
 
 If this comes up a lot, then you could Step 6. Abstract at the library level.
-E.g., you could pretty easily reduce the above query to something like
-
+E.g., you could pretty easily reduce the above query to something like:
 ```
-$ nio q -b'gbSetup("id1", `+=`)' 'gBadd()' -ereport id1.Ni v1.Nf
+$ nio q -b'var g=IGrouper("id1",`+=`)' 'g.add(id1,v1)' -eg.report id1.Ni v1.Nf
 ```
+with maybe a `~/.config/nio` file with `-p'import groupBy'` or something like
+that.  The idea being some constructor/add pair might work with any incremental
+operator, like `+=` or `adix/stats.MovingStat.push` or whatnot and besides dense
+integer `IGrouper` there might be an `HGrouper` for hash keys instead.
 
-with maybe a `~/.config/nio` file with `-p'import groupBy'` or maybe
-`import pandasALike` or something like that.  The idea being some `gB`
-macro/template might work with any incremental operator, like `+=` or
-`adix/stats.MovingStat.push` or whatnot and `gbSetup` just sets up some
-flag that `report` can consult to produce the right thing.
-
-OR you might Step 6': take the `/tmp/qC3D.nim` program as a template and hack
-away at it.
-
-You could potentially take Step 6'' and do a bunch of in Nim macro abstraction.
+OR you might Step 6': take the `/tmp/qC3D.nim` program as a template & hack away
+at it OR you could potentially take Step 6'' & do various Nim macro abstraction.
