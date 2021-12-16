@@ -88,12 +88,54 @@ Step 6: Maybe abstract & generalize
 If this computational pattern arises often, then you could simplify your future
 life with a little work.  A goal might be to be able to enter this instead:
 ```sh
-nio q -b'var g=IGrouper("id1")' 'g.add(id1,`+=`,v1)' -eg.report id1.Ni v1.Nf
+nio q -b'var g=grp[array[16,char],float]("id1.N16C")' 'g.up id1,`+=`,v1' \
+      -e'echo g' id1.Ni v1.Nf
 ```
-with maybe a `~/.config/nio` file with `-p'import groupBy'` or such.  The idea
-is some constructor/add pair can work with any incremental operator, like `+=`
-or `adix/stat.MovingStat.push` or whatnot and besides dense integer `IGrouper`
-there might be an `HGrouper` helper for hash keys instead.
+If `nio.nim` did not already support the above then you could add
+`~/.config/nio` with `-p'import gBy'`, etc. to make it available by default.
 
+`nio.nim` does support this in <15 lines of code, though. So, you can just
+`nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC09` to get a faster running
+program.  With proper imports `float` can become `adix/stat.MovingStat` and
+`+=` can become `push` or other such amendments.  For the curious/lazy, here
+is that code, slightly trimmed for pedagogy:
+```Nim
+type #*** MICRO "GROUPBY" FRAMEWORK,BUT USER'S LIKELY WANT THEIR OWN
+  Grp*[K,V] = object
+    ks*: FileArray[K]
+    vs*: seq[V]
+proc grp*[K,V](path: string): Grp[K,V] =
+  result.ks = initFileArray[K](path)
+template up*[K,V](g: Grp[K,V], id, op, val) =
+  if id >= g.vs.len: g.vs.setLen id + 1 # ensure room
+  op g.vs[id], v1                       # incremental update
+proc `$`*[K,V](g: Grp[K,V]) =
+  for i, v in g.vs: result.add g.ks[i] & " " & v & "\n"
+```
 OR you might Step 6': take the `/tmp/qC3D.nim` program as a template & hack away
 at it OR you could potentially take Step 6'' & do various Nim macro abstraction.
+
+----------------------------------------------------------------------------
+
+As a performance note, if you are tempted to make an type for concatenated keys
+as in other elements of the db-bench suite, then depending upon your key entropy
+/ data scales you may want to resist naive `Table`/`LPTabz` lookups inside the
+main loop.  Hash lookups are much slower than array lookups -- even for integer
+keys (e.g. `id1*100+id2`).  Instead you can create a new synthetic id and put it
+in a new `.N16C` or whatever file that pre-computes every possible catenation of
+2, say.  For `100*100` this is a not-so-bad L2 resident 10,000.  While you must
+still do hash lookups in constructing new merged ids for each row, you need only
+do this work *once*.
+
+So, it may be much faster *IF* you have many follow-on queries to run, but the
+"system" cannot guess whether one or many queries will happen in the future.
+In this specific case, if the system can observe enough free storage, it may be
+feasible to save the answer as you loop, BUT even this is not always possible,
+e.g. under ENOSPC conditions.  So, maybe you grow a toggle - "fail on ENOSPC" |
+"fallback to slower".  These toggles will then proliferate like rabbits and need
+to be specified and be no easier to understand than the code itself, IMO.  For
+reasons like this, I believe that "general purpose" DBs can never truly be as
+fast as programmer-user optimized analysis pipelines.  The question is more "how
+much" you lose -- 2X/5X/50X/1000X -- not "whether".  So, if data is big enough
+to make performance a real concern, the answer to me is to make this programming
+as easy as it can be which is in many ways a simpler problem.
