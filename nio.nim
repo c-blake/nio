@@ -1404,6 +1404,22 @@ proc kreduce*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
           if mk in stats: outu " ", $mk, ": ", fmtStat(st, mk, fmt)
     outu "\n"
 
+type #*** MICRO "GROUPBY" FRAMEWORK, BUT USER'S LIKELY WANT THEIR OWN
+  Grp*[K,V] = object
+    ks*: FileArray[K] ## For nio q -b'var g=grp[array[9,char],float]("id.N9C")'
+    vs*: seq[V]       ## 'g.up id,`+=`,v' -eg.report id.Ni v.Nf
+
+proc grp*[K,V](path: string): Grp[K,V] =
+  result.ks = initFileArray[K](path)
+
+template up*[K,V](g: Grp[K,V], id, op, val) =
+  if id >= g.vs.len: g.vs.setLen id + 1 # ensure room
+  op g.vs[id], v1                       # incremental update
+
+proc `$`*[K,V](g: Grp[K,V]): string =
+  for i, v in g.vs: result.add $g.ks[i] & " " & $v &
+                               (if i + 1 < g.vs.len: "\n" else: "")
+
 type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
   Comparator = object #*** (RADIX SORTS ARE BETTER FOR NUMBERS)
     nf:  NFile          # backing nio file
