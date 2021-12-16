@@ -23,8 +23,10 @@ nio i -si.N16C -p'c2tsv<$1' G1_1e8_1e2_0_0.csv
 Value fields are floats not auto-inferred integers and `float32` for a parsed
 vaue is probably good enough.  So manually edit the v[123] to be 'f f' with:
 ```sh
-sed -i -e 's/^v\(.*\)i     d/v\1f  f/' *.sc   # decimal ints->float32's
+sed -i -e 's/^v\(.*\)i<TAB>d/v\1f<TAB>f/' *.sc   # decimal ints->float32's
 ```
+(In the above <TAB> is a hard-tab character...Yeah, yeah. Ctrl-V is not so
+horrible.)
 
 Step 3: Run the parser to get some binary column files
 ======================================================
