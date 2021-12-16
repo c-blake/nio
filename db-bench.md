@@ -117,7 +117,7 @@ at it OR you could potentially take Step 6'' & do various Nim macro abstraction.
 
 ----------------------------------------------------------------------------
 
-As a performance note, if you are tempted to make an type for concatenated keys
+As a performance note, if you are tempted to make a type for concatenated keys
 as in other elements of the db-bench suite, then depending upon your key entropy
 / data scales you may want to resist naive `Table`/`LPTabz` lookups inside the
 main loop.  Hash lookups are much slower than array lookups -- even for integer
