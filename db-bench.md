@@ -72,10 +72,10 @@ paged in.  The fact that all pagefaults are minor tells us this was DRAM only.
 The fact that there were 12329 (\*4=49316) and not 783212 (./4=195803) tells us
 the kernel was paging in about 4 pages at a time.  That might be boostable with
 some `madvise` calls.  The bandwidth we realize is about `390\*2/.12 = 6.5 GB/s`
-on a machine that can do about 35 GB/s single core.  So, this can probably be
-sped up a bit even without parallelization, and likely about 8X total to
-saturate my DIMMs, BUT it is already faster than any numbers I see on the
-results portion of that db-bench website and (my machine is from 2016).
+on an i7-6700k that can do about 35 GB/s single core with 65ns latency.  So,
+this can likely be sped up a bit even without parallelization, and likely about
+8X total to saturate my DIMMs, BUT it is already faster than any numbers I see
+on the results portion of that db-bench website and (my machine is from 2016).
 
 Step 6: Maybe abstract & generalize
 ===================================
