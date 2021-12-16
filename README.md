@@ -143,3 +143,6 @@ tiny subtotal, it's fine to first memory map files, then fork & engage hardware
 parallelism with processes via `cligen/procpool`.  Were the output giant, kids
 could write to NIO files and return pathnames.  Once you are whole CPU/system
 optimizing, what idea is best quickly becomes "it depends".
+
+See [db-bench.md](https://github.com/c-blake/nio/tree/main/db-bench.md) for
+another worked out example, perhaps easier to compare to other systems.
