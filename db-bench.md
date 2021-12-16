@@ -36,6 +36,8 @@ down to about 60% of that time with some re-used temporary variables rather than
 malloc-free cycles in the parser, but the bigger speed-up would be parallelizing
 the parsing which could probably yield single digit seconds.  Then all you have
 is a lot of L1 resident hash tables managing the string -> dense integers ids.
+Note that performance-wise it is virtually always better to do this hashing
+exactly once, at induction of data into your system.
 
 Anyway, you get:
 ```sh
@@ -71,16 +73,20 @@ Note that 783 MiB is much less than 5 GiB because only two 390 MiB iles need be
 paged in.  The fact that all pagefaults are minor tells us this was DRAM only.
 The fact that there were 12329 (\*4=49316) and not 783212 (./4=195803) tells us
 the kernel was paging in about 4 pages at a time.  That might be boostable with
-some `madvise` calls.  The bandwidth we realize is about `390\*2/.12 = 6.5 GB/s`
-on an i7-6700k that can do about 35 GB/s single core with 65ns latency.  So,
-this can likely be sped up a bit even without parallelization, and likely about
-8X total to saturate my DIMMs, BUT it is already faster than any numbers I see
-on the results portion of that db-bench website and (my machine is from 2016).
+some `madvise` calls and is definitely boostable with Huge Page TLBs, probably
+down to 80 ms.  As is, we get `390\*2/.12=~6.5 GB/s` bandwidth on an i7-6700k
+that can do about 35 GB/s single core with 65ns latency.  So, this can likely be
+sped up a bit even w/out parallelization, likely to about 8X total to saturate
+my DIMMs, BUT it's already faster by a large margin than any numbers I see on
+the results portion of that db-bench website.  pandas-1.3.5 on the same machine
+takes ~4X longer at 0.45 seconds not nearly 3 seconds.  It seems pandas may have
+seen substantial speed ups in the past 2 yrs.  No, I do not have patience to try
+to learn how to install and configure the many other alternatives.
 
 Step 6: Maybe abstract & generalize
 ===================================
-If this computational patten arises often, then you could simplify your future
-life with a little work.  Our goal might be to be able to enter this instead:
+If this computational pattern arises often, then you could simplify your future
+life with a little work.  A goal might be to be able to enter this instead:
 ```sh
 nio q -b'var g=IGrouper("id1")' 'g.add(id1,`+=`,v1)' -eg.report id1.Ni v1.Nf
 ```
