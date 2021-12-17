@@ -1790,12 +1790,12 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
   su.close
 
 import std/hashes
-proc qry*(prelude="", begin="", test="true", stmtInputs: seq[string], epilog="",
-          where="", nim="",run=true,args="", verbose=0, outp="/tmp/qXXX"): int =
-  ## Gen & Run a *prelude*,*begin*,*test*,*stmt*,*epilog* IOTensor "query".
+proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
+          nim="", run=true, args="", verbose=0, outp="/tmp/qXXX"): int =
+  ## Gen & Run a *prelude*,*begin*,*where*,*stmt*,*epilog* IOTensor "query".
   ##
   ## Run against similarly indexed *inputs* NIO files (> 1st of *stmtInputs*).
-  ## Likely works best for "column files" as per eg.s.  Within *test* & *stmt*:
+  ## Likely works best for "column files" as per eg.s.  Within *where* & *stmt*:
   ##   *qryI*: curr row index; (prefixed to help avoid `inputs` name clashes.)
   ##   Each row has `let INP=fINPs[qryI]` bindings (from *gen-time* basenames).
   ## A generated program is left at *outp*.nim, easily copied for "utilitizing".
@@ -1803,10 +1803,10 @@ proc qry*(prelude="", begin="", test="true", stmtInputs: seq[string], epilog="",
   ## table scan in SQL but fully type-check compiled with access to all of Nim.
   ## Examples (need data):
   ##   nio q 'echo foo' *.N*                          # Extract column as ASCII
-  ##   nio q -t'nr mod 100==0' 'echo a,b,c' *.N*      # Print each 100th a,b,c
+  ##   nio q 'echo a,b,c' *.N* -w'nr mod 100==0'      # Print each 100th a,b,c
   ##   nio q -b'var t=0' t+=x -w'x>0' -e'echo t' *.N* # Total >0 `x` ints
   ##   nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' *.N*
-  ## (You can re-compile generated programs with -d:danger to run fast.)
+  ## You can (re-)compile generated programs with -d:danger to run faster.
   proc opens(inputs: seq[string]): string =
     for j, input in inputs:
       let tail = input.splitPath.tail; let base = input.splitFile.name
@@ -1829,7 +1829,7 @@ proc qryMain() = # [autoOpens]
 {indent(begin, 2)} # [begin]
   for qryI in 0 ..< f{base0}s.qryLen:
 {inputs.lets} # [inputs lets]
-    if {test}: # [test] auto ()s?
+    if {where}: # [where] auto ()s?
 """
   if stmt.len == 0: program.add "      discard\n"
   else            : program.add "      " & stmt & " # {stmt}\n"
@@ -1930,9 +1930,8 @@ if AT=="" %s renders as a number via `fmTy`""",
     [qry , help={"stmtInputs": "{stmt} {input paths}",
                   "prelude": "Nim code for prelude/imports section",
                   "begin"  : "Nim code for begin/pre-loop section",
-                  "test"   : "Nim code for row inclusion",
+                  "where"  : "Nim code for row inclusion",
                   "epilog" : "Nim code for epilog/end loop section",
-                  "where"  : "alias for `test` (SQL addict therapy)",
                   "nim"    : "\"\" => nim {if run: r else: c} {args}",
                   "run"    : "Run at once using nim r .. < input",
                   "args"   : "\"\" => -d:danger --gc:arc",
