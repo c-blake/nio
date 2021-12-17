@@ -5,16 +5,14 @@ https://h2oai.github.io/db-benchmark/ and we just replicate that in nio.  (You
 have to click on the 5GB button to see comparable numbers, but on a different
 machine.)
 
-Step 1: Make a CSV data set
-===========================
+### Step 1: Make a CSV data set
 
 install data.table in R
 ```
 $ git clone https://github.com/h2oai/db-benchmark
 $ Rscript \_data/groupby-datagen.R 1e8 1e2 0 0
 ```
-Step 2: Generate a fromSV parsing schema
-========================================
+### Step 2: Generate a fromSV parsing schema
 
 Will want id strings to be dense integer labels; So use .N16C strings
 ```sh
@@ -29,8 +27,8 @@ sed -i 's/^v\(.*\)i<TAB>d/v\1f<TAB>f/' *.sc # decimal ints->float32's
 (In the above <TAB> is a hard-tab character...Yeah, yeah. Ctrl-V is not so
 horrible.)
 
-Step 3: Run the parser to get some binary column files
-======================================================
+### Step 3: Run the parser to get some binary column files
+
 ```sh
 nio f -s *.sc G1_1e8_1e2_0_0.csv
 ```
@@ -52,8 +50,8 @@ total 8601384
  390628 id1.Ni                  390628 id3.Ni     390628 v1.Nf
 ```
 
-Step 4: Run a "simple" query
-============================
+### Step 4: Run a "simple" query
+
 If you had a real data set you use often with pre-prepared data repositories,
 then this step would be all you needed.
 ```sh
@@ -64,8 +62,8 @@ nio q -b'var gs:seq[float]; let ids=initFileArray[array[16,char]]("id1.N16C")'\
 If you care about run times on "big" data then it is faster to do an optimized
 compile first and then run that, but this is less "REPL/ad hoc", naturally.
 
-Step 5: Now time it more "for real" since "benchmark" sets people off:
-======================================================================
+### Step 5: Now time it more "for real" since "benchmark" sets people off:
+
 ```sh
 nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC3D.nim
 /usr/bin/time /tmp/qC3D > out
