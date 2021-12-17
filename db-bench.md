@@ -74,8 +74,7 @@ Note that 783 MiB is much less than 5 GiB because only two 390 MiB iles need be
 paged in.  The fact that all pagefaults are minor tells us this was DRAM only.
 The fact that there were 12329 (\*4=49316) and not 783212 (./4=195803) tells us
 the kernel was paging in about 4 pages at a time.  That might be boostable with
-some `madvise` calls and is definitely boostable with Huge Page TLBs, probably
-down to 80 ms.
+`madvise` and is definitely boostable with Huge Page TLBs, likely down to 80 ms.
 
 As is, we get `390*2/.12=~6.5 GB/s` bandwidth on an i7-6700k that can do about
 35 GB/s single core with 65ns latency.  So, this can likely be sped up a bit
