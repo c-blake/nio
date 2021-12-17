@@ -78,8 +78,7 @@ the kernel was paging in about 4 pages at a time.  That might be boostable with
 
 As is, we get `390*2/.12=~6.5 GB/s` bandwidth on an i7-6700k that can do about
 35 GB/s single core with 65ns latency.  So, this can likely be sped up a bit
-even w/out parallelization.  With parallelization it can likely saturate my
-DIMMs at about 8X faster, BUT it's already faster by a large margin than any
+even w/out parallelization, BUT it's already faster by a large margin than any
 numbers I see on the results portion of that db-bench website.
 
 For comparison, pandas-1.3.5 on the same machine takes ~4X longer at 0.45 sec {
@@ -120,7 +119,26 @@ proc `$`*[K,V](g: Grp[K,V]) =
 OR you might Step 6': take either program as a template & hack away at it OR you
 could potentially take Step 6'' & do various Nim macro abstraction.
 
-----------------------------------------------------------------------------
+### Extra Credit: Going Parallel
+
+```sh
+nio q -p'import os' -b'var g=grp[array[16,char],float32]("id1.N16C")' \
+      'g.up id1,`+=`,v1' -e'g.vs.save "out" & getEnv("p")' id1.Ni v1.Nf
+
+nim c -d:danger /tmp/qF87.nim # compile fast running version
+
+/usr/bin/time sh -c 'for p in 0 1 2 3
+  do p=$p ROWS=$((25000000*p)):$((25000000*(p+1))) /tmp/qF87 &
+  done; wait'    # run it in parallel
+```
+I get about 0.040 seconds.  So, ~3.0X speed-up with 4 cores or now ~11X faster
+than pandas-1.3.5.
+
+The output here is pure binary in `outK.Nf` { not ASCII - bug|feature? ;-) }
+which must still be merged, but this is a sub-millisec calculation for this
+problem and retaining separation may be useful for follow-on/in context things.
+
+### Post Script: Some other observations
 
 As a performance note, if you are tempted to make a type for concatenated keys
 as in other elements of the db-bench suite, then depending upon your key entropy
