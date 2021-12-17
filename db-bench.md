@@ -136,7 +136,8 @@ than pandas-1.3.5.
 
 The output here is pure binary in `outK.Nf` { not ASCII - bug|feature? ;-) }
 which must still be merged, but this is a sub-millisec calculation for this
-problem and retaining both/either separation and binaryness may be useful for
+problem (roughly `cat out*.Nf > out.N100f` with a sum along the file size axis
+or similar).  Retaining both/either separation and binaryness may be useful for
 follow-on/in context applications of the result.
 
 ### Post Script: Some other observations
