@@ -908,9 +908,9 @@ proc zip*(paths: Strings): int =
         outu buf
   for i in 0 ..< fs.len: fs[i].close
 
-proc cvtSlice(ab: (int, int); bound: int): (int, int) =
-  var a = ab[0]
-  var b = ab[1]
+proc cvtSlice(ab: tuple[a, b: int]; bound: int): (int, int) =
+  var a = ab.a
+  var b = ab.b
   if a < 0: a.inc bound
   if b < 0: b.inc bound
   if b < a: b = a + 1
