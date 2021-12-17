@@ -1802,10 +1802,10 @@ proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
   ## Knowing AWK/Nim/`rp`, you can learn this PRONTO.  This is much like a full
   ## table scan in SQL but fully type-check compiled with access to all of Nim.
   ## Examples (need data):
-  ##   nio q 'echo foo' *.N*                          # Extract column as ASCII
-  ##   nio q 'echo a,b,c' *.N* -w'nr mod 100==0'      # Print each 100th a,b,c
-  ##   nio q -b'var t=0' t+=x -w'x>0' -e'echo t' *.N* # Total >0 `x` ints
-  ##   nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' *.N*
+  ##  nio q 'echo foo' \*.N\*                          #Extract column as ASCII
+  ##  nio q 'echo a,b,c' \*.N\* -w'nr mod 100==0'      #Print each 100th a,b,c
+  ##  nio q -b'var t=0' t+=x -w'x>0' -e'echo t' \*.N\* #Total >0 `x` ints
+  ##  nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' \*.N\*
   ## You can (re-)compile generated programs with -d:danger to run faster.
   proc opens(inputs: seq[string]): string =
     for j, input in inputs:
