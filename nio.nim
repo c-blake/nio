@@ -1811,7 +1811,7 @@ proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
     var base0: string
     for j, input in inputs:
       let tail = input.splitPath.tail; let base = input.splitFile.name
-      let rowT = $ioCodeK(tail[^1]) #NOTE: only works for IOTensor style.
+      let rowT = $ioCodeK(tail[^1]) #NOTE: only works for IOTensor style files.
       result.add &"  var f{base}s = initFileArray[{rowT}](\"{tail}\")\n"
       if j == 0: base0 = base
       else: result.add &"  if f{base}s.len != f{base0}s.len: quit \"badSize\"\n"
