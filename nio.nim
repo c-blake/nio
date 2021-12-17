@@ -908,14 +908,16 @@ proc zip*(paths: Strings): int =
         outu buf
   for i in 0 ..< fs.len: fs[i].close
 
+proc cvtSlice(ab: (int, int); bound: int): (int, int) =
+  var a = ab[0]
+  var b = ab[1]
+  if a < 0: a.inc bound
+  if b < 0: b.inc bound
+  if b < a: b = a + 1
+  (a, min(b, bound))
+
 iterator elts(slices: Strings, bound: int): (int, int) =
-  var a, b: int
-  for s in slices:
-    (a, b) = parseSlice(s)
-    if a < 0: a.inc bound
-    if b < 0: b.inc bound
-    if b < a: b = a + 1
-    yield (a, min(b, bound))
+  for s in slices: yield cvtSlice(parseSlice(s), bound)
 
 proc cut*(drop: Strings = @[], pass: Strings = @[], path: Strings): int =
   ## pass|drop selected column slices {generalized cut(1)} to stdout.
