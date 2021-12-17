@@ -85,8 +85,8 @@ seconds.  It seems pandas may have seen substantial speed ups in the past 2 yrs.
 No, I do not have patience to try to learn how to install and configure the many
 other alternatives.
 
-Step 6: Maybe abstract & generalize
-===================================
+### Step 6: Maybe abstract & generalize
+
 If this computational pattern arises often, then you could simplify your future
 life with a little work.  A goal might be to be able to enter this instead:
 ```sh
