@@ -1791,6 +1791,10 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
   else: echo &"Up to date; No inputs seem newer than {stamp}."
   su.close
 
+proc dfl(n: int): tuple[a,b: int] = parseSlice(getEnv("ROWS", "0:" & $n))
+template qryRange*(n: int): untyped =
+  cvtSlice(dfl(n), n)[0] ..< cvtSlice(dfl(n), n)[1]
+
 import std/hashes
 proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
           nim="", run=true, args="", verbose=0, outp="/tmp/qXXX"): int =
@@ -1827,12 +1831,11 @@ proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
     stderr.write "`qry` needs >= 1 real file input; --help says more"; quit 1
   let base0 = inputs[0].splitFile.name
   var program = &"""import nio
-template qryLen(x): untyped = len(x)
 {prelude} # [prelude]
 proc qryMain() = # [autoOpens]
 {inputs.opens}
 {indent(begin, 2)} # [begin]
-  for qryI in 0 ..< f{base0}s.qryLen:
+  for qryI in qryRange(f{base0}s.len):
 {inputs.lets} # [inputs lets]
     if {where}: # [where] auto ()s?
 """
