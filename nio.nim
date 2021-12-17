@@ -1423,10 +1423,6 @@ proc `$`*[K,V](g: Grp[K,V]): string =
     if v.grpInclude:
       result.add $g.ks[id] & " " & $v & (if id + 1 < g.vs.len: "\n" else: "")
 
-template merge*[K,V](g: var Grp[K,V], op, gMerge: Grp[K,V]) =
-  g.setLen max(g.len, gMerge.len)
-  for id, gM in gMerge.vs: op g.vs[id], gM
-
 type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
   Comparator = object #*** (RADIX SORTS ARE BETTER FOR NUMBERS)
     nf:  NFile          # backing nio file
