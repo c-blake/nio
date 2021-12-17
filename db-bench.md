@@ -18,12 +18,13 @@ Step 2: Generate a fromSV parsing schema
 
 Will want id strings to be dense integer labels; So use .N16C strings
 ```sh
-nio i -si.N16C -p'c2tsv<$1' G1_1e8_1e2_0_0.csv
+nio i -si.N16C -d, G1_1e8_1e2_0_0.csv
 ```
-Value fields are floats not auto-inferred integers and `float32` for a parsed
-vaue is probably good enough.  So manually edit the v[123] to be 'f f' with:
+This takes about 75 seconds & 6 MiB RSS for me.  Value fields are floats, not
+auto-inferred integers & `float32` for a parsed value is probably good enough.
+So manually edit the v[123] to be 'f f' with:
 ```sh
-sed -i -e 's/^v\(.*\)i<TAB>d/v\1f<TAB>f/' *.sc   # decimal ints->float32's
+sed -i 's/^v\(.*\)i<TAB>d/v\1f<TAB>f/' *.sc # decimal ints->float32's
 ```
 (In the above <TAB> is a hard-tab character...Yeah, yeah. Ctrl-V is not so
 horrible.)
@@ -31,9 +32,9 @@ horrible.)
 Step 3: Run the parser to get some binary column files
 ======================================================
 ```sh
-nio f -sG1_1e8_1e2_0_0.csv.sc G1_1e8_1e2_0_0.csv
+nio f -s *.sc G1_1e8_1e2_0_0.csv
 ```
-This takes about 140 seconds & 130 MiB for me, but could probably be brought
+This takes about 130 seconds & 130 MiB for me, but could probably be brought
 down to about 60% of that time with some re-used temporary variables rather than
 malloc-free cycles in the parser, but the bigger speed-up would be parallelizing
 the parsing which could probably yield single digit seconds.  Then all you have
