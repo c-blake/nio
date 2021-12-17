@@ -1414,11 +1414,18 @@ proc grp*[K,V](path: string): Grp[K,V] =
 
 template up*[K,V](g: Grp[K,V], id, op, val) =
   if id >= g.vs.len: g.vs.setLen id + 1 # ensure room
-  op g.vs[id], v1                       # incremental update
+  op g.vs[id], val                      # incremental update
+
+proc grpInclude*[V: SomeNumber](v: V): bool = v != V(0)
 
 proc `$`*[K,V](g: Grp[K,V]): string =
-  for i, v in g.vs: result.add $g.ks[i] & " " & $v &
-                               (if i + 1 < g.vs.len: "\n" else: "")
+  for id, v in g.vs:
+    if v.grpInclude:
+      result.add $g.ks[id] & " " & $v & (if id + 1 < g.vs.len: "\n" else: "")
+
+template merge*[K,V](g: var Grp[K,V], op, gMerge: Grp[K,V]) =
+  g.setLen max(g.len, gMerge.len)
+  for id, gM in gMerge.vs: op g.vs[id], gM
 
 type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
   Comparator = object #*** (RADIX SORTS ARE BETTER FOR NUMBERS)

@@ -100,7 +100,7 @@ nio q -b'var g=grp[array[16,char],float]("id1.N16C")' 'g.up id1,`+=`,v1' \
 If `nio.nim` did not already support the above then you could add
 `~/.config/nio` with `-p'import gBy'`, etc. to make it available by default.
 
-`nio.nim` does support this in <15 lines of code, though. So, you can just
+`nio.nim` does support this in ~15 lines of code, though.  So, you can just
 `nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC09` to get a faster running
 program.  With proper imports `float` can become `adix/stat.MovingStat` and
 `+=` can become `push` or other such amendments.  For the curious/lazy, here
