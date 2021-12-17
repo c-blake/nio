@@ -65,8 +65,8 @@ compile first and then run that, but this is less "REPL/ad hoc", naturally.
 ### Step 5: Now time it more "for real" since "benchmark" sets people off:
 
 ```sh
-nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC3D.nim
-/usr/bin/time /tmp/qC3D > out
+nim c --cc:gcc -t:-ffast-math -d:danger /tmp/q1C4.nim
+/usr/bin/time /tmp/q1C4 > out
 0.08user 0.03system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 783212maxresident)k
 0inputs+0outputs (0major+12329minor)pagefaults 0swaps
 ```
@@ -101,7 +101,7 @@ If `nio.nim` did not already support the above then you could add
 `~/.config/nio` with `-p'import gBy'`, etc. to make it available by default.
 
 `nio.nim` does support this in ~15 lines of code, though.  So, you can just
-`nim c --cc:gcc -t:-ffast-math -d:danger /tmp/qC09` to get a faster running
+`nim c --cc:gcc -t:-ffast-math -d:danger /tmp/q3C6` to get a faster running
 program.  With proper imports `float` can become `adix/stat.MovingStat` and
 `+=` can become `push` or other such amendments.  For the curious/lazy, here
 is that code, slightly trimmed for pedagogy:
@@ -118,8 +118,8 @@ template up*[K,V](g: Grp[K,V], id, op, val) =
 proc `$`*[K,V](g: Grp[K,V]) =
   for i, v in g.vs: result.add g.ks[i] & " " & v & "\n"
 ```
-OR you might Step 6': take the `/tmp/qC3D.nim` program as a template & hack away
-at it OR you could potentially take Step 6'' & do various Nim macro abstraction.
+OR you might Step 6': take either program as a template & hack away at it OR you
+could potentially take Step 6'' & do various Nim macro abstraction.
 
 ----------------------------------------------------------------------------
 
