@@ -77,12 +77,13 @@ the kernel was paging in about 4 pages at a time.  That might be boostable with
 some `madvise` calls and is definitely boostable with Huge Page TLBs, probably
 down to 80 ms.  As is, we get `390*2/.12=~6.5 GB/s` bandwidth on an i7-6700k
 that can do about 35 GB/s single core with 65ns latency.  So, this can likely be
-sped up a bit even w/out parallelization, likely to about 8X total to saturate
-my DIMMs, BUT it's already faster by a large margin than any numbers I see on
-the results portion of that db-bench website.  pandas-1.3.5 on the same machine
-takes ~4X longer at 0.45 seconds not nearly 3 seconds.  It seems pandas may have
-seen substantial speed ups in the past 2 yrs.  No, I do not have patience to try
-to learn how to install and configure the many other alternatives.
+sped up a bit even w/out parallelization.  With parallelization it can likely
+saturate my DIMMs at about 8X faster, BUT it's already faster by a large margin
+than any numbers I see on the results portion of that db-bench website.
+pandas-1.3.5 on the same machine takes ~4X longer at 0.45 seconds not nearly 3
+seconds.  It seems pandas may have seen substantial speed ups in the past 2 yrs.
+No, I do not have patience to try to learn how to install and configure the many
+other alternatives.
 
 Step 6: Maybe abstract & generalize
 ===================================
