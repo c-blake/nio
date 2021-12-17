@@ -1808,10 +1808,13 @@ proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
   ##  nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' \*.N\*
   ## You can (re-)compile generated programs with -d:danger to run faster.
   proc opens(inputs: seq[string]): string =
+    var base0: string
     for j, input in inputs:
       let tail = input.splitPath.tail; let base = input.splitFile.name
       let rowT = $ioCodeK(tail[^1]) #NOTE: only works for IOTensor style.
       result.add &"  var f{base}s = initFileArray[{rowT}](\"{tail}\")\n"
+      if j == 0: base0 = base
+      else: result.add &"  if f{base}s.len != f{base0}s.len: quit \"badSize\"\n"
   proc lets(inputs: seq[string]): string =
     for j, input in inputs:
       let base = input.splitFile.name
