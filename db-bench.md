@@ -143,7 +143,8 @@ and then if you really need ASCII output, say to compare:
 nio pr id1.N16C out.Nf
 ```
 (Yes, yes, this summation could also be parallelized if it were a big enough
-problem to warrant such.)
+problem to warrant such.  For this calculation on my test box, the combined time
+for both nio xsum & print is < 2 ms which is below measurement error, TBH.)
 
 ### Post Script: Some other observations
 
