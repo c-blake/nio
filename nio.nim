@@ -80,7 +80,7 @@ func codeOf*(x: IONumber): IOKind =
   elif x is float80: result = gIk
 
 func isSigned*  (k: IOKind): bool {.inline.} = (k.int and 1) == 0
-func isUnSigned*(k: IOKind): bool {.inline.} = (k.int and 1) == 1
+func isUnsigned*(k: IOKind): bool {.inline.} = (k.int and 1) == 1
 func isFloat*   (k: IOKind): bool {.inline.} = k.int > LIk.int
 
 #*** MISSING VALUE CONVENTION; NA-AWARE LOW/HIGH MOSTLY FOR CLIPPING PARSED DATA
@@ -119,7 +119,7 @@ template withTyped_P_NA(k, adr, p, na, body) =
 func isNA*(k: IOKind, adr: pointer): bool {.inline.} =
   ## Test the number IO kind at `adr` against its missing/NA value
   withTyped_P_NA(k, adr, p, na):
-    when declared(isnan): return if k > LIk: p[].float64.isnan else: p[] == na
+    when declared(isNaN): return if k > LIk: p[].float64.isNaN else: p[] == na
     else: return if k > LIk: p[].float.classify == fcNan else: p[] == na
 
 proc setNA*(k: IOKind, adr: pointer) {.inline.} =
@@ -487,7 +487,7 @@ proc `$`*[M](x: array[M, char]): string =
   let m = M.high + 1
   result = (newStringOfCap m)
   copyMem result[0].addr, x[0].unsafeAddr, m
-  result.setLen result[0].addr.cstring.cstrlen
+  result.setLen result[0].addr.cstring.c_strlen
 
 proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
             offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
@@ -526,7 +526,7 @@ type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
     off:  Ix                    # running file size (what to set .[DL] ptrs to)
     tab*: Table[string, Ix]     # index lookup table
 const IxIk = IIk
-const IxNA = Ina
+const IxNA = I_na
 
 iterator keysAtOpen*(r: Repo): (string, Ix) =
   case r.kind
@@ -1017,7 +1017,7 @@ proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
   ## E.g.: `fooBar.Nif` -> `struct fooBar { unsigned int foo; float bar; };`
   ## These types allow treating memory mapped files as unchecked arrays or ease
   ## row-wise calculation/streamed IO.
-  case lang.toLowerASCII:
+  case lang.toLowerAscii:
   of "nim":
     let ntype: array[IOKind, string] = ["int8", "uint8", "int16", "uint16",
       "int32", "uint32", "int64", "uint64", "float32", "float64", "float80"]
@@ -1372,7 +1372,7 @@ proc moments*(fmt=".4g", stats: set[MomKind]={mkMin,mkMax}, paths:Strings): int=
       while true:
         for j in 0 ..< sts.len:
           if not inp.read(num): break fileLoop
-          if not num.isnan: sts[j].push num
+          if not num.isNaN: sts[j].push num
     for j in 0 ..< sts.len:
       outu path, ":", j
       for mk in [mkN, mkMin, mkMax, mkSum, mkAvg, mkSdev, mkSkew, mkKurt]:
@@ -1415,7 +1415,7 @@ proc kreduce*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
         row.setLen 0
         for j in 0 ..< inps[i].rowFmt.cols.len:
           if not inps[i].read(num): break fileLoop
-          row.add if num.isnan: na else: num
+          row.add if num.isNaN: na else: num
         rec.add (i, row)
       gstats.mgetOrPut(g, empty).up rec, g
   for i in 0 ..< inps.len: inps[i].close
@@ -1891,7 +1891,7 @@ when isMainModule:
                      "cut", "tails", "moments", "defType", "order", "emerge",
                      "upstack"]: # allow n-foo links
             result.add bn[2..^1]
-        return result & cmdline
+        return result & cmdLine
       let underJoin = su.toUpperAscii(cmdNames.join("_"))
       var cfPath = getEnv(underJoin & "_CONFIG")      # See if cfg file redirect
       if cfPath.len == 0:                             #..else use getConfigDir.
