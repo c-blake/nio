@@ -134,11 +134,16 @@ nim c -d:danger /tmp/qF87.nim # compile fast running version
 I get about 0.040 seconds.  So, ~3.0X speed-up with 4 cores or now ~11X faster
 than pandas-1.3.5.
 
-The output here is pure binary in `outK.Nf` { not ASCII - bug|feature? ;-) }
-which must still be merged, but this is a sub-millisec calculation for this
-problem (roughly `cat out*.Nf > out.N100f` with a sum along the file size axis
-or similar).  Retaining both/either separation and binaryness may be useful for
-follow-on/in context applications of the result.
+The output here is pure binary in `outK.Nf`.  To merge it, just do sub-millisec:
+```sh
+nio xsum -of out?.Nf > out.Nf
+```
+and then if you really need ASCII output, say to compare:
+```sh
+nio pr id1.N16C out.Nf
+```
+(Yes, yes, this summation could also be parallelized if it were a big enough
+problem to warrant such.)
 
 ### Post Script: Some other observations
 

@@ -1310,6 +1310,28 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
         else: o.write &"{sIType}\tx @{hdr}{sExt}"
       o.write '\n'
 
+proc xsum*(outKind='d', paths: Strings): int =
+  ## total zipped rows to stdout; Missing tails treated as zero
+  if paths.len == 0: return 0 #NOTE: An easy but not useless example calculation
+# if stdout.isatty:                     # block accidental tty corruption
+#   erru "stdout is a terminal; pipe | redirect\n"; return 1
+  var nfs: seq[NFile]                   # open inputs
+  var nRow = 0
+  let kout = ioCodeK(outKind)
+  for path in paths:
+    nfs.add nOpen(path)
+    nRow = max(nRow, nfs[^1].len)
+  var obuf: array[16, char]             # actual output buffer
+  for i in 0..<nRow:
+    var num, sum: float64               # It'd be more correct/intuitive to sum
+    for nf in mitems(nfs):              #..in kout arith, not always float64.
+      for c in nf.rowFmt.cols:
+        for e in 0 ..< c.width:
+          if nf.read(num): sum += num   # read & total each entry as a float64
+    convert kout, dIk, obuf[0].addr, sum.addr
+    stdout.nurite kout, obuf[0].addr    # convert & then emit row sum as `kout`.
+  for nf in mitems(nfs): nf.close
+
 when defined(useAdix):                  #*** NOT TOTALLY USELESS DEMO: moments
   import adix/stat
   type RunningStat = MovingStat[float32,uint32]
@@ -1928,6 +1950,8 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "compl" : "pass complement/inside of fence posts",
                    "repeat": "repeat rows when head+tail>=n"},
             short={"help": '?'}],
+    [xsum  , help={"paths" : "[paths: 1|more paths to NIO files]",
+                   "outKind": "code for output row type"} ],
     [moments,help={"paths" : "[paths: 1|more paths to NIO files]",
                    "fmt"   : "Nim floating point output format",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
