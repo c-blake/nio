@@ -1093,7 +1093,7 @@ proc parse(inp, pathName: string; lno: int; colName: string; inCode: char;
   of 'f':
     if inp.parseFloat(nF) != inp.len:
       raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
-    convert kout, dik, obuf[0].addr, nF.addr
+    convert kout, dIk, obuf[0].addr, nF.addr
   of 'x': xfm obuf[0].addr, inp, lno
   else: raise newException(IOError, &"{inCode}: inCode not in [bodhfx]")
   outp.nurite kout, obuf[0].addr
