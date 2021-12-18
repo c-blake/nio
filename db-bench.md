@@ -152,11 +152,16 @@ As a performance note, if you are tempted to make a type for concatenated keys
 as in other elements of the db-bench suite, then depending upon your key entropy
 / data scales you may want to resist naive `Table`/`LPTabz` lookups inside the
 main loop.  Hash lookups are much slower than array lookups -- even for integer
-keys (e.g. `id1*100+id2`).  Instead you can create a new synthetic id and put it
-in a new `.N16C` or whatever file that pre-computes every possible catenation of
-2, say.  For `100*100` this is a not-so-bad L2 resident 10,000.  While you must
-still do hash lookups in constructing new merged ids for each row, you need only
-do this work *once*.
+keys (e.g. `id1*100+id2`).  For example, the built-in `nio kreduce` is about 50X
+slower (although some of this time is computing unneeded stats incrementally):
+```
+nio kreduce -f.0f --s,= -ssum -g id1.Ni v1.Nf
+```
+Instead you can create a new synthetic id and put it in a new `.N16C` style
+file that pre-computes every catenation.  For `100*100` this is a not-so-bad L2
+resident 10,000 accumulators.  While you must still do hash lookups in
+constructing new merged ids for each row, you need only do this work *once*
+if these new ids are useful anyway.
 
 So, it may be much faster *IF* you have many follow-on queries to run, but the
 "system" cannot guess whether one or many queries will happen in the future.
