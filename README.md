@@ -80,7 +80,7 @@ $t nio fromSV -s f.sc /dev/stdin < f  # parse the data into NIO
 ls                                    # peruse some files
 nio pr a.Nf b.Nf%.5f | head -n3       # print human readable
 $t nio zip a.Nf b.Nf > ab.Nff         # stitch cols together
-nio pr ab.Nff%.9f%.5f | head -n3      # print those, too
+nio pr ab.Nff%.9f%.5f | head -n3      # print same vals another way
 $t nio moments [a-z].N*               # compute some summary stats
 ```
 and get output that looks like this (i7-6700k @4.7GHz; 8MiB L3):
