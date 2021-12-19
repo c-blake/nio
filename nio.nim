@@ -1128,6 +1128,71 @@ proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   result = if info.id.device == 0: fmWrite else: fmAppend
 
 from cligen/argcvt import unescape  # pulls in much, but impacts comptime little
+type                                #*** SHARED STATE FOR  parseCol/Sch/fromSV
+  SchState = tuple[pp, outBase, outType, shrd, nameSep, schema: string;
+                   doZip, onlyOut: bool; nHdr, mxLg, lno: int; dlm: char;
+                   xfm0: Transform; stab: StringTableRef]
+  SchCol = tuple[name: string; inCode: char; f: File; xfm: Transform;
+                 kout: IOKind; count: int]  # A parsed schema column
+
+proc parseCol(scols: seq[string], ss: var SchState): SchCol =
+  if scols.len < 3: raise newException(ValueError,&"{ss.schema}:{ss.lno} < 3 cols")
+  result.name = scols[0]
+  result.kout = ioCodeK(scols[1][^1])
+  result.inCode = scols[2][0]
+  result.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
+  if ss.doZip:                           # stdout zipped mode
+    result.f = stdout
+    if ss.outBase.len > 0: ss.outBase.add ss.nameSep
+    ss.outBase.add scols[0]
+    ss.outType.add scols[1]
+  else:
+    let path = scols[0] & ".N" & scols[1]
+    if not ss.onlyOut: result.f = open(path, path.maybeAppend)
+  if scols.len > 3:
+    if not ss.onlyOut:
+      if scols[3].startsWith("@@"):
+        if ss.xfm0 == nil:
+          ss.xfm0 = initXfm(result.inCode, result.kout, "@" & ss.shrd)
+          result.xfm = ss.xfm0
+        else: result.xfm = ss.xfm0
+      else: result.xfm = initXfm(result.inCode, result.kout, scols[3] % ss.stab)
+  elif result.inCode == 'x':
+    raise newException(ValueError, "'x' but no tranform arguments")
+
+proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
+                                                                seq[SchCol]) =
+  result[0].schema  = schema
+  result[0].shrd    = "strings"
+  result[0].stab    = {"REPS": reps}.newStringTable
+  result[0].shrd    = "strings"
+  result[0].nameSep = nameSep
+  result[0].onlyOut = onlyOut
+  result[0].nHdr    = 1
+  result[0].mxLg    = 100
+  let sep = initSep("white")
+  var scols: seq[string]
+  var didCd = false
+  for line in lines(schema):
+    if not didCd and dir.len > 0:       # Done in loop so users need no special
+      discard existsOrCreateDir(dir)    #..instructions Re: schema path.
+      setCurrentDir dir; didCd = true
+    inc result[0].lno
+    let line = line.commentStrip
+    let mcols = line.split({'=', ':'})  # parse schema-level arg
+    let sarg = if mcols.len > 1: mcols[1] else: ""
+    if   line.len == 0: continue
+    elif line.startsWith("--preproc"): result[0].pp    = sarg
+    elif line.startsWith("--delim"  ): result[0].dlm  = argcvt.unescape(sarg)[0]
+    elif line.startsWith("--nHeader"): result[0].nHdr  = parseInt(sarg)
+    elif line.startsWith("--maxLog" ): result[0].mxLg  = parseInt(sarg)
+    elif line.startsWith("--zip"    ): result[0].doZip = true
+#   elif line.startsWith("--dotfs"  ): result[0].dotfs = true #XXX auto dotfiles
+    elif line.startsWith("--shared" ): result[0].shrd  = sarg % result[0].stab
+    else:
+      sep.split(line, scols, n=4)
+      if scols.len > 0 and scols[0] != "_": result[1].add scols.parseCol(result[0])
+
 proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
              SVs: Strings): int =
   ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
@@ -1149,84 +1214,22 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
   ##   Note  i  x  @@               #..with maybe a shared common string repo.
   ## create/appends *qtyPxIdDateCityNote.Nif8C2si*, *dates.N9c*, *cities.Dn*
   ## and length-prefixed *strings.LS*.  $REPS or ${REPS} is interpolated into
-  ## both the argument of --shared and post `x` schema columns.
-  type Col = tuple[name: string; inCode: char; f: File;
-                   xfm: Transform; kout: IOKind; count: int]
-  if schema.len == 0: erru "Cannot infer schema; Provide one\n"; return 1
-  let stab = {"REPS": reps}.newStringTable
-  let sep = initSep("white")
-  var scols: seq[string]
-  var cols: seq[Col]
-  var pp, outBase, outType: string
-  var shrd = "strings"
-  var dlm  = '\0'
-  var nHdr = 1
-  var mxLg = 100
-  var doZip: bool
-  var xfm0: Transform = nil
-  var slno = 0
-  var didDir = false                    # Flag to only do mkdir/chdir once
-  var oldDir = getCurrentDir()          # For restoring if called as a library
-  for line in lines(schema):
-    if dir.len > 0 and not didDir:      # Done here so users need no special
-      discard existsOrCreateDir(dir)    #..instructions Re: schema path.
-      try: setCurrentDir dir
-      except: erru &"Cannot cd to {dir}!\n"; return 1
-      didDir = true
-    inc slno
-    var c: Col                          # in loop re-inits each time
-    let line = line.commentStrip
-    let mcols = line.split({'=', ':'})  # parse schema-level arg
-    let sarg = if mcols.len > 1: mcols[1] else: ""
-    if   line.len == 0: continue
-    elif line.startsWith("--preproc"): pp    = sarg
-    elif line.startsWith("--delim"  ): dlm   = argcvt.unescape(sarg)[0]
-    elif line.startsWith("--nHeader"): nHdr  = parseInt(sarg)
-    elif line.startsWith("--maxLog" ): mxLg  = parseInt(sarg)
-    elif line.startsWith("--zip"    ): doZip = true
-#   elif line.startsWith("--dotfs"  ): dotfs = true #XXX auto dot files
-    elif line.startsWith("--shared" ): shrd  = sarg % stab
-    else:
-      sep.split(line, scols, n=4)
-      if scols.len > 0:
-        if scols[0] != "_":
-          if scols.len < 3:
-            raise newException(ValueError,&"{schema}:{slno} < 3 cols")
-          c.name = scols[0]
-          c.kout = ioCodeK(scols[1][^1])
-          c.inCode = scols[2][0]
-          c.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
-          if doZip:                     # stdout zipped mode
-            c.f = stdout
-            if outBase.len > 0: outBase.add nameSep
-            outBase.add scols[0]
-            outType.add scols[1]
-          else:
-            let path = scols[0] & ".N" & scols[1]
-            if not onlyOut: c.f = open(path, path.maybeAppend)
-          if scols.len > 3:
-            if not onlyOut:
-              if scols[3].startsWith("@@"):
-                if xfm0 == nil:
-                  xfm0 = initXfm(c.inCode, c.kout, "@" & shrd)
-                  c.xfm = xfm0
-                else: c.xfm = xfm0
-              else: c.xfm = initXfm(c.inCode, c.kout, scols[3] % stab)
-          elif c.inCode == 'x':
-            raise newException(ValueError, "'x' but no tranform arguments")
-        cols.add c
-  if slno == 0: erru "Empty schema; Provide a real one\n"; return 1
+  ## both the argument of --shared and post `x` schema columns. Since this makes
+  ## & CHDIRs into `dir` if non-empty, library callers may want save & restore.
+  if schema.len == 0: erru "Provide a schema maybe from `inferT`\n"; return 1
+  let (ss, cols) = parseSch(schema, nameSep, dir, reps, onlyOut)
+  if ss.lno == 0: erru "Empty schema; Provide a real one\n"; return 1
   if onlyOut:
-    if doZip: outu outBase, ".N", outType, '\n'
+    if ss.doZip: outu ss.outBase, ".N", ss.outType, '\n'
     else: erru &"--onlyOut makes sense only for --zip schemas\n"
     return
   for path in SVs:                      # Now the actual parsing part!
     var lno = 1
-    let inpFile = pp.popenr(path)
+    let inpFile = ss.pp.popenr(path)
     for row in lines(inpFile):
-      if lno > nHdr:                    # skip however many header rows
+      if lno > ss.nHdr:                 # skip however many header rows
         var cix = 0
-        for inp in row.split(dlm):
+        for inp in row.split(ss.dlm):
           if cix == cols.len:
             erru &"{path}:{lno}: ignoring columns past {cols.len + 1}\n"
             break
@@ -1235,14 +1238,11 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
             inp.parse path, lno, c.name, c.inCode, c.kout, c.f, c.xfm, c.count
           cix.inc
       lno.inc
-    discard inpFile.pclose(pp)
+    discard inpFile.pclose(ss.pp)
   for c in cols:
-    if c.xfm != xfm0 and c.xfm != nil: c.xfm nil, "", 0 # close `Transform`s
+    if c.xfm != ss.xfm0 and c.xfm != nil: c.xfm nil, "", 0 # close `Transform`s
     if c.f != nil and c.f != stdout: c.f.close
-  if xfm0 != nil: xfm0(nil, "", 0)      # close common `Transform`
-  if dir.len > 0:                       # Restore; if called as library API
-    try: setCurrentDir oldDir
-    except: erru &"Cannot revert cd back to {oldDir}!\n"; return 1
+  if ss.xfm0 != nil: ss.xfm0 nil, "", 0 # close common `Transform`
 
 proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
          iType='i', fType='f', sType="i.Dn", guess="f\tf", SVs: Strings): int =
