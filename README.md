@@ -12,11 +12,11 @@ are signed.  That's it.  The full syntax is one or more:
 ```
 where
 ```
-  c: signed char    C: unsigned char
-  s: signed short   S: unsigned short
-  i: signed int     I: unsigned int
-  l: signed long    L: unsigned long
-  f: float          d: double           g: long double
+  c: signed (c)har    C: unsigned (C)har
+  s: signed (s)hort   S: unsigned (S)hort
+  i: signed (i)nt     I: unsigned (I)nt
+  l: signed (l)ong    L: unsigned (L)ong
+  f: (f)loat          d: (d)ouble          g: lon(g) double
 ```
 The number of rows is inferred from the file size (but could be a length-prefix
 in some message buffer context).  Some examples:
