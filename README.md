@@ -5,8 +5,8 @@ binary files a terse syntax inspired by but simpler than various Perl/Python
 and easy to remember (I think) because it is derived from the C programming
 language family.  Most programmers have those basic "CPU types" memorized.
 With the lone exception of long double (an already exceptional thing), the type
-code is just the first letter of each C type.  Capitals are unsigned while
-lowercase are signed.  That's it.  The full syntax is one or more:
+code is just the first letter of each C type.  Uppercase are unsigned; Lowercase
+are signed.  That's it.  The full syntax is one or more:
 ```
   [<COUNT[,..]>]<c|C|s|S|i|I|l|L|f|d|g>
 ```
