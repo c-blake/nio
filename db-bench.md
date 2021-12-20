@@ -32,13 +32,7 @@ horrible.)
 ```sh
 nio f -s *.sc G1_1e8_1e2_0_0.csv
 ```
-This takes about 130 seconds & 130 MiB for me, but could probably be brought
-down to about 60% of that time with some re-used temporary variables rather than
-malloc-free cycles in the parser, but the bigger speed-up would be parallelizing
-the parsing which could probably yield single digit seconds.  Then all you have
-is a lot of L1 resident hash tables managing the string -> dense integers ids.
-Note that performance-wise it is virtually always better to do this hashing
-exactly once, at induction of data into your system.
+This takes about 130 seconds & 130 MiB for me.
 
 Anyway, you get:
 ```sh
@@ -175,3 +169,26 @@ fast as programmer-user optimized analysis pipelines.  The question is more "how
 much" you lose -- 2X/5X/50X/1000X -- not "whether".  So, if data is big enough
 to make performance a real concern, the answer to me is to make this programming
 as easy as it can be which is in many ways a simpler problem.
+
+### Double Extra Credit: Parallel Parses
+
+The bulk of the calculation is clearly parsing/loading the data.  Now, maybe the
+data will be used many times and the one-time cost at induction into your system
+is no big deal.  Or maybe, as in this demo, it dominates for a one/few times
+calculation and you'd like to speed it up.
+
+This is harder than it might first appear.  It's easy to spit an input file and
+search for newlines to create independent segments (assuming newlines are a
+reliable record delimiter).  BUT interning string data into dense ids (to avoid
+hashing in the group loop) does not lend itself to either reliable lock-free or
+efficient post facto merge methods.
+
+Data statistics of this particular benchmark are misleading here.  Almost all
+novel ids are introduced in a very small fraction of the data set.  So, the lock
+to update hash table(s) will almost never be needed or contended.  This may be a
+pretty unrepresentative situation.
+
+To speed up the situation more generally, you must shard the *whole calculation*
+and merge the small (by presumption) final answers.  This, however, fixes the
+amount of parallelism in your parsed data repository making it not scale up to
+"bigger computers".
