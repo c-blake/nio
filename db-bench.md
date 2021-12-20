@@ -32,9 +32,7 @@ horrible.)
 ```sh
 nio f -s *.sc G1_1e8_1e2_0_0.csv
 ```
-This takes about 130 seconds & 130 MiB for me.
-
-Anyway, you get:
+This takes about 130 seconds & 130 MiB for me.  You get:
 ```sh
 ls -s
 total 8601384
