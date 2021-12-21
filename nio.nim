@@ -1158,7 +1158,7 @@ proc parseCol(scols: seq[string], ss: var SchState): SchCol =
         else: result.xfm = ss.xfm0
       else: result.xfm = initXfm(result.inCode, result.kout, scols[3] % ss.stab)
   elif result.inCode == 'x':
-    raise newException(ValueError, "'x' but no tranform arguments")
+    raise newException(ValueError, "'x' but no transform arguments")
 
 proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
                                                                 seq[SchCol]) =
@@ -1173,6 +1173,7 @@ proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
   let sep = initSep("white")
   var scols: seq[string]
   var didCd = false
+  var ign: SchCol
   for line in lines(schema):
     if not didCd and dir.len > 0:       # Done in loop so users need no special
       discard existsOrCreateDir(dir)    #..instructions Re: schema path.
@@ -1191,7 +1192,8 @@ proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
     elif line.startsWith("--shared" ): result[0].shrd  = sarg % result[0].stab
     else:
       sep.split(line, scols, n=4)
-      if scols.len > 0 and scols[0] != "_": result[1].add scols.parseCol(result[0])
+      if scols.len > 0:
+        result[1].add if scols[0] == "_": ign else: scols.parseCol(result[0])
 
 proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
              SVs: Strings): int =
