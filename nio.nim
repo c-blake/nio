@@ -1912,7 +1912,7 @@ when isMainModule:
                    "names" : "names for each column",
                    "lang"  : "programming language"}, echoResult=true],
     [inferT, help={"SVs"     : "[?SVs: input paths; empty|\"-\"=stdin]",
-                   "ext"     : "parsing schema written to inp.`suffix`",
+                   "ext"     : "parsing schema written to inp.`ext`",
                    "pre"     : "use `popen(pre%inp)` instead of `open(inp)`",
                    "delim"   : "strict TSV field delimiter",
                    "nHdr"    : "number of header lines (1st must be name)",
