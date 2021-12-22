@@ -785,6 +785,9 @@ proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
       if spec.precision != -1 and spec.precision < runeLen(value):
         setLen(value, runeOffset(value, spec.precision))
       result.add alignString(value, spec.minimumWidth, spec.align, spec.fill)
+    elif k.isSigned:
+      let value = cast[int64](value)
+      result.add formatInt(value, (if radix == 0: 16 else: radix), spec)
     else:
       result.add formatInt(value, (if radix == 0: 16 else: radix), spec)
 
