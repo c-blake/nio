@@ -16,30 +16,29 @@ $ Rscript \_data/groupby-datagen.R 1e8 1e2 0 0
 
 Will want id strings to be dense integer labels; So use .N16C strings
 ```sh
-nio i -si.N16C -d, G1_1e8_1e2_0_0.csv
+head -n20000 G1_1e8_1e2_0_0.csv|nio i -si.N16C -d, ''
+mv .sc G1.sc
 ```
-This takes about 75 seconds & 6 MiB RSS for me.  Value fields are floats, not
-auto-inferred integers & `float32` for a parsed value is probably good enough.
-So manually edit the v[123] to be 'f f' with:
+Value fields are floats, not auto-inferred integers & `float32` for a parsed
+value is probably good enough.  So manually edit the v[123] to be 'f f' with:
 ```sh
-sed -i 's/^v\(.*\)i<TAB>d/v\1f<TAB>f/' *.sc # decimal ints->float32's
+t=$(echo a|tr a \\t)
+sed -i "s/^v\\(.*\\)i${t}d/v\1f${t}f/" G1.sc # decimal ints->float32's
 ```
-(In the above <TAB> is a hard-tab character...Yeah, yeah. Ctrl-V is not so
-horrible.)
 
 ### Step 3: Run the parser to get some binary column files
 
 ```sh
-nio f -s *.sc G1_1e8_1e2_0_0.csv
+nio f -s G1.sc G1_1e8_1e2_0_0.csv
 ```
-This takes about 130 seconds & 130 MiB for me.  You get:
+This takes about 64 seconds for me yielding:
 ```sh
 ls -s
 total 8601384
-5070092 G1_1e8_1e2_0_0.csv           4 id2.N16C   390628 id4.Ni   390628 v2.Nf
-      4 G1_1e8_1e2_0_0.csv.sc   390628 id2.Ni     390628 id5.Ni   390628 v3.Nf
-      4 id1.N16C                 15628 id3.N16C   390628 id6.Ni
- 390628 id1.Ni                  390628 id3.Ni     390628 v1.Nf
+5070092 G1_1e8_1e2_0_0.csv      4 id2.N16C  390628 id4.Ni  390628 v2.Nf
+      4 G1.sc              390628 id2.Ni    390628 id5.Ni  390628 v3.Nf
+      4 id1.N16C            15628 id3.N16C  390628 id6.Ni
+ 390628 id1.Ni             390628 id3.Ni    390628 v1.Nf
 ```
 
 ### Step 4: Run a "simple" query
@@ -57,7 +56,7 @@ compile first and then run that, but this is less "REPL/ad hoc", naturally.
 ### Step 5: Now time it more "for real" since "benchmark" sets people off:
 
 ```sh
-nim c --cc:gcc -t:-ffast-math -d:danger /tmp/q1C4.nim
+nim c --gc:arc --cc:gcc -t:-ffast-math -d:release -d:danger /tmp/q1C4.nim
 /usr/bin/time /tmp/q1C4 > out
 0.08user 0.03system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 783212maxresident)k
 0inputs+0outputs (0major+12329minor)pagefaults 0swaps
@@ -178,15 +177,39 @@ calculation and you'd like to speed it up.
 This is harder than it might first appear.  It's easy to spit an input file and
 search for newlines to create independent segments (assuming newlines are a
 reliable record delimiter).  BUT interning string data into dense ids (to avoid
-hashing in the group loop) does not lend itself to either reliable lock-free or
+hashing in the group loop) does not lend itself to either reliable unlocked or
 efficient post facto merge methods.
 
 Data statistics of this particular benchmark are misleading here.  Almost all
-novel ids are introduced in a very small fraction of the data set.  So, the lock
-to update hash table(s) will almost never be needed or contended.  This may be a
+novel ids are introduced in a very small fraction of the data set.  So, locks
+to update hash tables will almost never be needed/contended.  This may be a
 pretty unrepresentative situation.
 
 To speed up the situation more generally, you must shard the *whole calculation*
 and merge the small (by presumption) final answers.  This, however, fixes the
 amount of parallelism in your parsed data repository making it not scale up to
-"bigger computers".
+"bigger computers".  Here is an example shell script doing this:
+```
+#!/bin/sh
+data="G1_1e8_1e2_0_0.csv" #prof PS4='+$EPOCHREALTIME ' sh -x pgby
+head -n10000 G1_1e8_1e2_0_0.csv|nio i -si.N16C -d, '' #mk schema
+t=$(echo a|tr a \\t)
+sed -i "s/^v\\(.*\\)i${t}d/v\1f${t}f/" .sc  # adjust schema
+sed -i "s/^id[2-6].*/_${t}ignore/" .sc      # only parse needed
+# Only ~0.010 sec up to here                # Now: Actual work
+part -i1 -n0 $data                          # partition 1.12 sec
+
+for d in 0*; do (cd $d; nio f -s ../.sc $data) & done
+wait  # 6.53 sec from 1st cd                # parallel parse
+
+nio q -b'var g=grp[array[16,char],float]("id1.N16C")' \
+      'g.up id1,`+=`,v1' -e'echo g' id1.Ni v1.Nf -r=off -oq
+nim c --verbosity:0 --cc:gcc -d:release -d:danger /tmp/q.nim
+# 2.93 sec to do optimized build
+
+for d in 0*; do (cd $d; /tmp/q >out) & done
+wait                                        # parallel groupBy
+# Combine results; About 0.002 sec more
+cat 0*/out | awk '{c[$1]+=$2} END{for(k in c)print k,c[k]}' >out
+: dummy # 0.068 sec total from 1st cd       # get last timestamp
+```
