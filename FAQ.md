@@ -134,7 +134,7 @@ of work is needed?  Data analysis is usually not like "emacs" where you can have
 some very long running program loaded up in a costly way just once.  Imposing
 such restrictions to acquire performance seems quite unnatural.  As explained
 in the readme these costs can be factors of 100s..1000s.  Such ratios may well
-be the diference between "fitting" on one fast server vs needing a big cluster.
+be the difference between "fitting" on one fast server vs needing a big cluster.
 
 ### 8 - Why not a relational database like SQLite/MySql/etc.?
 
@@ -323,7 +323,7 @@ If one can ensure sort order on the repo all in-set string compares can even be
 reduced to integer compares.  That is rather costly requiring either another
 level of indirection (say via a B-tree which itself might have a level or three)
 or a batch sort with a re-org of all the pointers which is only practical for
-truly static data.  Since NIO is not a string-focused facility, this is unikely
+truly static data.  Since NIO is not a string-focused facility, this is unlikely
 to be popular feature anyway.
 
 ### 19 What about "schema versioning"/evolution?
