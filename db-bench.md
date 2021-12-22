@@ -196,11 +196,12 @@ head -n10000 G1_1e8_1e2_0_0.csv|nio i -si.N16C -d, '' #mk schema
 t=$(echo a|tr a \\t)
 sed -i "s/^v\\(.*\\)i${t}d/v\1f${t}f/" .sc  # adjust schema
 sed -i "s/^id[2-6].*/_${t}ignore/" .sc      # only parse needed
+sed -i "s/^v[2-3].*/_${t}ignore/" .sc       # only parse needed
 # Only ~0.010 sec up to here                # Now: Actual work
 part -i1 -n0 $data                          # partition 1.12 sec
 
 for d in 0*; do (cd $d; nio f -s ../.sc $data) & done
-wait  # 6.53 sec from 1st cd                # parallel parse
+wait  # 4.93 sec from 1st cd                # parallel parse
 
 nio q -b'var g=grp[array[16,char],float]("id1.N16C")' \
       'g.up id1,`+=`,v1' -e'echo g' id1.Ni v1.Nf -r=off -oq
@@ -213,3 +214,7 @@ wait                                        # parallel groupBy
 cat 0*/out | awk '{c[$1]+=$2} END{for(k in c)print k,c[k]}' >out
 : dummy # 0.068 sec total from 1st cd       # get last timestamp
 ```
+This reduces the "load" time to under 5 seconds.  Meanwhile, using the same
+trimmed schema parsing only `id1` & `v1` takes about 16 seconds.  So, parallel
+scale up is again about 3x on 4 cores.  Also, again we get a rather large "it
+all just depends on what you *really* need and *when*" factor.
