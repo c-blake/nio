@@ -4,7 +4,7 @@
 (echo 1.23; echo 4.56; echo 7.89) | nio l -if -of > kk.Nf
 nio p kk.Nf
 
-(echo 123; echo 456) | nio l -id -oi > jj.Ni
+(echo 123; echo -456) | nio l -id -oi > jj.Ni
 nio p jj.Ni
 
 ln -s jj.Ni jj.N2i
