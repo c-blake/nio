@@ -185,6 +185,13 @@ novel ids are introduced in a very small fraction of the data set.  So, locks
 to update hash tables will almost never be needed/contended.  This may be a
 pretty unrepresentative situation.
 
+Another aspect of the numbers on the linked web page is that an E5-2630 v4 CPU
+has 25 MB of L3 cache - enough to perhaps just hold all 3 of the string hash
+tables needed for parsing.  My test i7-6700k test system has only 8MB of cache.
+Better measurement science would pick fully in and fully out of L3 cache entropy
+scales on a variety of CPUs to eliminate a 10x latency hit on a slow part of the
+parsing, but then this benchmark is not supposed to be "about parsing", either.
+
 To speed up the situation more generally, you must shard the *whole calculation*
 and merge the small (by presumption) final answers.  This, however, fixes the
 amount of parallelism in your parsed data repository making it not scale up to
@@ -215,6 +222,7 @@ cat 0*/out | awk '{c[$1]+=$2} END{for(k in c)print k,c[k]}' >out
 : dummy # 0.068 sec total from 1st cd       # get last timestamp
 ```
 This reduces the "load" time to under 5 seconds.  Meanwhile, using the same
-trimmed schema parsing only `id1` & `v1` takes about 16 seconds.  So, parallel
-scale up is again about 3x on 4 cores.  Also, again we get a rather large "it
-all just depends on what you *really* need and *when*" factor.
+trimmed schema parsing only `id1` & `v1` takes about 16 seconds - also 4x faster
+without compromising the later queries (except by not having all the data).  So,
+parallel scale up is again about 3x on 4 cores.  Also, again we get a rather
+large "it all just depends on what you *really* need and *when*" factor.
