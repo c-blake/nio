@@ -1060,41 +1060,43 @@ proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
 import parseutils
 type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
-proc parse(inp, pathName: string; lno: int; colName: string; inCode: char;
-           kout: IOKind; outp=stdout, xfm: Transform, cnt=1) {.inline.} =
-  let inp = su.strip(inp)
-  var nS: int                         # widest types for number parsing
+proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
+           kout: IOKind; xfm: Transform; cnt=1; outp=stdout) {.inline.} =
+  let s = s.strip                       #XXX could be conditional
+  var nS, eoNum: int                    # widest types for number parsing
   var nU: uint
   var nF: float
   var obuf: array[16, char]             # actual output buffer
-  template p(fn, n, k, low, high) =
-    if inp.fn(n) != inp.len:
-      raise newException(IOError,
-            &"stdin:{lno}: col:{colName} ic:{inCode} oc:{kout} !=~ \"{inp}\"")
-    let lo = type(n)(low[kout.int shr 1])
-    let hi = type(n)(high[kout.int shr 1])
-    if n < lo: erru &"{pathName}:{lno} \"{inp}\" underflows\n"; n = lo
-    if n > hi: erru &"{pathName}:{lno} \"{inp}\" overflows\n";  n = hi
-    convert kout, k, obuf[0].addr, n.addr
 
-  if inp.len == 0:                      # empty string ==> N/A
-    setNA kout, obuf[0].addr
-    outp.nurite kout, obuf[0].addr
+  template p(fn, n, k, low, high) =
+    n = cast[type(n)](s.fn(eoNum))
+    if eoNum == s.len:
+      let lo = type(n)(low[kout.int shr 1])
+      let hi = type(n)(high[kout.int shr 1])
+      if n < lo: erru &"{pathName}:{lno} \"{$s}\" underflows\n"; n = lo
+      if n > hi: erru &"{pathName}:{lno} \"{$s}\" overflows\n" ; n = hi
+      convert kout, k, obuf[0].addr, n.addr
+    else:
+      setNA kout, obuf[0].addr
+      erru &"stdin:{lno}: col:{colName} ic:{inCode} oc:{kout} !=~ \"{$s}\""
+
+  if s.len == 0:                        # empty string ==> N/A
+    setNA kout, obuf[0].addr; outp.nurite kout, obuf[0].addr
     return
   case inCode
   of 'c':
-    let pc = padClip(inp, cnt)
+    let pc = padClip($s, cnt)
     discard outp.uriteBuffer(pc[0].unsafeAddr, cnt)
     return
   of 'b': (if kout.isSigned: p(parseBin,nS,lIk,lowS,highS) else: p(parseBin ,nU,LIk,lowU,highU))
   of 'o': (if kout.isSigned: p(parseOct,nS,lIk,lowS,highS) else: p(parseOct ,nU,LIk,lowU,highU))
-  of 'd': (if kout.isSigned: p(parseInt,nS,lIk,lowS,highS) else: p(parseUInt,nU,LIk,lowU,highU))
+  of 'd': (if kout.isSigned: p(parseInt,nS,lIk,lowS,highS) else: p(parseInt ,nU,LIk,lowU,highU))
   of 'h': (if kout.isSigned: p(parseHex,nS,lIk,lowS,highS) else: p(parseHex ,nU,LIk,lowU,highU))
   of 'f':
-    if inp.parseFloat(nF) != inp.len:
-      raise newException(IOError, &"stdin:{lno}: bad fmt \"{inp}\"")
-    convert kout, dIk, obuf[0].addr, nF.addr
-  of 'x': xfm obuf[0].addr, inp, lno
+    nF = s.parseFloat(eoNum)
+    if eoNum == s.len: convert kout, dIk, obuf[0].addr, nF.addr
+    else: setNA kout, obuf[0].addr; erru &"stdin:{lno}: bad fmt \"{$s}\""
+  of 'x': xfm obuf[0].addr, $s, lno
   else: raise newException(IOError, &"{inCode}: inCode not in [bodhfx]")
   outp.nurite kout, obuf[0].addr
 
@@ -1114,10 +1116,9 @@ proc load1*(inCode, oCode: char; xform="", count=1): int =
   let kout = ioCodeK(oCode)
   var xfm: Transform
   if inCode == 'x': xfm = initXfm(inCode, kout, xform)
-  var inp: string
   var lno = 1
-  while stdin.readLine(inp):
-    inp.parse "stdin", lno, "COL0", inCode, kout, stdout, xfm, count
+  for (cs, n) in getDelims(stdin):
+    MSlice(mem: cs, len: n).parse "stdin",lno, "COL0", inCode, kout, xfm, count
     lno.inc
   if inCode == 'x': xfm nil, "", 0      # tell Transform to close
 
@@ -1228,16 +1229,16 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
   for path in SVs:                      # Now the actual parsing part!
     var lno = 1
     let inpFile = ss.pp.popenr(path)
-    for row in lines(inpFile):
+    for (cs, n) in getDelims(inpFile):
       if lno > ss.nHdr:                 # skip however many header rows
         var cix = 0
-        for inp in row.split(ss.dlm):
+        for s in MSlice(mem: cs, len: n).mSlices(ss.dlm):
           if cix == cols.len:
             erru &"{path}:{lno}: ignoring columns past {cols.len + 1}\n"
             break
           let c = cols[cix]
           if c.f != nil:
-            inp.parse path, lno, c.name, c.inCode, c.kout, c.f, c.xfm, c.count
+            s.parse path, lno, c.name, c.inCode, c.kout, c.xfm, c.count, c.f
           cix.inc
       lno.inc
     discard inpFile.pclose(ss.pp)
