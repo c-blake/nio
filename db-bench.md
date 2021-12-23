@@ -5,13 +5,22 @@ https://h2oai.github.io/db-benchmark/ and we just replicate that in nio.  (You
 have to click on the 5GB button to see comparable numbers, but on a different
 machine.)
 
-### Step 1: Make a CSV data set
+### Step 1: Generate a CSV data set
 
-install data.table in R
+Either install data.table in R with R CMD INSTALL data.table and then
 ```
 $ git clone https://github.com/h2oai/db-benchmark
 $ Rscript \_data/groupby-datagen.R 1e8 1e2 0 0
 ```
+OR more simply (& more efficiently - under 10 seconds for me):
+```
+cd /dev/shm
+nim r -d:release -d:danger $nio/demo/gbyGen 1e8 1e2 0 0 0
+cat 0* > G1_1e8_1e2_0_0.csv
+rm 0*
+```
+where nio=<wherever nio source is cloned into>.
+
 ### Step 2: Generate a fromSV parsing schema
 
 Will want id strings to be dense integer labels; So use .N16C strings
