@@ -1230,9 +1230,10 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
     else: erru &"--onlyOut makes sense only for --zip schemas\n"
     return
   for path in SVs:                      # Now the actual parsing part!
-    var lno = 1
+    var lno = 0
     let inpFile = ss.pp.popenr(path)
     for (cs, n) in getDelims(inpFile):
+      lno.inc
       if lno > ss.nHdr:                 # skip however many header rows
         var cix = 0
         for s in MSlice(mem: cs, len: n).mSlices(ss.dlm):
@@ -1243,7 +1244,6 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
           if c.f != nil:
             s.parse path, lno, c.name, c.inCode, c.kout, c.xfm, c.count, c.f
           cix.inc
-      lno.inc
     discard inpFile.pclose(ss.pp)
   for c in cols:
     if c.xfm != ss.xfm0 and c.xfm != nil: c.xfm nil, "", 0 # close `Transform`s
