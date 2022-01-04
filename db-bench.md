@@ -82,8 +82,8 @@ even w/out parallelization, BUT it's already faster by a large margin than any
 numbers I see on the results portion of that db-bench website.
 
 For comparison, pandas-1.3.5 on the same machine takes ~4X longer at 0.45 sec {
-not nearly 3 sec.  It seems pandas may have seen substantial speed ups in the
-past 2 yrs. } No, I do not have patience to try to learn how to install and
+not nearly 3 sec like the above link.  It seems pandas may have seen big speed
+ups in the past 2 yrs. } No, I do not have patience to learn how to install and
 configure the many other alternatives, but I am happy to try to help anyone
 reproduce *this* addition. :-)
 
@@ -207,7 +207,7 @@ amount of parallelism in your parsed data repository making it not scale up to
 "bigger computers".  Here is an example shell script doing this:
 ```
 #!/bin/sh
-data="G1_1e8_1e2_0_0.csv" #prof PS4='+$EPOCHREALTIME ' sh -x pgby
+data="G1_1e8_1e2_0_0.csv" #prof PS4='+$EPOCHREALTIME ' sh -x gbyP
 head -n10000 G1_1e8_1e2_0_0.csv|nio i -si.N16C -d, '' #mk schema
 t=$(echo a|tr a \\t)
 sed -i "s/^v\\(.*\\)i${t}d/v\1f${t}f/" .sc  # adjust schema
@@ -231,7 +231,9 @@ cat 0*/out | awk '{c[$1]+=$2} END{for(k in c)print k,c[k]}' >out
 : dummy # 0.068 sec total from 1st cd       # get last timestamp
 ```
 This reduces the "load" time to under 5 seconds.  Meanwhile, using the same
-trimmed schema parsing only `id1` & `v1` takes about 16 seconds - also 4x faster
-without compromising the later queries (except by not having all the data).  So,
-parallel scale up is again about 3x on 4 cores.  Also, again we get a rather
-large "it all just depends on what you *really* need and *when*" factor.
+trimmed schema parsing only `id1` & `v1` 1-core takes about 16 seconds - also 4x
+faster without forcing later sharded queries.  So, parallel scale up is again
+~3x on 4 cores.  68 millisec is >2x faster than the fastest 5GB groupby with
+Polars (140 ms on machine with 2.5x more cores!).  We again get a rather large
+"it all just depends on what you *really* need *when*" factor { maybe 5X here if
+we apply BS-scaling to say 2x\*2.5x. ;-) }
