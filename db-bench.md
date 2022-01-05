@@ -70,7 +70,7 @@ nim c --gc:arc --cc:gcc -t:-ffast-math -d:release -d:danger /tmp/q1C4.nim
 0.08user 0.03system 0:00.12elapsed 100%CPU (0avgtext+0avgdata 783212maxresident)k
 0inputs+0outputs (0major+12329minor)pagefaults 0swaps
 ```
-Note that 783 MiB is much less than 5 GiB because only two 390 MiB iles need be
+Note that 783 MiB is much less than 5 GiB because only two 390 MiB files need be
 paged in.  The fact that all pagefaults are minor tells us this was DRAM only.
 The fact that there were 12329 (\*4=49316) and not 783212 (./4=195803) tells us
 the kernel was paging in about 4 pages at a time.  That might be boostable with
@@ -169,12 +169,13 @@ In this specific case, if the system can observe enough free storage, it may be
 feasible to save the answer as you loop, BUT even this is not always possible,
 e.g. under ENOSPC conditions.  So, maybe you grow a toggle - "fail on ENOSPC" |
 "fallback to slower".  These toggles will then proliferate like rabbits and need
-to be specified and be no easier to understand than the code itself, IMO.  For
-reasons like this, I believe that "general purpose" DBs can never truly be as
-fast as programmer-user optimized analysis pipelines.  The question is more "how
-much" you lose -- 2X/5X/50X/1000X -- not "whether".  So, if data is big enough
-to make performance a real concern, the answer to me is to make this programming
-as easy as it can be which is in many ways a simpler problem.
+to be specified and be no easier to understand than the code itself, IMO.
+
+For reasons like this, I believe that "general purpose" DBs can never truly be
+as fast as programmer-user optimized analysis pipelines.  The question is more
+"how much" you lose -- 2X/5X/50X/1000X -- not "whether".  So, if data is big
+enough to make performance a real concern, the answer to me is to make this
+programming as easy as it can be which is in many ways a simpler problem.
 
 ### Double Extra Credit: Parallel Parses
 
