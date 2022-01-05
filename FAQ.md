@@ -405,13 +405,14 @@ parser, `nio.initIORow`, is like 25 lines of non-comment Nim.
 
 The missing value|N/A convention is perhaps less critical in a first pass.  A
 full suite of tools like loaders/parsers/printers/zip/rip is not necessary *if*
-you are merely willing to compile/learn how to use the Nim nio program here.
+you are merely willing to compile/learn how to use the Nim `nio` CLI tool.
 
-Once you have a basic access libraries you could write n-foo CL tools (or libs)
-in a dozen PLs if you want..n-awk, n-plot, n-histo, etc.  As already mentioned,
-the main use case is custom calculations over big data where all you really need
-is the row stream/mmap interfaces and your own code which may need very little
-generality.  OTOH, maybe there are dozens of general things to do.  Have at it.
+Once you have a basic access libraries you could write n-foo CL tools OR libs in
+a dozen PLs if you want..n-awk, n-plot, n-histo, `import nregress`, etc.  As
+already mentioned, the main use case is custom calculations over big data where
+all you really need is the row stream/mmap interfaces and your own code which is
+often very special purpose.  OTOH, maybe there are dozens of general things to
+do.  Have at it!
 
 NIO is so simple/easy that its main value to the world might not be *any* one
 implementation, tool, or library, but merely some standard suffix syntax/naming
