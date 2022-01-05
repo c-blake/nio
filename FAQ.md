@@ -165,8 +165,9 @@ just use the existing FS?  Why not fully "save the answer" so almost no re-doing
 of work is needed?  Data analysis is usually not like "emacs" where you can have
 some very long running program loaded up in a costly way just once.  Imposing
 such restrictions to acquire performance seems quite unnatural.  As explained
-in the readme these costs can be factors of 100s..1000s.  Such ratios may well
-be the difference between "fitting" on one fast server vs needing a big cluster.
+in the readme these costs can be factors of 100s..1000s, even 10s of thousands.
+Such ratios may well be the difference between "fitting" on one fast server or
+even a laptop vs needing a huge cluster/distributed compute framework.
 
 ### 8: Why not a relational database like SQLite/MySql/etc.?
 
