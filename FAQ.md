@@ -389,12 +389,12 @@ building a DB in such a way that preserves "no compromise IO" by programmers
 willing to put in some effort.  E.g., query language-like functionality can be
 layered on top, and more transactional ideas could be stuffed in underneath,
 hopefully optionally to preserve efficiency.  NIO is just a supplementary point
-in the design space rather than an outright replacement.  Not appealing to all
-in all cases is just another way of saying "Yup.  It's software." ;)
+in the design space rather than an outright replacement.  "Not appealing to all
+in all cases" is just another way of saying "Yup.  It's software." ;)
 
 In any case, my ideas here have received conservatively under 0.0001% of the
-man hours and monetary support of usability work SQL has received.  So, you
-know, maybe they compete pretty favorably considering this? ;)
+man hours, monetary support, advertising, and usability work SQL has received.
+So, you know, maybe they compete pretty favorably considering this? ;)
 
 ### 21: Ok.  I am sold, BUT what about MY programming language?
 
