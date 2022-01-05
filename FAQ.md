@@ -266,8 +266,11 @@ with the concrete types.)
 
 If you are packing that many fields into single rows then you (or some upstream
 dependency you have) are almost certainly on the wrong track, if for no other
-reason than IO bw and the extraordinary unlikelihood you need all those fields
-in every table scan.  In any event, you can still use dot files.
+reason than IO bw.  It is extraordinarily unlikely you want all those fields in
+every table scan.  In any event, you can use dot files for the type information
+to get somewhat more space in the filename and there is also no requirement to
+name every field.  If you have enough to blow out your filesystem limit then an
+abbreviation syntax like `yadda1-7,dates1-7,..` is more user-friendly anyway.
 
 ### 14: Why don't you just ALWAYS do column IO?
 
