@@ -1,8 +1,33 @@
-### 0 - Hey!  This FAQ is more like a design document than "frequent" questions.
+# Index
+
+0:-Hey!-This-FAQ-is-more-like-a-design-document-than-"frequent"-questions.
+1:-What-is-NIO?
+2:-How-can-it-be-"programming-language-agnostic"-if-it-uses-C-type-names?
+3:-NIO-isn't-CPU-architecture-neutral?-Aaaawhaaaaa?
+4:-Why-is-the-type-syntax-so-darn-terse?-Why-no-file-headers?
+5:-What-about-case-insensitive-file-systems?
+6:-What-do-you-mean-"NIO-formalizes/generalizes-existing-practice"?
+7:-Why-not-Pandas/R-dataframes/Excel/JSON/XML/etc.?
+8:-Why-not-a-relational-database-like-SQLite/MySql/etc.?
+9:-Ok..Why-not-HDF5?
+10:-Don't-KDB/APL-derivative-xyz/Tea-Files-do-this-already?
+11:-Ok..Why-not-a-full-object-graph?
+12:-Why-no-bit-fields/discriminated-unions/even-fancier-things?
+13:-What-about-filename-limits,-like-255-chars?
+14:-Why-don't-you-just-ALWAYS-do-column-IO?
+15:-Why-don't-you-just-always-do-simple-tensor-IO-like-x.N10,10f?
+16:-Isn't-the-"type-system"-barely-worthy-of-the-name?
+17:-Why-so-many-string-repository-styles?
+18:-Why-no-variable-width-inline-strings-like-protobufs/flatbuffers/etc.?
+19:-What-about-"schema-versioning"/evolution?
+20:-This-is-all-hopelessly-hard-to-use-compared-to-SQL
+21:-Ok.-I-am-sold,-BUT-what-about-MY-programming-language?
+
+### 0: Hey!  This FAQ is more like a design document than "frequent" questions.
 
 That's not a question. ;-)  Also, please just forgive the poetic license.
 
-### 1 - What is NIO?
+### 1: What is NIO?
 
 "Nio" are [two wrath-filled & muscular but "benevolent" King
 guardians](https://en.wikipedia.org/wiki/Nio) of the Buddha, outside many
@@ -31,7 +56,7 @@ process is often quite low (order 1 Python funcall) compared to whatever the
 desired calculation.  There is no burden of immediate control flow transfer,
 though.  You can re-open the files whenever is convenient.
 
-#### 1a - Why not bio for binary IO?
+#### 1a: Why not bio for binary IO?
 
 To avoid confusion with block/buffered IO which is "similar but different" in
 the same context and focus on the main points of nativeness/number-hood.  Also,
@@ -39,7 +64,7 @@ the same context and focus on the main points of nativeness/number-hood.  Also,
 "B.O." which in English speaking cultures abbreviates body odor and we try to
 avoid "name smell" as well as "code smell". Lolz. ;-)
 
-### 2 - How can it be "programming language agnostic" if it uses C type names?
+### 2: How can it be "programming language agnostic" if it uses C type names?
 
 Dependence upon C is only mnemonic.  C's ubiquity at the system level means
 most/almost all prog.langs have exposure to C, e.g. for foreign function
@@ -47,7 +72,7 @@ interfaces.  A great many programmers who would never call themselves "C
 programmers" nevertheless find the suffix syntax easy to remember.  I have
 accessed NIO files from C, C++, Python, and Nim.  The format is all the same.
 
-### 3 - NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
+### 3: NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
 
 Architecture neutrality was always over-rated for files for data analysis or
 programmatic interaction, the main use case of NIO.  Neutrality has become ever
@@ -65,7 +90,7 @@ NIO may not add much value over other approaches since it loses full optimizing
 compiler mediated access, though it may still be "simpler".  Those are both
 "big ands", though (meaning "rare in practice") esp. in the 2020s & beyond.
 
-### 4 - Why is the type syntax so darn terse?  Why no file headers?
+### 4: Why is the type syntax so darn terse?  Why no file headers?
 
 People use terse codes for outputs (like printf) all the time.  Why not for
 inputs?  The input side is much simpler.  There is no base-10/16/.. variation,
@@ -90,7 +115,7 @@ of that IO protocol.  Why combine and then force re-separation when things can
 be separated at the outset (either in 2 files or via traditional filename
 extension syntax -- maybe the most well known "syntax" in all computerdom)?
 
-### 5 - What about case-insensitive file systems?
+### 5: What about case-insensitive file systems?
 
 I never use these myself and fail to see the appeal, but there are (at least)
 two kinds of case-insensitivity: A) fully forgetful and B) store/present with
@@ -105,7 +130,7 @@ users can simply say `nio p dateFoo` or otherwise `nOpen("dateFoo")`.  Note the
 text after `[@%]` is really only special `nio print` syntax and ignored in other
 contexts.  The file could also contain just "if" for most purposes.
 
-### 6 - What do you mean "NIO formalizes/generalizes existing practice"?
+### 6: What do you mean "NIO formalizes/generalizes existing practice"?
 
 Unix /var/run/utmp & /var/log/wtmp have had this format for decades.  This sort
 of works as a poor man's utmpdump/last:
@@ -129,7 +154,7 @@ such as the NIO suffix format suffices to write *general* tools that can handle
 any layout, transformation, multiple OSes, etc. as well as avoiding mucking bout
 with `hexdump`, `od`, etc.
 
-### 7 - Why not Pandas/R dataframes/Excel/JSON/XML/etc.?
+### 7: Why not Pandas/R dataframes/Excel/JSON/XML/etc.?
 
 The culture in this space is not to run directly off of stored files, but to
 re-parse them constantly.  While they may be better than, well nothing at all,
@@ -142,7 +167,7 @@ such restrictions to acquire performance seems quite unnatural.  As explained
 in the readme these costs can be factors of 100s..1000s.  Such ratios may well
 be the difference between "fitting" on one fast server vs needing a big cluster.
 
-### 8 - Why not a relational database like SQLite/MySql/etc.?
+### 8: Why not a relational database like SQLite/MySql/etc.?
 
 NIO is for use by programmer data analysts..perhaps advanced programmers who
 think they can IO optimize better than query analyzers or who have custom
@@ -159,7 +184,7 @@ IO-wise from LMDB but specifying structure of the data will still need something
 like NIO anyway.  In short, there seems definite value to non-DB persistence
 formats.  The closest analogue to envisioned NIO use cases is HDF5.
 
-### 9 - Ok..Why not HDF5?
+### 9: Ok..Why not HDF5?
 
 Files & directories are a done deal.  HDF5 heralds from NetCDF & earlier formats
 designed to work with very limited OS FSes of the 1970s & 1980s..E.g. DOS 8.3
@@ -173,7 +198,7 @@ Functionality bundles *seem* nice, but can also be a limiting luxury trap, e.g.
 to support compression libs, ACLs, rsync optimization, encryption, or all other
 things provided for files & dirs.  Orthogonality/independence is good.
 
-### 10 - Don't KDB/APL derivative xyz/Tea Files do this already?
+### 10: Don't KDB/APL derivative xyz/Tea Files do this already?
 
 Somewhat, but not fully.  For example, back around the turn of the 2010
 decade one could use `plzip` or `pixz` to get multi-GB/s scale IO from
@@ -194,7 +219,7 @@ As said elsewhere, it's mostly just `numpy.save` format with an external header
 (but, at least for me, it pre-dates things like numpy/pytables by years and they
 do not strive for PL-neutrality - except by using the simplest possible format).
 
-### 11 - Ok..Why not a full object graph?
+### 11: Ok..Why not a full object graph?
 
 This could be a good addition.  Generalizing how string repositories work to
 allow more arbitrary pointers may not even be hard.  Always insert-at-end/
@@ -206,7 +231,7 @@ for near a half century without this feature and object-relational mappings
 are usually considered thorny.  Another aspect is that simpler structures
 tend to encourage discipline rewarded via IO performance (and its converse!).
 
-### 12 - Why no bit fields/discriminated unions/even fancier things?
+### 12: Why no bit fields/discriminated unions/even fancier things?
 
 This is a good question.  Choosing the best least common denominator is hard.
 ".N3:i5:i" instead of ".NC" with some prohibition on prefix multipliers might
@@ -236,14 +261,14 @@ Sadly, the interpretation is fancier than "pointers are repo indices".
 (Well, with discriminated unions you might just have however many files
 with the concrete types.)
 
-### 13 - What about filename limits, like \< 255 chars?
+### 13: What about filename limits, like 255 chars?
 
 If you are packing that many fields into single rows then you (or some upstream
 dependency you have) are almost certainly on the wrong track, if for no other
 reason than IO bw and the extraordinary unlikelihood you need all those fields
 in every table scan.  In any event, you can still use dot files.
 
-### 14 - Why don't you just *always* do column IO?
+### 14: Why don't you just ALWAYS do column IO?
 
 Column stores became all the rage in the 2010s and it's true in 2002 when I
 first started doing things like this they had charm (and still do) for some
@@ -262,14 +287,14 @@ analysis needs "when it matters" at large scales.  At large scales things can
 take hours, days, or weeks and factors of 2-10x can make enormous usability
 differences.  So, no compromise access can be critical.
 
-### 15 - Why don't you just always do simple tensor IO like x.N10,10f?
+### 15: Why don't you just always do simple tensor IO like x.N10,10f?
 
 This special case, like column IO, can be exactly what you want sometimes.
 Other times it can be helpful to zip tensors with identifying tags or other
 metadata..perhaps only transiently, but transiently is "enough" to need support
 in the format.
 
-### 16 - Isn't the "type system" barely worthy of the name?
+### 16: Isn't the "type system" barely worthy of the name?
 
 Yes & no.  It's basically the CPU type system (sans less portable latterday SIMD
 types) rather than a more sophisticated programming language type system.  How
@@ -285,7 +310,7 @@ higher level of the system to interpret or enforce the types.  It would be more
 efficient to add this extra metadata just once not for each record..maybe as a
 paired .Txyz file or as another row in the dotfile.
 
-### 17 - Why so many string repository styles?
+### 17: Why so many string repository styles?
 
 Because no one can really agree on what is convenient and text varies so much.
 Length-prefixed is the most general autonomous 8-bit clean format, but is harder
@@ -304,7 +329,7 @@ undelimited string data with external length, index data (like "hihothere").
 This is as fast & general as length-prefixed, but is also non-autonomous -
 external data is needed to identify string boundaries.
 
-### 18 Why no variable width inline strings like protobufs/flatbuffers/etc.?
+### 18: Why no variable width inline strings like protobufs/flatbuffers/etc.?
 
 NIO embraces files & directories (and their context) which, again, is a done
 deal rather than trying to make "autonomous buffers".  Fixed size records allow
@@ -333,7 +358,7 @@ or a batch sort with a re-org of all the pointers which is only practical for
 truly static data.  Since NIO is not a string-focused facility, this is unlikely
 to be popular feature anyway.
 
-### 19 What about "schema versioning"/evolution?
+### 19: What about "schema versioning"/evolution?
 
 Since files are autonomous, you can usually just add new columns as new files
 with compatible indexing.  This gives you schema addition with no need to even
@@ -351,7 +376,7 @@ field becoming a cumulative field.  At some level, you must understand data that
 you calculate against.  In any case, you can always just drop a `.VERSION` file
 in the directory if you think some string can capture the needed labeling.
 
-### 20 - This is all hopelessly hard to use compared to SQL
+### 20: This is all hopelessly hard to use compared to SQL
 
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
@@ -367,7 +392,7 @@ In any case, my ideas here have received conservatively under 0.0001% of the
 man hours and monetary support of usability work SQL has received.  So, you
 know, maybe they compete pretty favorably considering this? ;)
 
-### 21 - Ok.  I am *so* sold, BUT what about *my* programming language?
+### 21: Ok.  I am sold, BUT what about MY programming language?
 
 Hey..Glad you like the idea (and even read to the end).  There are only so many
 hours in the day, though.  My hope is that the core idea is simple enough to be
