@@ -485,7 +485,7 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
 proc `$`*[M](x: array[M, char]): string =
   ## Sometimes `x=initFileArray[array[z,char]]("x.NzC"); echo x[i]` is nice.
   let m = M.high + 1
-  result = (newStringOfCap m)
+  result.setLen m + 1                 # space for NUL-term for debug builds
   copyMem result[0].addr, x[0].unsafeAddr, m
   result.setLen result[0].addr.cstring.c_strlen
 
