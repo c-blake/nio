@@ -215,6 +215,7 @@ sed -i "s/^v\\(.*\\)i${t}d/v\1f${t}f/" .sc  # adjust schema
 sed -i "s/^id[2-6].*/_${t}ignore/" .sc      # only parse needed
 sed -i "s/^v[2-3].*/_${t}ignore/" .sc       # only parse needed
 # Only ~0.010 sec up to here                # Now: Actual work
+# `part` can be skipped if you simply retain separation of gbyGen
 part -i1 -n0 $data                          # partition 1.12 sec
 
 for d in 0*; do (cd $d; nio f -s ../.sc $data) & done
