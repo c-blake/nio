@@ -183,9 +183,10 @@ primary table key.
 As far as I can tell, NIO is alone in striving for a flexible column/vector
 |matrix|tensor "store" that strives to just solve **just one simple problem**:
 not parsing & re-parsing and running "live" right off the files, but solve
-that problem as generally as is easy.  All that said, the NIO solution is *so*
-simple that it seems not improbable *someone* else has devised a close analogue
-(especially simplified variants as above).
+that problem as generally as is easy in a programming language-neutral way.
+As said elsewhere, it's mostly just `numpy.save` format with an external header
+(but, at least for me, it pre-dates things like numpy/pytables by years and they
+do not strive for PL-neutrality - except by using the simplest possible format).
 
 ### 11 - Ok..Why not a full object graph?
 
