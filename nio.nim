@@ -472,7 +472,7 @@ func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
 
 func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
-  ## Returns i-th row of `r` copied into `result`.
+  ## Assign `val` to `i`-th row of `fa`.
   when not defined(danger):
     if fa.nf.m.mem.isNil:
       raise newException(ValueError, "uninitialized FileArray[T]")
