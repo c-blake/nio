@@ -84,6 +84,12 @@ users confront & thus quickly learn/memorize row format syntax.  Row format
 transformations (such as combining columns) render explicitly.  Being explicit
 has pros as well as cons & we won't settle that debate here.
 
+And, yes, every pipeline command tool could replicate row format headers at the
+beginning of any sliced stream, say.  To me this reaffirms the extra complexity
+of that IO protocol.  Why combine and then force re-separation when things can
+be separated at the outset (either in 2 files or via traditional filename
+extension syntax -- maybe the most well known "syntax" in all computerdom)?
+
 ### 5 - What about case-insensitive file systems?
 
 I never use these myself and fail to see the appeal, but there are (at least)
