@@ -178,14 +178,19 @@ analytics or other needs to integrate with "real" prog.lang libraries that is
 all too painful in SQL/SQL stored procedures (the latter of which are often very
 non-DB portable).  Last I checked, it was a trick to even get Gaussian deviates
 out of PostGres.  Trying to build some machine learning algo as part of a stored
-procedure sounds like a nightmare.  Repayment for low-levelness is true zero
-overhead IO (and easy access to SIMD speeds).  Updates are also often rare to
-never; Yet analyses can hit large data sets 100s if not 100s of thousands of
-times.  So, vectors/tables/tensors are apt while ACID transactions are over-
-engineered.  Any cost is waste.  There may be a way to get mostly what you want
-IO-wise from LMDB but specifying structure of the data will still need something
-like NIO anyway.  In short, there seems definite value to non-DB persistence
-formats.  The closest analogue to envisioned NIO use cases is HDF5.
+procedure sounds like a nightmare.  Beyond this the SQL standard is labyrinthine.
+Another answer is "Because no one knows all of/fully implements SQL anyway" and
+that limitation leads to unfounded assumptions, portability problems, vendor
+lock in, and all sorts of other things avoidable with a simple file format.
+
+Repayment for low-levelness is true zero overhead IO (and easy access to SIMD
+speeds).  Updates are also often rare to never; Yet analyses can hit large data
+sets 100s if not 100s of thousands of times.  So, vectors/tables/tensors are apt
+while ACID transactions are over-engineered.  Any cost is waste.  There may be
+a way to get mostly what you want IO-wise from LMDB but specifying structure of
+the data will still need something like NIO anyway.  In short, there seems value
+to non-DB persistence formats.  The closest analogue to envisioned NIO use cases
+is HDF5.
 
 ### 9: Ok..Why not HDF5?
 
@@ -384,15 +389,21 @@ in the directory if you think some string can capture the needed labeling.
 
 ### 20: This is all hopelessly hard to use compared to SQL
 
-Also not a question.  I think reasonable folks can differ on this and I am open
-to usability suggestions.  Also, the idea is kind of "between" the IO parts of
-DBs and the access/query parts.  So, you could think of it as a way to layer
-building a DB in such a way that preserves "no compromise IO" by programmers
-willing to put in some effort.  E.g., query language-like functionality can be
-layered on top, and more transactional ideas could be stuffed in underneath,
-hopefully optionally to preserve efficiency.  NIO is just a supplementary point
-in the design space rather than an outright replacement.  "Not appealing to all
-in all cases" is just another way of saying "Yup.  It's software." ;)
+Also not a question.  But is it, though?  The SQL standard is as big or bigger
+than that of C++.  Many people know trivial basics yet almost nothing of the
+full feature set or even its scope.  `nio qry` is not so different from such
+trivial basics.  I do think reasonable folks can differ on "hard" (it often
+comes down to background knowledge which varies tremendously) and I am open to
+usability suggestions coherent with the overall design.
+
+The core idea is kind of "between" the IO parts of DBs and the access/query
+parts.  So, you could think of it as a way to layer building a DB in such a way
+that preserves "no compromise IO" by programmers willing to put in some effort.
+E.g., query language-like functionality can be layered on top, and transactional
+ideas could be stuffed in underneath, maybe optionally to preserve efficiency.
+NIO is just a supplementary point in the design space, arguably at its simplest
+crux, rather than an outright replacement.  "Not appealing to all in all cases"
+is just another way of saying "Yup.  It's software." ;)
 
 In any case, my ideas here have received conservatively under 0.0001% of the
 man hours, monetary support, advertising, and usability work SQL has received.
