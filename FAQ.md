@@ -385,7 +385,7 @@ in the directory if you think some string can capture the needed labeling.
 Also not a question.  I think reasonable folks can differ on this and I am open
 to usability suggestions.  Also, the idea is kind of "between" the IO parts of
 DBs and the access/query parts.  So, you could think of it as a way to layer
-building a DB in such a way that preserves no compromise IO by programmers
+building a DB in such a way that preserves "no compromise IO" by programmers
 willing to put in some effort.  E.g., query language-like functionality can be
 layered on top, and more transactional ideas could be stuffed in underneath,
 hopefully optionally to preserve efficiency.  NIO is just a supplementary point
