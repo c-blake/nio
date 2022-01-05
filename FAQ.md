@@ -1,6 +1,7 @@
 # Index
 
 Various questions/rejoinders:
+
  0.  [Hey!  This FAQ is more like a design document than "frequent" questions.](#0-hey--this-faq-is-more-like-a-design-document-than-frequent-questions)
  1.  [What is NIO?](#1-what-is-nio)
  2.  [How can it be "programming language agnostic" if it uses C type names?](#2-how-can-it-be-programming-language-agnostic-if-it-uses-C-type-names)
