@@ -1807,7 +1807,7 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
 # Id notin data by def. Id-segregated piped output may seem best BUT pipe writes
 # block if buffers fill. More buffering works; Buffer may as well be /dev/shm.
     putEnv "F", path; putEnv "T", time; putEnv "OUTDIR", outDir; clearDir wd                                 # CLEAR OLD
-    if execShellCmd(cmd) != 0:                  # PASS 1: CREATE RIP/VEC FILES
+    if cmd.len != 0 and execShellCmd(cmd) != 0: # PASS 1: CREATE RIP/VEC FILES
       erru &"FAILED: {cmd}\n" # Instead of fromSV NimCall run `cmd` since fromSV
       break                   #..script wrapper|alt vector file gen may be nice.
     if su.update(time) == 0:                    # PASS 2: INJECT RIP/VEC FILES
