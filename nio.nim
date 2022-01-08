@@ -574,7 +574,9 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   if info.size > type(result.off).high.int:
     raise newException(ValueError, &"{path}: too big for index pointer sizes")
   result.off = info.size.Ix
-  let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else: mf.open(path)
+  let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else:
+    try: mf.open(path)
+    except: mf.MemFile(mem: nil,size: 0)
   let (_, _, ext) = splitPathName(path)
   if ext.len == 0 or ext == ".Dn":
     result = Repo(kind:rkDelim, dlm: '\n', m: m, na: na, mode: mode, kout: kout)
