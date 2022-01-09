@@ -537,7 +537,7 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       yield (k, Ix(i div r.fmt.bytes))
   of rkDelim:
     for ms in mf.memSlices(r.m, r.dlm):
-      yield ($ms, Ix(cast[int](ms.data) -% cast[int](r.m.mem)))
+      yield (mf.`$`(ms), Ix(cast[int](ms.data) -% cast[int](r.m.mem)))
   of rkLenPfx:
     var k: string
     var off, len: uint64
