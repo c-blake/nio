@@ -509,14 +509,18 @@ proc mOpen*(path: string, mode=fmRead, mappedSize = -1, offset=0,
 proc close*(tsr: var IOTensor) = mf.close(tsr.m)
 
 type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
-  Ix* = uint32                  # max file size for repos is 4 GiB/GiEntry
-  RepoKind* = enum rkFixWid, rkDelim, rkLenPfx
-  RepoMode* = enum rmFast, rmIndex, rmUpdate
-  Repo* = ref object
+  Ix* = uint32                  ## max file size for repos is 4 GiB/GiEntry
+  RepoKind* = enum rkFixWid,    ## Fixed Width buffers w/key truncation/0-pad
+                   rkDelim,     ## A popular format: Disallowed Delimiter Char
+                   rkLenPfx     ## An 8-bit clean format: Length-prefixed
+  RepoMode* = enum rmFast,      ## Provide ptr->string only; not string->ptr
+                   rmIndex,     ## Non-updating bi-directional ptr<->string
+                   rmUpdate     ## Updating bi-directional ptr<->string
+  Repo* = ref object            ## Mostly opaque string Repository type
     case kind: RepoKind
-    of rkFixWid: fmt : IORow    # simplest random access format: just a matrix
-    of rkDelim : dlm : char     # most popular format: delimited
-    of rkLenPfx: lenK: IOKind   # best trade-off format: length-prefixed
+    of rkFixWid: fmt : IORow
+    of rkDelim : dlm : char
+    of rkLenPfx: lenK: IOKind
     path: string
     m:    mf.MemFile
     na:   string                # *output* N/A; input is always ""
@@ -524,7 +528,7 @@ type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
     kout: IOKind                # output pointer type for index|updating mode
     f:    File                  # updating mode only fields
     off:  Ix                    # running file size (what to set .[DL] ptrs to)
-    tab*: Table[string, Ix]     # index lookup table
+    tab*: Table[string, Ix]     ## index lookup table
 const IxIk = IIk
 const IxNA = I_na
 
