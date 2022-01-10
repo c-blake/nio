@@ -1718,6 +1718,8 @@ proc ensureSpace(su: var StacksUpdater; vQ: var seq[NFile];
     if vQ.len > 0: vQ[v].close
   vQ = vN
 
+proc wdExpand(wd, tm: string): string = wd.replace("@TM@", tm)
+
 proc update*(su: var StacksUpdater, tm: string): int =
   ## Returns number of rows incorporated into matrices
   var t: int                    # FIRST DECIDE NEEDED tm INDEX
@@ -1726,14 +1728,14 @@ proc update*(su: var StacksUpdater, tm: string): int =
     if su.fixed: erru &"ix2tm: no \"{tm}\" and static ix; skipping\n"; return 0
     else: t = su.axT.nKy        # `add` POST-UPDATE TO MARK COMPLETION
   var ids: NFile                # ids <- OPEN idVar
-  try: ids = nOpen(su.wd/su.idVar)
-  except: erru &"no id file: {su.wd/su.idVar}!\n"; return 0
+  try: ids = nOpen(su.wd.wdExpand(tm)/su.idVar)
+  except: erru &"no id file: {su.wd.wdExpand(tm)/su.idVar}!\n"; return 0
   if not su.fixed:              # UPDATE Id AXIS
     for id in ids: (if id notin su.axI: su.axI.add id)
     su.axI.fK.flushFile
   if su.nI < su.axI.nKy:
     su.nI = roundUp(su.axI.nKy, su.padI)
-  if su.inpVars.len == 0: su.getVars su.wd # OPEN INPUT RIP/VEC FILES
+  if su.inpVars.len == 0: su.getVars su.wd.wdExpand(tm) # OPEN INPUT RIP/VEC FILES
   let (xT, xI) = su.extantAxSpc
   su.nT = max(su.nT, xT)        # Leave alone user-over provisioned
   su.nI = max(su.nI, xI)
@@ -1784,7 +1786,7 @@ proc getTimePaths*(pfxSfx: seq[string]): (seq[string], seq[string]) =
 
 proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
     padT=1, padI=1, ix2tm="ix2tm", ix2id="ix2id", tiDir="tmId", itDir = "idTm",
-    doTs="", ids="", wd="/tmp/up", stamp="DONE", inpPat: seq[string]) =
+    doTs="", ids="", wd="/tmp/up",clr=false, stamp="DONE", inpPat: seq[string])=
   ## make/update time series matrices from per-tm cross-sectional files.
   if inpPat.len != 1 or inpPat[0].split("@TM@").len != 2:
     raise newException(ValueError, "non-option not @TM@ pattern; See --help.")
@@ -1812,7 +1814,8 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
 # New ids appearing & output matrix resize conservation => 2 pass: ids & data.
 # Id notin data by def. Id-segregated piped output may seem best BUT pipe writes
 # block if buffers fill. More buffering works; Buffer may as well be /dev/shm.
-    putEnv "F", path; putEnv "T", time; putEnv "OUTDIR", outDir; clearDir wd                                 # CLEAR OLD
+    putEnv "F", path; putEnv "T", time; putEnv "OUTDIR", outDir
+    if clr: clearDir wd                         # MAYBE CLEAR OLD
     if cmd.len != 0 and execShellCmd(cmd) != 0: # PASS 1: CREATE RIP/VEC FILES
       erru &"FAILED: {cmd}\n" # Instead of fromSV NimCall run `cmd` since fromSV
       break                   #..script wrapper|alt vector file gen may be nice.
@@ -2002,6 +2005,7 @@ if AT=="" %s renders as a number via `fmTy`""",
       "itDir" : "id,tm output directory; \"\"=>skip",
       "doTs"  : "list of @TM@ to always do",
       "wd"    : "work dir/tmp dir for rip/vec files",
+      "clr"   : "clear work dir/tmp pre-cmd",
       "inpPat": "[/path/to/my/@TM@/data]"},
       short = {"idVar": 'i', "ix2Tm": 'T', "ix2Id": 'I', "nT": 'n', "nI": 'm',
-               "tiDir": 'o', "itDir": 'x', "padT": 'H', "padI": 'W'}])
+               "tiDir": 'o', "itDir": 'x', "padT": 'H', "padI":'W', "clr":'C'}])
