@@ -30,15 +30,16 @@ While learning the syntax is needed to use streaming/pipe style calculation, you
 can also stow the format inside a file of a parallel name (e.g. "foo" & ".foo").
 I have found this setup to be usable, flexible, & efficient.  It can perhaps
 cure you from your likely addiction of parsing & re-parsing ASCII numbers which
-is up to hundreds of times slower than modern SIMD FP operations.  (Seriously,
+is up to hundreds of times slower than modern SIMD FP operations.  (Seriously --
 SIMD's go at L1 cache bandwidth which are order 100s of GB/s while parsing at
-even 1 GB/s is a challenge; Printing/binary->ASCIII is even slower.)
+even 1 GB/s is a challenge and printing/binary->ASCII is even slower.)
 
 Unpacking other linearized/serialized marshal formats often requires at least
-iterating over all data.  NIO tries to allow "mmap & go" when feasible.  In a
-sense like the above 100s vs 1 comparison, this is "***infinite GB/s***".  In a
-more accurate sense, start-up cost is as fixed as opening random access files
-can be.  (This is what DB software has always done and should not surprise.)
+iterating over all data, but often has decompression work woven in.  NIO tries
+to allow "mmap & go" when feasible.  In a sense like the above 100s vs 1
+comparison, this is "***infinite GB/s***".  In a more accurate sense, start-up
+cost is as fixed as opening random access files can be.  (This is what DB
+software has always done and should not surprise.)
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is both a library usable via `import nio` and a
