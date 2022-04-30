@@ -239,3 +239,10 @@ faster without forcing later sharded queries.  So, parallel scale up is again
 Polars (140 ms on machine with 2.5x more cores!).  We again get a rather large
 "it all just depends on what you *really* need *when*" factor { maybe 5X here if
 we apply BS-scaling to say 2x\*2.5x. ;-) }
+
+### Triple Extra Credit: Sort-Based GroupBy
+
+The random nature of hashing can cause slowdown with many groups when storage or
+memory latency is high at appropriate scales.  It is possible to do sort-based
+variants which instead become bandwidth bound.  This is left as an exercise for
+the ambitious reader (for now), but it is important enough to mention.
