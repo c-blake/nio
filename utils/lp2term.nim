@@ -11,7 +11,7 @@ proc lp2term*(eor='\0', subEor=" ", index="", paths: Strings) =
     var r = rOpen(path)
     for k, i in r.keysAtOpen:
       if ix.f != nil: #XXX replace below mess with nice `ix.write off` API
-        convert(ix.rowFmt.cols[0].iok, lik, obuf[0].addr, off.addr)
+        convert(ix.rowFmt.cols[0].iok, lIk, obuf[0].addr, off.addr)
         ix.f.nurite ix.rowFmt.cols[0].iok, obuf[0].addr
       off.inc k.len + 1
       stdout.replacingUrite k, eor, subEor
