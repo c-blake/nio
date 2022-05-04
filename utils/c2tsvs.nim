@@ -2,14 +2,16 @@ import std/[strformat, parsecsv, streams, strutils], cligen/osUt
 
 type Log = enum eachSub, totalSubs
 
-proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
-            nl='\n', NlSub=" ", log: set[Log]={}, si="stdin", bSz=65536,
-            raw=false, addEmpty=false): int =
-  ## Convert quoted/escaped CSV on stdin to IANA *strictly separated TSV* on
-  ## stdout via Nim stdlib `parsecsv`.  Ease of IANA TSV parsing & pipeline
-  ## parallelism imply you should implement higher level ideas (header/table
-  ## analysis, etc.) via `popen("c2tsvs")`.  See also 7X faster `c2tsv`.
-  var totNl, totTab: int      # counters for in-field delim stats
+proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\t',
+            TabSub="\\t", nl='\n', NlSub="\\n", log: set[Log]={}, si="stdin",
+            bSz=65536, raw=false, addEmpty=false): int =
+  ## Use Nim stdlib `parsecsv` to convert quoted/escaped CSV on stdin to
+  ## *strictly separated*, \\-escaped TSV on stdout.  Output is soundly newline
+  ## char-frameable & split-parsable { un-escape of (backslash, TabSub, NlSub)
+  ## is nice to render for '\\'-unfamiliar users }.  Parsing ease & pipeline |
+  ## file parallelism imply higher level ideas (header/table struct..) are best
+  ## done via `popen("c2tsv")` | a temp file.  See also 7X faster `c2tsv`.
+  var totNl, totTab, totBack: int       # counters for in-field delim stats
   var p: CsvParser
   discard c_setvbuf(stdin , nil, 0, bSz.csize_t)  # boost input
   discard c_setvbuf(stdout, nil, 0, bSz.csize_t)  # match output w/input
@@ -23,12 +25,16 @@ proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
           var fix = newStringOfCap(fld.len + 4)
           for c in fld:
             if c == tab:
-              totTab.inc
               fix.add TabSub
+              totTab.inc
               if eachSub in log: erru &"{si}:{rNo} {c.repr} substitution\n"
             elif c == nl:
-              totNl.inc
               fix.add NlSub
+              totNl.inc
+              if eachSub in log: erru &"{si}:{rNo} {c.repr} substitution\n"
+            elif c == '\\':
+              fix.add "\\\\"
+              totBack.inc
               if eachSub in log: erru &"{si}:{rNo} {c.repr} substitution\n"
             else: fix.add c
           stdout.urite (if raw: fix else: fix.strip)
@@ -41,7 +47,7 @@ proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\0', TabSub=" ",
     stdout.urite nl
     rNo.inc
   if totalSubs in log:
-    erru &"{si}: {totNl} \\n substitutions {totTab} \\t substitutions\n"
+    erru &"{si}: {totNl} \\n subs {totTab} \\t subs {totBack} \\t subs\n"
 
 when isMainModule: import cligen; dispatch c2tsvs, help = {
   "comma"   : "CSV delimiter",
