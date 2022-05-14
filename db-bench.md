@@ -8,12 +8,12 @@ machine.)
 ### Step 1: Generate a CSV data set
 
 Either install data.table in R with R CMD INSTALL data.table and then
-```
+```sh
 $ git clone https://github.com/h2oai/db-benchmark
 $ Rscript \_data/groupby-datagen.R 1e8 1e2 0 0
 ```
 OR more simply (& more efficiently - under 10 seconds for me):
-```
+```sh
 cd /dev/shm
 nim r -d:release -d:danger $nio/demo/gbyGen 1e8 1e2 0 0 0
 cat 0* > G1_1e8_1e2_0_0.csv
@@ -154,7 +154,7 @@ as in other elements of the db-bench suite, then depending upon your key entropy
 main loop.  Hash lookups are much slower than array lookups -- even for integer
 keys (e.g. `id1*100+id2`).  For example, the built-in `nio kreduce` is about 50X
 slower (although some of this time is computing unneeded stats incrementally):
-```
+```sh
 nio kreduce -f.0f --s,= -ssum -g id1.Ni v1.Nf
 ```
 Instead you can create a new synthetic id and put it in a new `.N16C` style
@@ -206,7 +206,7 @@ To speed up the situation more generally, you must shard the *whole calculation*
 and merge the small (by presumption) final answers.  This, however, fixes the
 amount of parallelism in your parsed data repository making it not scale up to
 "bigger computers".  Here is an example shell script doing this:
-```
+```sh
 #!/bin/sh
 data="G1_1e8_1e2_0_0.csv" #prof PS4='+$EPOCHREALTIME ' sh -x gbyP
 head -n10000 G1_1e8_1e2_0_0.csv|nio i -si.N16C -d, '' #mk schema
