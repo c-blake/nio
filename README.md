@@ -1,12 +1,12 @@
-The basic idea here is to just take fully seriously the old chestnut that file
-name extensions inform users as to the contained format.  We just append to
-binary files a terse syntax inspired by but simpler than various Perl/Python
-"pack formats" and build APIs and tools around that.  The syntax is simple and
-easy to remember (I think) since it is derived from the C programming language
-family.  Most programmers have these basic "CPU types" memorized.  With the lone
-exception of long double (an already exceptional thing), the type code is just
-the first letter of each C type.  Uppercase are unsigned; Lowercase are signed.
-The full syntax is one or more:
+The basic idea here is to take fully seriously the old chestnut that file name
+extensions tell users contained formats to make data access efficient.
+Specifically, we append to binary file pathnames a terse syntax inspired by (but
+simpler than) various Perl/Python "pack formats" and build APIs/tools around
+this.  The syntax is simple & easy to remember (I think) since it is derived
+from the C programming language family.  Most programmers have these basic "CPU
+types" memorized.  With the exception of long double (an already exceptional
+thing), the type code is just the first letter of each C type.  Uppercase are
+unsigned; Lowercase are signed.  The full syntax is one or more:
 ```
   [<COUNT[,..]>]<c|C|s|S|i|I|l|L|f|d|g>
 ```
