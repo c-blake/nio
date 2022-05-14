@@ -121,7 +121,8 @@ perfectly predictable pipeline.  This is because I was lazy doing `nio moments`
 and just used stdlib `stats.RunningStat` which is accuracy semi-optimized, not
 speed optimized.
 
-`demo/datGen` shows how easy it is to just ***stay in binary the whole time***:
+[demo/datGen](https://github.com/c-blake/nio/tree/main/demo/datGen.nim) shows
+how easy it is to just ***stay in binary the whole time***:
 ```sh
 #!/bin/sh
 t=/usr/bin/time
