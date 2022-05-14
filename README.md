@@ -61,8 +61,8 @@ context of schema writing (as in `c2tsv < foo | head | transpose > editMe.sc`).
 ### Usage Vignette
 
 Here is a little usage vignette using simulated data.  First we will show some
-steps and then explain things.  To start, you will first need to compile &
-install in your $PATH demo/tabGen.nim.  Something like this may do the trick:
+steps and then explain them.  To start, you will first need to compile & install
+`demo/tabGen.nim` in your `$PATH`.  Something like this may do the trick:
 ```sh
 nimble install cligen   # may not be needed
 git clone https://github.com/c-blake/nio
