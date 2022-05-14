@@ -49,11 +49,10 @@ unique prefix for subcommand names (and long option names) is sufficient.  The
 
 One can do some things with the `nio` command, but the main point of the design
 is to be extensible by actual programmers `import`ing, `nOpen`/`initFileArray`
-ing, etc. or really just writing their own libs & tools either on top or off to
-the side.  Extended tools/logic must have their own documentation, but they can
-share an `n-foo` namespace if they want.  (Note that `nio zip` is named after
-functional PL terms|real world clothing zippers.  It is unrelated to data
-compression.)
+ing, etc., writing their own libs & tools either on top or off to the side.
+Extended tools/logic must document themselves, but they can, e.g. share `n-foo`
+namespaces if desired.  (Note that `nio zip` is named after functional PL
+terms|real world clothing zippers.  It is unrelated to data compression.)
 
 Convenience tools live in `utils/`.  E.g., `transpose` an be useful in the
 context of schema writing (as in `c2tsv < foo | head | transpose > editMe.sc`).
