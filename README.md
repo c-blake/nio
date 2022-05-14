@@ -133,13 +133,14 @@ $t favg [a-d].Nf                    # Does 100 loops by default!
 Compiling the tiny [demo/favg](https://github.com/c-blake/nio/tree/main/demo/favg.nim)
 with `-d:danger` for me results in a run-time on that same machine of 0.045 sec
 for 100 passes or 0.45 ms/pass.  This is 40ms/.45=~ ***90X faster*** or about
-16/.45 = 35.5GB/s.  Memory BW on this particular 5 year old Linux box that tops
-out at ~45GB/s (with 3 cores pulling).
+16/.45 = 35.5GB/s.  Memory BW on this particular 2016 Linux box that tops out at
+~45GB/s (with >=3 cores pulling).
 
-It is straightforward but maybe too demo-messy to break up the loop into `p`
-big sections & total over processes/threads to realize that last 1.3x speed-up.
-More recent server/HEDT models have much higher peak parallel BW/peak single
-core BW ratios than 1.3 (more like 15+X) pushing optimizing folk to parallelism
+It is straightforward (but demo-messy) to [split the loop into `p`
+parts](https://forum.nim-lang.org/t/9115#59567) & then grand total over
+thread/process subtotals to realize that last 1.3x (45/35) speed-up.  More
+recent server/HEDT models have much higher peak parallel/peak single core BW
+ratios than 1.3 (more like 15+X) pushing optimizing folk to parallelism
 complexity simply to saturate DIMMs.  In this example, since the output is a
 tiny subtotal, it's fine to first memory map files, then fork & engage hardware
 parallelism with processes via `cligen/procpool`.  Were the output giant, kids
