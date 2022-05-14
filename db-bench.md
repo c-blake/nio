@@ -142,9 +142,9 @@ and then if you really need ASCII output, say to compare:
 ```sh
 nio pr id1.N16C out.Nf
 ```
-(Yes, yes, this summation could also be parallelized if it were a big enough
-problem to warrant such.  For this calculation on my test box, the combined time
-for both nio xsum & print is < 2 ms which is below measurement error, TBH.)
+(Yes, yes, `xsum` could also be parallelized if you had enough CPUs to warrant
+such.  For this calculation on my test box, the combined time for both nio xsum
+& print is < 2 ms which is below measurement error, TBH.)
 
 ### Post Script: Some other observations
 
@@ -233,9 +233,9 @@ cat 0*/out | awk '{c[$1]+=$2} END{for(k in c)print k,c[k]}' >out
 : dummy # 0.068 sec total from 1st cd       # get last timestamp
 ```
 This reduces the "load" time to under 5 seconds.  Meanwhile, using the same
-trimmed schema parsing only `id1` & `v1` 1-core takes about 16 seconds - also 4x
+trimmed schema parsing only `id1` & `v1` 1-core takes ~16 seconds - also 4x
 faster without forcing later sharded queries.  So, parallel scale up is again
-~3x on 4 cores.  68 millisec is >2x faster than the fastest 5GB groupby with
+~3x on 4 cores.  68 ms is >2x faster than the fastest 5GB groupby with
 Polars (140 ms on machine with 2.5x more cores!).  We again get a rather large
 "it all just depends on what you *really* need *when*" factor { maybe 5X here if
 we apply BS-scaling to say 2x\*2.5x. ;-) }
@@ -243,6 +243,6 @@ we apply BS-scaling to say 2x\*2.5x. ;-) }
 ### Triple Extra Credit: Sort-Based GroupBy
 
 The random nature of hashing can cause slowdown with many groups when storage or
-memory latency is high at appropriate scales.  It is possible to do sort-based
-variants which instead become bandwidth bound.  This is left as an exercise for
-the ambitious reader (for now), but it is important enough to mention.
+memory latency is high at appropriate scales.  One can do sort-based variants
+which instead become bandwidth bound.  This is left as an exercise for the
+ambitious reader (for now), but is important enough to mention.
