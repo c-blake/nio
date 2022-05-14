@@ -141,11 +141,11 @@ parts](https://forum.nim-lang.org/t/9115#59567) & then grand total over
 thread/process subtotals to realize that last 1.3x (45/35) speed-up.  More
 recent server/HEDT models have much higher peak parallel/peak single core BW
 ratios than 1.3 (more like 15+X) pushing optimizing folk to parallelism
-complexity simply to saturate DIMMs.  In this example, since the output is a
-tiny subtotal, it's fine to first memory map files, then fork & engage hardware
-parallelism with processes via `cligen/procpool`.  Were the output giant, kids
+complexity simply to saturate DIMMs.  In this example, since outputs are tiny
+subtotals, it's fine to first memory map files, then `fork` to engage hardware
+parallelism with processes via `cligen/procpool`.  (Were outputs giant, kids
 could write to NIO files and return pathnames.  Once you are whole CPU/system
-optimizing, what idea is best quickly becomes "it depends".
+optimizing, what idea is best quickly becomes "it depends".)
 
 See [db-bench.md](https://github.com/c-blake/nio/tree/main/db-bench.md) for
 another worked out example, perhaps easier to compare to other systems.
