@@ -1,5 +1,5 @@
 The basic idea here is to take fully seriously the old chestnut that file name
-extensions tell users contained formats to make data access efficient.
+extensions tell users contained formats in order to make data access efficient.
 Specifically, we append to binary file pathnames a terse syntax inspired by (but
 simpler than) various Perl/Python "pack formats" and build APIs/tools around
 this.  The syntax is simple & easy to remember (I think) since it is derived
