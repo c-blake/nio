@@ -175,14 +175,15 @@ For reasons like this, I believe that "general purpose" DBs can never truly be
 as fast as programmer-user optimized analysis pipelines.  The question is more
 "how much" you lose -- 2X/5X/50X/1000X -- not "whether".  So, if data is big
 enough to make performance a real concern, the answer to me is to make this
-programming as easy as it can be which is in many ways a simpler problem.
+programming as easy as it can be which is in many ways a simpler problem than
+what general purpose DBs try to do (measure, guess, provide a zillion toggles).
 
 ### Double Extra Credit: Parallel Parses
 
-The bulk of the calculation is clearly parsing/loading the data.  Now, maybe the
-data will be used many times and the one-time cost at induction into your system
-is no big deal.  Or maybe, as in this demo, it dominates for a one/few times
-calculation and you'd like to speed it up.
+The bulk of the above calculation is clearly parsing/loading the data.  Now,
+maybe the data will be used many times and the upfront cost at induction into
+your system is no big deal.  Or maybe, as in this demo, it dominates for a
+one/few times calculation and you'd like to speed that up, too.
 
 This is harder than it might first appear.  It's easy to spit an input file and
 search for newlines to create independent segments (assuming newlines are a
@@ -192,15 +193,15 @@ efficient post facto merge methods.
 
 Data statistics of this particular benchmark are misleading here.  Almost all
 novel ids are introduced in a very small fraction of the data set.  So, locks
-to update hash tables will almost never be needed/contended.  This may be a
-pretty unrepresentative situation.
+to update hash tables will almost never be needed/contended.  That may be a
+pretty unrepresentative situation (or not - it all "depends").
 
 Another aspect of the numbers on the linked web page is that an E5-2630 v4 CPU
 has 25 MB of L3 cache - enough to perhaps just hold all 3 of the string hash
 tables needed for parsing.  My test i7-6700k test system has only 8MB of cache.
 Better measurement science would pick fully in and fully out of L3 cache entropy
 scales on a variety of CPUs to eliminate a 10x latency hit on a slow part of the
-parsing, but then this benchmark is not supposed to be "about parsing", either.
+parsing, but then this benchmark is not supposed to be "about parsing", exactly.
 
 To speed up the situation more generally, you must shard the *whole calculation*
 and merge the small (by presumption) final answers.  This, however, fixes the
