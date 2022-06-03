@@ -62,16 +62,16 @@ proc hdr2ix(hdr: string): int =         # find decoder from hdr/magic number
   result = -1
   for i, d in decs: (if hdr.startsWith(d.hdr): return i)
 
-proc file2ix(path: string; fd: cint; hdr: var string; n: var int): int =
+proc file2ix(path: string; fd: cint; hdr: var string; off: var int): int =
   result = -1                           # find decoder from either
   hdr.setLen PEEK
-  n = 0
+  off = 0
   if path.len > 0:                      # try to infer via sfx & return if can
     if (result = sfx2ix(path); result != -1): return
-  n = read(fd, hdr[0].addr, PEEK)       # ..then via hdr/aka magic number.
-  if n == PEEK: result = hdr2ix(hdr)    # read enough bytes to classify
-  if lseek(fd, -n, SEEK_CUR) != -1:     # rewind by whatever read, if can
-    n = 0                               # register no stolen bytes.
+  off = read(fd, hdr[0].addr, PEEK)     # ..then via hdr/aka magic number.
+  if off == PEEK: result = hdr2ix(hdr)  # Have read enough bytes to classify
+  if lseek(fd, -off, SEEK_CUR) != -1:   # Rewind by whatever was read, if can
+    off = 0                             # Register no stolen bytes.
 
 proc writeAll(fd: cint; buf: var openArray[char]; n0: int): int =
   var n = n0; var off = 0               # loop control & buf offset
@@ -91,13 +91,13 @@ proc fdCopy(src, dst: cint) =           # file descriptor copy loop
 
 proc oneFile(path: string; do_fork: bool) = # dispatch just one file
   var hdr = newStringOfCap(PEEK)
-  var n: int
+  var off: int
   if path.len > 0:
     discard close(0)
     if open(path, O_RDONLY) != 0:
       stderr.write &"{av0}: open(\"{path}\"): {errstr()}\n"; return
-  let decIx = file2ix(path, 0, hdr, n)
-  if n > 0:                             # unseekable; fork to re-prepend hdr
+  let decIx = file2ix(path, 0, hdr, off)
+  if off > 0:                           # unseekable; fork to re-prepend hdr
     var fds: array[2, cint]
     if pipe(fds) == -1: stderr.write &"{av0}: pipe: {errstr()}\n"; return
     let pipe_writer = fork()
@@ -106,25 +106,22 @@ proc oneFile(path: string; do_fork: bool) = # dispatch just one file
       discard dup2(fds[0], 0)
       discard close(fds[1])
       if decIx >= 0: decode(decIx, path)
-      fdCopy(0, 1)
-      quit(0)
+      else: fdCopy(0, 1); quit(0)
     of -1: stderr.write &"{av0}: fork: {errstr()}\n"
     else:                               # parent:
       discard close(fds[0])
-      if write(fds[1], hdr[0].addr, n) != n:  # put hdr back in place
+      if write(fds[1], hdr[0].addr, off) != off: # restore hdr
         stderr.write &"{av0}: {errstr()}\n"; return
-      fdCopy(0, fds[1])                 #  blocking RW loop
+      fdCopy(0, fds[1])                 # blocking RW loop
       discard close(fds[1])
   elif decIx >= 0:
     if not do_fork:                     # replace current process
       decode(decIx, path)
     let pipe_writer = fork()
     case pipe_writer                    # child shares stdout
-    of 0:
-      decode(decIx, path)
-      stderr.write &"{av0}: {errstr()}\n"
+    of 0: decode(decIx, path)
     of -1: stderr.write &"{av0}: {errstr()}\n"
-    else:                               # barrel onward upon fail
+    else:                               # do any other input files upon fail
       var st: cint; discard waitpid(pipe_writer, st, 0)
   else: fdCopy(0, 1)
 
