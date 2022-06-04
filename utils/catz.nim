@@ -83,7 +83,23 @@ proc writeAll(fd: cint; buf: var openArray[char]; n0: int): int =
   return n0 - n
 
 proc fdCopy(src, dst: cint) =           # file descriptor copy loop
-  var buf: array[8192, char]
+  when defined(linux):                  # optimize a few cases for Linux
+    proc copy_file_range(fdI: cint, offI: ptr int64, fdO: cint, offO: ptr int64,
+      len: csize_t, flags: cuint): int64 {.importc, header: "unistd.h".}
+    proc sendfile(fdO: cint, fdI: cint, offI: ptr int64, len: csize_t):
+      int64 {.importc: "sendfile64", header: "unistd.h".}
+    proc splice(fdI: cint, offI: ptr int64, fdO: cint, offO: ptr int64,
+      len: csize_t, flags: cuint): int64 {.importc, header: "unistd.h".}
+    template tryLoopRet(call) =
+      if (let r = call; r >= 0):
+        if r == 0: return
+        while (let r = call; r != 0):
+          if r == -1 and errno != EINTR and errno != EAGAIN: return
+        return
+    tryLoopRet copy_file_range(src,nil, dst,nil, csize_t.high, 0) # src&dst REGF
+    tryLoopRet sendfile(dst, src, nil, csize_t(int32.high))       # src seekable
+    tryLoopRet splice(src,nil, dst,nil, csize_t.high, 0)          # >=1 pipe fds
+  var buf: array[65536, char]
   var nR: int
   while (nR = read(src, buf[0].addr, buf.sizeof); nR) > 0:
     if writeAll(dst, buf, nR) != nR: quit(17)
