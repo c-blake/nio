@@ -27,9 +27,9 @@ const decs: seq[Decoder] = @[
   (".Lz"     , "LZIP"       , 0, @["plzip", "-d"]),
   (".tLz"    , "LZIP"       , 0, @["plzip", "-d"]),
   (".lz4"    , "\x04\"M\x18", 0, @["lz4", "-cd"]),
-  (".zst"    , "P*M\x18"    , 0, @["pzstd", "-cdqp8"]),
-  ( ".zs"    , "P*M\x18"    , 0, @["pzstd", "-cdqp8"]),
-  (".tzs"    , "P*M\x18"    , 0, @["pzstd", "-cdqp8"]),
+  (".zst"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
+  ( ".zs"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
+  (".tzs"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
   (".pdf"    , "%PDF"       , 1, @["pdftotext", "", "-"]),
   (".ps"     , "%!PS"       , 0, @["ps2ascii"]),
   (".ps.gz"  , "%"          , 0, @["pz2ascii"]), # hdr will never match
