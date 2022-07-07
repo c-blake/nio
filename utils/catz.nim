@@ -32,11 +32,11 @@ const decs: seq[Decoder] = @[
   (".tzs"    , "P*M\x18"    , 0, @["pzstd", "-cdq"]),
   (".pdf"    , "%PDF"       , 1, @["pdftotext", "", "-"]),
   (".ps"     , "%!PS"       , 0, @["ps2ascii"]),
-  (".ps.gz"  , "%"          , 0, @["pz2ascii"]), # hdr will never match
-  (".ps.bz"  , "%"          , 0, @["pz2ascii"]), # hdr will never match
-  ( ".ps.bz2", "%"          , 0, @["pz2ascii"]), # hdr will never match
-  (".ps.xz"  , "%"          , 0, @["pz2ascii"]), # hdr will never match
-  (".ps.zs"  , "%"          , 0, @["pz2ascii"]),
+  (".ps.gz"  , "\xDE\xAD"   , 0, @["pz2ascii"]), # hdr will never match
+  (".ps.bz"  , "\xDE\xAD"   , 0, @["pz2ascii"]), # hdr will never match
+  ( ".ps.bz2", "\xDE\xAD"   , 0, @["pz2ascii"]), # hdr will never match
+  (".ps.xz"  , "\xDE\xAD"   , 0, @["pz2ascii"]), # hdr will never match
+  (".ps.zs"  , "\xDE\xAD"   , 0, @["pz2ascii"]), # hdr will never match
   (".html"   , "<!DO"       , 0, htmlDecode),
   (".html"   , "<htm"       , 0, htmlDecode),
   (".htm"    , "<htm"       , 0, htmlDecode)]
