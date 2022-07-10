@@ -823,7 +823,7 @@ proc st*(format="", nios: Strings): int =
         if c == '%': inPct = true
         else: outu c
 
-proc print*(sep="\t", at="", fmTy: Strings = @[], na="", paths: Strings) =
+proc print*(sep="\t", at="", t='x', fmTy: Strings = @[], na="", paths: Strings)=
   ## print native numeric files; pasted side-by-side over rows.
   ##
   ## *.N* suffix + printf-esque extra suffix/`fmTy` may imply number conversion.
@@ -835,11 +835,13 @@ proc print*(sep="\t", at="", fmTy: Strings = @[], na="", paths: Strings) =
   ##   [[fill]<^>][+- ][#][0][minWidth][.prec][cbdoxXeEfFgG]
   #  C %[flags][minWidth][.prec][modifier][type]
   #    %[' +-#0]*[minWidth][.prec]{hh|h|l|ll|L|z|t}[csdiuoxXeEfFgGaA]
-  if paths.len == 0:
-    erru "nio print needs >= 1 path/format; Run with --help for usage"; return
   var atShr: Repo
   try: atShr = rOpen(at, na=na)           # `nil` if at == ""
   except: erru &"Cannot open \"{at}\"\n"; quit(1)
+  if t != 'x' and at.len > 0 and paths.len == 0:
+    for (key, ix) in atShr.keysAtOpen: outu key, t
+    return
+  elif paths.len<1: erru "nio print needs >= 1 path; --help for usage\n"; return
   var ofmt: string
   var nfs: seq[NFile]
   var fms: seq[Formatter]
@@ -1948,6 +1950,7 @@ empty string => full information format"""},
              short={"format": 'c'}],
     [print , help={"sep"   : "separator for output columns",
                    "at"    : "shared default file for %s formats",
+                   "t"     : "dump `at` keys terminated by `t` if != 'x'",
                    "fmTy"  : """format spec defaults for types; Default:
 c%c C%d s%d S%d i%d I%d l%d L%d f%g d%g g%g
 if AT=="" %s renders as a number via `fmTy`""",
