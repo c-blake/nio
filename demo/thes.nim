@@ -4,7 +4,7 @@
 ## lists of refs (.NI), and a hash mapping the former to latter (.NII).  Use is
 ## just: wget github.com/words/moby/raw/master/words.txt; thes b; thes s ajar
 
-import std/[tables, os, math, times, strutils], cligen/[mfile, mslice, tab]
+import std/[tables, os, math, times], cligen/[mfile, mslice, tab]
 from terminal import terminalWidth; let ttyWidth = terminalWidth()
 
 template pua(T: typedesc): untyped = ptr UncheckedArray[T]
