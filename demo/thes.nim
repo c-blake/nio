@@ -75,9 +75,11 @@ proc build*(bpsl=821.0, time=false, input: seq[string]): int =
     for line in mf.mSlices:
       var line = line
       if line.nextSlice(w, ',') < 1: continue
+      if w.len > 254: stderr.write "ignoring overlong word\n"; continue
       oGet(wO, w, uniq, uniO, th.uniM)
       var syns: seq[uint32]                  #NOTE: Hash-order for inSynonyms..
       for syn in line.mSlices(','):          #.. with a later alpha readability
+        if syn.len > 254: stderr.write "ignoring overlong synonym\n"; continue
         oGet(synO, syn, uniq, uniO, th.uniM) #.. sort is faster, BUT fastest of
         syns.add synO                        #.. all is saving the 2nd syn list.
       let i = -th.find(w) - 1       # Lookups must fail for correct Moby inputs
