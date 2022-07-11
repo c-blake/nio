@@ -119,10 +119,12 @@ proc format(strs: seq[string]) =
 
 proc synon*(base="words", also=false, time=false, words: seq[string]) =
   ## Synonyms for given words|phrases; Maybe symmetrized suggestions.
+  ##
+  ## When no `words` are given, act as flushing stdin-stdout "server".
   var t0: float
   let th = topen(base)
-  for w in words:
-    stdout.write w, '\n'
+  template doWord(w) = 
+    stdout.write "Word: ", w, '\n'
     if time: t0 = epochTime()
     let ws = w.toMSlice
     var strs: seq[string]
@@ -136,6 +138,9 @@ proc synon*(base="words", also=false, time=false, words: seq[string]) =
       if time: stderr.write epochTime() - t0, " seconds\n"
       stdout.write "See also:\n"
       strs.format
+      if words.len == 0: flushFile stdout
+  if words.len == 0: (for w in stdin.lines: doWord(w))
+  else: (for w in words: doWord(w))
   th.close
 
 when isMainModule:
