@@ -10,7 +10,7 @@ from terminal import terminalWidth; let ttyWidth = terminalWidth()
 template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 proc `+%`(p: pointer, i: int): pointer = cast[pointer](cast[int](p) +% i)
 
-type # The money code is just the 89 lines from here to the end of `synos`.
+type # Core code is just the 99 lines from here to the end of `reduced`.
   TabEnt {.packed.} = object
     wdN {.bitsize:  8.}: uint8          # length of key cached in table slot
     wdR {.bitsize: 24.}: uint32         # ref(byte offset) into uniq
@@ -26,9 +26,9 @@ proc word(th: Thes, i: uint32): MSlice =
   result.len = cast[ptr uint8](th.uniM.mem +% i.int)[].int
   result.mem = th.uniM.mem +% (i.int + 1)
 
-proc find(th: Thes, w: MSlice): int =
-  let mask = th.tabSz - 1               # Vanilla linear probe hash search
-  let n = w.len.csize_t
+proc find(th: Thes, w: MSlice): int =   # Vanilla linear probe hash search
+  let mask = th.tabSz - 1 #NOTE: Moby+256kB L2 CPU params =>15,17bit hash,wdR
+  let n = w.len.csize_t   # ..+RobinHood+parallel KV arrays likely ~2X faster.
   var i = w.hash and mask               # Initial probe
   while (let j = th.tab[i].wdR.int; j != 0):
     if th.tab[i].wdN.int==n.int and c_memcmp(th.uniM.mem +% (j+1), w.mem, n)==0:
@@ -76,11 +76,11 @@ proc build*(bpsl=821.0, time=false, input: seq[string]): int =
       var line = line
       if line.nextSlice(w, ',') < 1: continue
       oGet(wO, w, uniq, uniO, th.uniM)
-      var syns: seq[uint32]
-      for syn in line.mSlices(','):
-        oGet(synO, syn, uniq, uniO, th.uniM)
-        syns.add synO
-      let i = -th.find(w) - 1
+      var syns: seq[uint32]                  #NOTE: Hash-order for inSynonyms..
+      for syn in line.mSlices(','):          #.. with a later alpha readability
+        oGet(synO, syn, uniq, uniO, th.uniM) #.. sort is faster, BUT fastest of
+        syns.add synO                        #.. all is saving the 2nd syn list.
+      let i = -th.find(w) - 1       # Lookups must fail for correct Moby inputs
       if i < 0: raise newException(ValueError, "build using stale files")
       th.tab[i].wdN   = w.len.uint8
       th.tab[i].wdR   = wO
