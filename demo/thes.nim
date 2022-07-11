@@ -123,7 +123,7 @@ proc synon*(base="words", also=false, time=false, words: seq[string]) =
   ## When no `words` are given, act as flushing stdin-stdout "server".
   var t0: float
   let th = topen(base)
-  template doWord(w) = 
+  template doWord(w) =
     stdout.write "Word: ", w, '\n'
     if time: t0 = epochTime()
     let ws = w.toMSlice
