@@ -54,6 +54,23 @@ proc close*(th: Thes) =
   th.uniM.close; th.synM.close; th.tabM.close
   if not th.synF.isNil: th.synF.close
 
+iterator synos*(th: Thes, ws: MSlice, wn: ptr uint32 = nil): uint32 =
+  if (let i = th.find(ws); i >= 0):
+    if not wn.isNil: wn[] = th.tab[i].wdR
+    let syns = cast[pua uint32](th.synM.mem +% th.tab[i].synsR.int)
+    for j in 1u32..syns[0]: yield syns[j]
+  elif not wn.isNil: wn[] = 0
+
+proc inSynonyms*(th: Thes, ss: MSlice, wn: uint32): bool =
+  for rn in th.synos(ss):       # This linear scan can be slow; So be sure to
+    if rn == wn: return true    #..do integer compares, not string compares.
+
+iterator reduced*(th: Thes, ws: MSlice): MSlice =
+  var wn: uint32                    # Could share old lookup; Do it again for..
+  for sn in th.synos(ws, wn.addr):  # more autonomous/fair timing, not "best".
+    let ss = th.word(sn)
+    if th.inSynonyms(ss, wn): yield ss
+
 proc build*(bpsl=821.0, time=false, input: seq[string]): int =
   ## Build binary files that can be rapidly queried
   let t0 = epochTime()
@@ -75,11 +92,11 @@ proc build*(bpsl=821.0, time=false, input: seq[string]): int =
     for line in mf.mSlices:
       var line = line
       if line.nextSlice(w, ',') < 1: continue
-      if w.len > 254: stderr.write "ignoring overlong word\n"; continue
+      if w.len > 255: stderr.write "ignoring overlong word\n"; continue
       oGet(wO, w, uniq, uniO, th.uniM)
       var syns: seq[uint32]                  #NOTE: Hash-order for inSynonyms..
       for syn in line.mSlices(','):          #.. with a later alpha readability
-        if syn.len > 254: stderr.write "ignoring overlong synonym\n"; continue
+        if syn.len > 255: stderr.write "ignoring overlong synonym\n"; continue
         oGet(synO, syn, uniq, uniO, th.uniM) #.. sort is faster, BUT fastest of
         syns.add synO                        #.. all is saving the 2nd syn list.
       let i = -th.find(w) - 1       # Lookups must fail for correct Moby inputs
@@ -94,23 +111,6 @@ proc build*(bpsl=821.0, time=false, input: seq[string]): int =
     discard th.uniM.resize uniO.int; th.close; mf.close
   else: stderr.write "Cannot open|mmap \"", input[0], "\"\n"; return 1
   if time: stderr.write epochTime() - t0, " seconds\n"
-
-iterator synos*(th: Thes, ws: MSlice, wn: ptr uint32 = nil): uint32 =
-  if (let i = th.find(ws); i >= 0):
-    if not wn.isNil: wn[] = th.tab[i].wdR
-    let syns = cast[pua uint32](th.synM.mem +% th.tab[i].synsR.int)
-    for j in 1u32..syns[0]: yield syns[j]
-  elif not wn.isNil: wn[] = 0
-
-proc inSynonyms*(th: Thes, ss: MSlice, wn: uint32): bool =
-  for rn in th.synos(ss):       # This linear scan can be slow; So be sure to
-    if rn == wn: return true    #..do integer compares, not string compares.
-
-iterator reduced*(th: Thes, ws: MSlice): MSlice =
-  var wn: uint32                    # Could share old lookup; Do it again for..
-  for sn in th.synos(ws, wn.addr):  # more autonomous/fair timing, not "best".
-    let ss = th.word(sn)
-    if th.inSynonyms(ss, wn): yield ss
 
 proc format(strs: seq[string]) =
   var wids: seq[int]; for s in strs: wids.add -s.len
@@ -140,7 +140,29 @@ proc synon*(base="words", also=false, time=false, words: seq[string]) =
       if time: stderr.write epochTime() - t0, " seconds\n"
       stdout.write "See also:\n"
       strs.format
-      if words.len == 0: flushFile stdout
+    if words.len == 0: flushFile stdout
+  if words.len == 0: (for w in stdin.lines: doWord(w))
+  else: (for w in words: doWord(w))
+  th.close
+
+proc cnt*(base="words", also=false, time=false, words: seq[string]) =
+  ## Just like synon but merely count synonyms
+  var t0: float
+  let th = topen(base)
+  template doWord(w) =
+    stdout.write "Word: ", w, ": "
+    if time: t0 = epochTime()
+    let ws = w.toMSlice
+    var cnt = 0
+    var al: pua uint32
+    for sn in th.synos(ws): inc cnt
+    if time: stderr.write epochTime() - t0, " seconds\n"
+    if also and cnt > 0:
+      if time: t0 = epochTime()
+      for s in th.reduced(ws): inc cnt
+      if time: stderr.write epochTime() - t0, " seconds\n"
+    echo cnt
+    if words.len == 0: flushFile stdout
   if words.len == 0: (for w in stdin.lines: doWord(w))
   else: (for w in words: doWord(w))
   th.close
@@ -149,4 +171,6 @@ when isMainModule:
   import cligen; include cligen/mergeCfgEnvMulti
   dispatchMulti [build, help={"bpsl": "bytes/synonym list (to size table)"}],
                 [synon, help={"base": "prefix of .LC, .NI, .NII",
+                              "also": "show symmetry imposed 'see also'"}],
+                [cnt  , help={"base": "prefix of .LC, .NI, ..",
                               "also": "show symmetry imposed 'see also'"}]
