@@ -139,7 +139,7 @@ proc synon*(base="words", also=false, time=false, words: seq[string]) =
   th.close
 
 when isMainModule:
-  import cligen
+  import cligen; include cligen/mergeCfgEnvMulti
   dispatchMulti [build, help={"bpsl": "bytes/synonym list (to size table)"}],
                 [synon, help={"base": "prefix of .LC, .NI, .NII",
                               "also": "show symmetry imposed 'see also'"}]
