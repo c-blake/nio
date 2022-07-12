@@ -133,7 +133,7 @@ proc synon*(base="words", also=false, time=false, words: seq[string]) =
     for sn in th.synos(ws): strs.add $th.word(sn)
     if time: stderr.write epochTime() - t0, " seconds\n"
     strs.format
-    if also:
+    if also and strs.len > 0:
       strs.setLen 0
       if time: t0 = epochTime()
       for s in th.reduced(ws): strs.add $s
@@ -154,8 +154,8 @@ proc cnt*(base="words", also=false, time=false, words: seq[string]) =
     if time: t0 = epochTime()
     let ws = w.toMSlice
     var cnt = 0
-    var al: pua uint32
-    for sn in th.synos(ws): inc cnt
+    if (let i = th.find(ws); i >= 0):
+      inc cnt, cast[pua uint32](th.synM.mem +% th.tab[i].synsR.int)[0].int
     if time: stderr.write epochTime() - t0, " seconds\n"
     if also and cnt > 0:
       if time: t0 = epochTime()
