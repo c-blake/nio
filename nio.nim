@@ -544,14 +544,15 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       yield (mf.`$`(ms), Ix(cast[int](ms.data) -% cast[int](r.m.mem)))
   of rkLenPfx:
     var k: string
-    var off, len: uint64
+    var off: uint64; var len: int64
     while off.int < r.m.size - 1:
       let off0 = off.Ix
-      convert LIk, r.lenK, len.addr, cast[pointer](cast[uint64](r.m.mem) + off)
+      convert lIk, r.lenK, len.addr, cast[pointer](cast[uint64](r.m.mem) + off)
+      len = len.abs
       off.inc ioSize[r.lenK]
       k.setLen len
       copyMem k[0].addr, cast[pointer](cast[uint64](r.m.mem) + off), len
-      off += len
+      off += len.uint64
       yield (k, off0)
 
 var openRepos*: Table[string, Repo]
