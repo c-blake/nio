@@ -1,6 +1,6 @@
 ## Moby Thesaurus has a slow (350..500 ms) NPM prog to CL query.  Shipped data
 ## is: word,synonym,..(no antonyms).  To enable rapid query, this prog compiles
-## said format to various binary files inspectable with `nio`.  Use is just:
+## said format to various binary files inspectable with `nio pr`.  Use is just:
 ## wget github.com/words/moby/raw/master/words.txt; thes b; thes s ajar
 
 import std/[tables, os, math, times], cligen/[mfile, mslice, tab]
@@ -9,7 +9,7 @@ from terminal import terminalWidth; let ttyWidth = terminalWidth()
 template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 proc `+%`(p: pointer, i: int): pointer = cast[pointer](cast[int](p) +% i)
 
-type # Core code is just the 99 lines from here to the end of `reduced`.
+type # Core code is just the 144 lines from here to the end of `build`.
   TabEnt {.packed.} = object
     wdN {.bitsize:  8.}: uint8          # length of key cached in table slot
     wdR {.bitsize: 24.}: uint32         # ref(byte offset) into uniq

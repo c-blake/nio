@@ -10,7 +10,7 @@ from terminal import terminalWidth; let ttyWidth = terminalWidth()
 template pua(T: typedesc): untyped = ptr UncheckedArray[T]
 proc `+%`(p: pointer, i: int): pointer = cast[pointer](cast[int](p) +% i)
 
-type # Core code is just the 99 lines from here to the end of `reduced`.
+type # Core code is just the 100 lines from here to the end of `build`.
   TabEnt {.packed.} = object
     wdN {.bitsize:  8.}: uint8          # length of key cached in table slot
     wdR {.bitsize: 24.}: uint32         # ref(byte offset) into uniq
