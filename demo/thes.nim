@@ -92,7 +92,7 @@ proc make(th: var Thes; input, base: string) = # Make binary files from `input`
       if kw.data.isNil:
         kw = word
         offGetOrAdd(wO, kw, uniq, uniO, th.uniM)
-      else:
+      elif word.size > 0:               # Moby has stray EOL ','s
         offGetOrAdd(synO, word, uniq, uniO, th.uniM)
         syns.add synO
     var hs: uint16
