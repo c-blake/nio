@@ -25,7 +25,7 @@ proc toMemSlice(a: string): MemSlice =
 proc removeFiles(paths: seq[string]) =
   for p in paths: (try: p.removeFile except: discard)
 
-type # Core code is the 88 non-comment lines after this to the end of `make`.
+type # Core code is the ~90 non-comment lines after this to the end of `make`.
   TabEnt {.packed.} = object    # 11,21 work for Moby; May need >21 for bigger.
     kwH {.bitsize: 11.}: uint16         # Partial keyword hash as cmp prefix
     kwR {.bitsize: 21.}: uint32         # Ref(byte offset) into uniq words file
@@ -69,6 +69,7 @@ proc synsContain(th: Thes, ss: MemSlice, wn: int32): bool = # Check Reciprocal
 
 proc make(th: var Thes; input, base: string) = # Make binary files from `input`
   template offGetOrAdd(o, k, uniq, uniO, uniM) =
+    if k.size>127: raise newException(ValueError,"overlong word: \"" & $k & "\"")
     try: o = uniq[k]                    # lptabz editOrInit would do only 1 find
     except: o=uniO; uniq[k]=o; uniM.add chr(k.size.int8), uniO; uniM.add k, uniO
   var inp = mfop(input)
@@ -96,7 +97,7 @@ proc make(th: var Thes; input, base: string) = # Make binary files from `input`
         syns.add synO
     var hs: uint16
     let i = -th.find(kw, hs.addr) - 1   # Lookups MUST fail for inputs w/o dups
-    if i < 0: raise newException(ValueError, "duplicate keyword")
+    if i < 0: raise newException(ValueError, "duplicate keyword " & $kw)
     th.tab[i].kwH = hs
     th.tab[i].kwR = wO
     cast[pua uint32](th.synM.mem)[i] = synsO
@@ -190,6 +191,7 @@ proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
         for sn in th.synos(w.toMemSlice):
           let (ms, keyw) = th.word(sn.abs)
           if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
+      stdout.write '\n'
       stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
   if words.len == 0:
     for w in stdin.lines:
