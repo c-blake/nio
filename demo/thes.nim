@@ -171,7 +171,7 @@ proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
       if time: stderr.write epochTime() - t0, " seconds\n"
       echo nSyn, " syns ", nAlso, " alsos ", nSyn - (nKeyW + nAlso), " missing"
     else:
-      if words.len > 1: stdout.write "Word: ", w
+      if words.len > 1: echo "Word: ", w
       var strs: seq[string]       #NOTE: reciprocal => keyw, but NOT vice versa
       var wids: seq[int]          # unembellished lens
       if alpha:         # 3 passes is still fast; Eg., makes same num of strings
@@ -191,7 +191,6 @@ proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
         for sn in th.synos(w.toMemSlice):
           let (ms, keyw) = th.word(sn.abs)
           if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
-      stdout.write '\n'
       stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
   if words.len == 0:
     for w in stdin.lines:
