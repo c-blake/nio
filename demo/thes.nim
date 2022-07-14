@@ -141,8 +141,8 @@ proc thOpen*(input, base: string): Thes =
 # outside when in case you need to import{.all.} `thes`
 import std/[strutils, terminal, times], cligen/[tab, humanUt]
 
-proc thes(input="", base="", count=false, gap=1, flush=false, time=false,
-  xRef="inverse", kwOnly="bold", unDef="plain", plain=false, words:seq[string])=
+proc thes(input="", base="", flush=false, gap=1, xRef="inverse", kwOnly="bold",
+       unDef="plain", plain=false, count=false, time=false, words: seq[string])=
   ## List synonyms with various ANSI SGR embellishment.  With no words on the
   ## command line, this instead runs as a stdin-stdout filter.
   ##
@@ -192,14 +192,14 @@ when isMainModule:
   import cligen; include cligen/mergeCfgEnv; dispatch thes, help={
     "input" : "a Moby-like words.txt file; \"\"->use cached",
     "base"  : "path pfx w/base sfx to output data files",
-    "count" : "only count synonyms; do not render",
     "flush" : "flush after every response in filter mode",
     "gap"   : "minimum inter-column gap",
-    "time"  : "time query in count mode",
     "xRef"  : "highlight for reciprocally synonymous",
     "kwOnly": "highlight for defined but irreciprocal",
     "unDef" : "highlight for undefined in thesaurus",
-    "plain" : "disable ANSI SGR Escape highlighting"}
+    "plain" : "disable ANSI SGR Escape highlighting",
+    "count" : "only count synonyms; do not render",
+    "time"  : "time query in count mode"}
 
 # On more optimizing: for a thesaurus, most lookups are likely for present keys.
 # While it's possible & maybe pedagogical (but see adix/lptabz), Robin-Hood will
