@@ -237,6 +237,8 @@ for kw, syns in th:                         |for (kw, syns) in th.items():
 The Nim, as written, is barely faster than Py.  Having done this, such users may
 want plain=on in ~/.config/thes.  If this winds up being the popular way to
 conceive the problem, ditching the <0 checks & highlighting makes more sense.
+Note that symmetry enforcement makes semantic clusters "more complete", but not
+as much as you might like.  Some rule (eg. edit distance) for merging is needed.
 
 On more optimizing: for a thesaurus, most lookups are likely for present keys.
 While it's possible & maybe pedagogical (but see adix/lptabz), Robin-Hood will
