@@ -140,7 +140,7 @@ proc thOpen*(input, base: string): Thes =
 
 import std/[strutils, terminal, times], cligen/[tab, humanUt]
 
-proc thes(input="", base="", order=false, flush=false, gap=1, xRef="inverse",
+proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
           kwOnly="bold", unDef="plain", plain=false, count=false, time=false,
           words: seq[string]) = # You can import{.all.} if you NEED `thes`.
   ## List synonyms with various ANSI SGR embellishment.  With no words on the
@@ -173,7 +173,14 @@ proc thes(input="", base="", order=false, flush=false, gap=1, xRef="inverse",
       if words.len > 1: stdout.write "Word: ", w
       var strs: seq[string]       #NOTE: reciprocal => keyw, but NOT vice versa
       var wids: seq[int]          # unembellished lens
-      if order:         # 3 passes is still fast; Eg., makes same num of strings
+      if alpha:         # 3 passes is still fast; Eg., makes same num of strings
+        for sn in th.synos(w.toMemSlice):
+          let (ms, keyw) = th.word(sn.abs)
+          wids.add -ms.size         # < 0 => left-aligned
+          if   sn<0: strs.add hlX & $ms & hl0
+          elif keyw: strs.add hlK & $ms & hl0
+          else     : strs.add hlU & $ms & hl0
+      else:
         for sn in th.synos(w.toMemSlice):
           let (ms, _) = th.word(sn.abs)         # < 0 => left-aligned
           if sn<0: strs.add hlX & $ms & hl0; wids.add -ms.size
@@ -183,13 +190,6 @@ proc thes(input="", base="", order=false, flush=false, gap=1, xRef="inverse",
         for sn in th.synos(w.toMemSlice):
           let (ms, keyw) = th.word(sn.abs)
           if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
-      else:
-        for sn in th.synos(w.toMemSlice):
-          let (ms, keyw) = th.word(sn.abs)
-          wids.add -ms.size         # < 0 => left-aligned
-          if   sn<0: strs.add hlX & $ms & hl0
-          elif keyw: strs.add hlK & $ms & hl0
-          else     : strs.add hlU & $ms & hl0
       stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
   if words.len == 0:
     for w in stdin.lines:
@@ -203,6 +203,7 @@ when isMainModule:
   import cligen; include cligen/mergeCfgEnv; dispatch thes, help={
     "input" : "a Moby-like words.txt file; \"\"->use cached",
     "base"  : "path pfx w/base sfx to output data files",
+    "alpha" : "fully alphabetical order, not block sorted",
     "flush" : "flush after every response in filter mode",
     "gap"   : "minimum inter-column gap",
     "xRef"  : "highlight for reciprocally synonymous",
