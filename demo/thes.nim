@@ -124,6 +124,7 @@ proc close*(th: var Thes) =
   th.uniM.close; th.tabM.close; th.synsM.close; th.synM.close
 
 proc thOpen*(input, base: string): Thes =
+  ## Open a thesaurus binary package, building it from "source" if input given.
   if input == "" and base == "":        # Should maybe just HTTPS fetch here
     stderr.write "wget github.com/words/moby/raw/master/words.txt\n"
     raise newException(ValueError, "Missing data")
@@ -139,13 +140,22 @@ proc thOpen*(input, base: string): Thes =
   result.tab   = cast[pua TabEnt](result.tabM.mem)
   result.tabSz = result.tabM.size div TabEnt.sizeof
 
+proc count*(th: Thes, w: string): tuple[nSyn, nAlso, nKeyW: int] =
+  ## Return a count of synonyms in various categories.  Undefined=nSyn-others.
+  for sn in th.synos(w.toMemSlice):
+    let (_, keyw) = th.word(sn.abs)
+    if   sn<0: inc result.nAlso
+    elif keyw: inc result.nKeyW
+    inc result.nSyn
+
 import std/[strutils, terminal, times], cligen/[tab, humanUt]
 
-proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
-          kwOnly="bold", unDef="plain", plain=false, count=false, time=false,
-          words: seq[string]) = # You can import{.all.} if you NEED `thes`.
-  ## List synonyms with various ANSI SGR embellishment.  With no words on the
-  ## command line, this instead runs as a stdin-stdout filter.
+type K = enum KxRef="xRef", KkwOnly="kwOnly", KunDef="unDef"
+proc thes(input="", base="", alpha=false, flush=false, gap=1, types: seq[K]= @[],
+          limit=0, xRef="inverse", kwOnly="bold", unDef="plain", plain=false,
+          count=false, measure=false, words: seq[string]) = # import{.all.}able
+  ## List synonyms maybe with various ANSI SGR embellishments.  With no words on
+  ## the command line, this instead runs as a stdin-stdout filter.
   ##
   ## Moby has a 300-2000 ms NPM prog to CLquery w/ugly, less informative output.
   ## To enable sub-usec query, we compile data to binary files; View w/`nio pr`.
@@ -157,40 +167,41 @@ proc thes(input="", base="", alpha=false, flush=false, gap=1, xRef="inverse",
   let hlU = textAttrOn(unDef.split, plain)
   let hl0 = if plain: "" else: textAttrOff
   var th = thOpen(input, base)    # This builds data files if needed
+  template ok(kind: K, counts): untyped =
+    limit == 0 or counts.nSyn < limit or kind in types
   template doWord(w) =
     if count:
       var t0: float
       if words.len > 1: stdout.write "Word: ", w, ": "
-      var nAlso, nKeyW, nSyn: int
-      if time: t0 = epochTime()
-      for sn in th.synos(w.toMemSlice):
-        let (_, keyw) = th.word(sn.abs)
-        if   sn<0: inc nAlso
-        elif keyw: inc nKeyW
-        inc nSyn
-      if time: stderr.write epochTime() - t0, " seconds\n"
+      if measure: t0 = epochTime()
+      let (nSyn, nAlso, nKeyW) = th.count(w)
+      if measure: stderr.write epochTime() - t0, " seconds\n"
       echo nSyn, " syns ", nAlso, " alsos ", nSyn - (nKeyW + nAlso), " missing"
     else:
       if words.len > 1: echo "Word: ", w
       var strs: seq[string]       #NOTE: reciprocal => keyw, but NOT vice versa
       var wids: seq[int]          # unembellished lens
-      if alpha:         # 3 passes is still fast; Eg., makes same num of strings
+      let cnts = th.count(w)
+      if alpha:
         for sn in th.synos(w.toMemSlice):
           let (ms, keyw) = th.word(sn.abs)
-          wids.add -ms.size         # < 0 => left-aligned
-          if   sn<0: strs.add hlX & $ms & hl0
-          elif keyw: strs.add hlK & $ms & hl0
-          else     : strs.add hlU & $ms & hl0
-      else:
-        for sn in th.synos(w.toMemSlice):
-          let (ms, _) = th.word(sn.abs)         # < 0 => left-aligned
-          if sn<0: strs.add hlX & $ms & hl0; wids.add -ms.size
-        for sn in th.synos(w.toMemSlice):
-          let (ms, keyw) = th.word(sn.abs)
-          if sn >= 0 and keyw: strs.add hlK & $ms & hl0; wids.add -ms.size
-        for sn in th.synos(w.toMemSlice):
-          let (ms, keyw) = th.word(sn.abs)
-          if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
+          let wid = -ms.size        # < 0 => left-aligned
+          if   sn<0 and ok(KxRef  , cnts): strs.add hlX & $ms & hl0;wids.add wid
+          elif keyw and ok(KkwOnly, cnts): strs.add hlK & $ms & hl0;wids.add wid
+          elif          ok(KunDef , cnts): strs.add hlU & $ms & hl0;wids.add wid
+      else:     # 3 passes is still fast; Eg., makes same num of strings
+        if ok(KxRef, cnts):
+          for sn in th.synos(w.toMemSlice):
+            let (ms, _) = th.word(sn.abs)         # < 0 => left-aligned
+            if sn<0: strs.add hlX & $ms & hl0; wids.add -ms.size
+        if ok(KkwOnly, cnts):
+          for sn in th.synos(w.toMemSlice):
+            let (ms, keyw) = th.word(sn.abs)
+            if sn >= 0 and keyw: strs.add hlK & $ms & hl0; wids.add -ms.size
+        if ok(KunDef, cnts):
+          for sn in th.synos(w.toMemSlice):
+            let (ms, keyw) = th.word(sn.abs)
+            if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
       stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
   if words.len == 0:
     for w in stdin.lines:
@@ -207,12 +218,14 @@ when isMainModule:
     "alpha" : "fully alphabetical order, not block sorted",
     "flush" : "flush after every response in filter mode",
     "gap"   : "minimum inter-column gap",
+    "types" : "limit output to: xRef, kwOnly, unDef",
+    "limit" : "total count limit @which to enforce `types`",
     "xRef"  : "highlight for reciprocally synonymous",
     "kwOnly": "highlight for defined but irreciprocal",
     "unDef" : "highlight for undefined in thesaurus",
     "plain" : "disable ANSI SGR Escape highlighting",
     "count" : "only count synonyms; do not render",
-    "time"  : "time query in count mode"}
+    "measure":"time query in count mode"}
 #[ As conceived, this program highlights rather than second guesses human
    (mis)judgement.  Some users may prefer symmetry of "synonymity" to override.
    Such users can use the below small program to pre-process a "words.txt":
