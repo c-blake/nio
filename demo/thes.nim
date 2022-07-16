@@ -151,7 +151,7 @@ proc count*(th: Thes, w: string): tuple[nSyn, nAlso, nKeyW: int] =
 import std/[strutils, terminal, times], cligen/[tab, humanUt]
 
 type K = enum KxRef="xRef", KkwOnly="kwOnly", KunDef="unDef"
-proc thes(input="", base="", alpha=false, flush=false, gap=1, types: seq[K]= @[],
+proc thes(input="", base="", alpha=false, flush=false, gap=1, types:seq[K]= @[],
           limit=0, xRef="inverse", kwOnly="bold", unDef="plain", plain=false,
           count=false, measure=false, words: seq[string]) = # import{.all.}able
   ## List synonyms maybe with various ANSI SGR embellishments.  With no words on
@@ -202,7 +202,8 @@ proc thes(input="", base="", alpha=false, flush=false, gap=1, types: seq[K]= @[]
           for sn in th.synos(w.toMemSlice):
             let (ms, keyw) = th.word(sn.abs)
             if sn >= 0 and not keyw: strs.add hlU & $ms & hl0; wids.add -ms.size
-      stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
+      if gap >= 0: stdout.format ttyWidth - pfx.len, wids, strs, gap, pfx
+      else: (for s in strs: echo s)
   if words.len == 0:
     for w in stdin.lines:
       doWord(w)
@@ -217,7 +218,7 @@ when isMainModule:
     "base"  : "path pfx w/base sfx to output data files",
     "alpha" : "fully alphabetical order, not block sorted",
     "flush" : "flush after every response in filter mode",
-    "gap"   : "minimum inter-column gap",
+    "gap"   : "minimum inter-column gap; <0 = 1 column",
     "types" : "limit output to: xRef, kwOnly, unDef",
     "limit" : "total count limit @which to enforce `types`",
     "xRef"  : "highlight for reciprocally synonymous",
