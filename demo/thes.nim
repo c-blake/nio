@@ -25,7 +25,7 @@ proc toMemSlice(a: string): MemSlice =
 proc removeFiles(paths: seq[string]) =
   for p in paths: (try: p.removeFile except: discard)
 
-type # Core code is the ~90 non-comment lines after this to the end of `make`.
+type # Core code is the ~108 non-comment lines after this to end of `thOpen`.
   TabEnt {.packed.} = object    # 11,21 work for Moby; May need >21 for bigger.
     kwH {.bitsize: 11.}: uint16         # Partial keyword hash as cmp prefix
     kwR {.bitsize: 21.}: uint32         # Ref(byte offset) into uniq words file
