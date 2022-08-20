@@ -1,10 +1,10 @@
 ## This is a system for managing pre-parsed N)umeric|N)ative binary data.  File
 ## names have extensions with metadata needed to interpret data as typed rows.
 ## Syntax is *".N"* then 1|more *{COUNT{,COUNT..}}[cCsSiIlLfdg]* specs where
-## **Uppercase=>Unsigned** & letter=first letter of C type except g=lonG double.
-## No count => 1.  *'_'* is ignored.  An empty string before ".N" gives *stdin*
-## row format if needed. E.g., a packed *struct{ short id,day; float price; }*
-## <~~> *"idDayPrice.N2sf"*. N/A = NaN|signed.low|unsigned.high.
+## **Uppercase => Unsigned** & letter=1st letter of C type except g=lonG double.
+## No count => 1.  *'_'* is ignored.  *idDayVal.N2sf* <~> packed *struct{ short
+## id,day; float val; }* can work for simple time series. N/A = NaN | signed.low
+## | unsigned.high.  "" before ".N" gives *stdin* row formats when needed.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 import strutils as su, math, os, times, strtabs, strformat {.all.},#`formatInt`
