@@ -353,6 +353,10 @@ func len*(nf: NFile): int {.inline.} =
       raise newException(ValueError, "non-mmapped file")
   nf.m.size div nf.rowFmt.bytes
 
+template BadIndex: untyped =
+  when declared(IndexDefect): IndexDefect
+  else: IndexError
+
 func `[]`*(nf: NFile, i: int): pointer {.inline.} =
   ## Returns pointer to the i-th row of a file opened with whatever row format
   ## and whatever *mode* (eg. fmReadWrite).  Cast it to an appropriate Nim type:
@@ -363,7 +367,7 @@ func `[]`*(nf: NFile, i: int): pointer {.inline.} =
   let m = nf.rowFmt.bytes
   when not defined(danger):
     if i >=% nf.m.size div m:
-      raise newException(IndexDefect, formatErrorIndexBound(i, nf.m.size div m))
+      raise newException(BadIndex, formatErrorIndexBound(i, nf.m.size div m))
   cast[pointer](cast[ByteAddress](nf.m.mem) + i*m)
 
 func `[]`*(nf: NFile; T: typedesc; i: int): T {.inline.} =
@@ -457,7 +461,7 @@ func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
   let m = T.sizeof
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
-      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
+      raise newException(BadIndex,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
 
 func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
@@ -468,7 +472,7 @@ func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
   let m = T.sizeof
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
-      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
+      raise newException(BadIndex,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
 
 func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
@@ -479,7 +483,7 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
   let m = T.sizeof
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
-      raise newException(IndexDefect,formatErrorIndexBound(i,fa.nf.m.size div m))
+      raise newException(BadIndex,formatErrorIndexBound(i,fa.nf.m.size div m))
   cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[] = val
 
 proc `$`*[M](x: array[M, char]): string =
