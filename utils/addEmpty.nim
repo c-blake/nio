@@ -1,3 +1,4 @@
+when not declared(File): import std/syncio
 when not declared(csize_t):
   type csize_t = uint64
 

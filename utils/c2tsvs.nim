@@ -1,4 +1,5 @@
 import std/[strformat, parsecsv, streams, strutils], cligen/osUt
+when not declared(File): import std/syncio
 
 type Log = enum eachSub, totalSubs
 

@@ -1,4 +1,5 @@
 import std/[strutils, strformat], cligen/osUt
+when not declared(stdin): import std/syncio
 
 proc transpose(delim='\0', sep='\t', null="N/A", verbose=false) =
   ## A stdin-stdout filter that transposes strict \\t-\\n-delimited TSV.  When 

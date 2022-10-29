@@ -1,4 +1,5 @@
 import std/[re, sugar]
+when not declared(stdin): import std/syncio
 
 proc nmatch*(nCt = -1, xCt = -1, delim=":", patterns: seq[string]): int =
   ## Read lines from stdin, counts number of in-line matches of all patterns,

@@ -5,6 +5,7 @@
 # 2-byte CRLF can be split across reads which is handled by 'CR' DFA states.
 
 import std/[posix, strformat], cligen/osUt # uriteBuffer, erru, outu, c_setvbuf
+when not declared(File): import std/syncio
 
 type Log      = enum eachSub, totalSubs
 type DFAState = enum sFEnd, sNonQuo, sQuo, sQuoInQuo, sCRAtEnd, sCRInQuo

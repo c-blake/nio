@@ -10,6 +10,7 @@ const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 import strutils as su, math, os, times, strtabs, strformat {.all.},#`formatInt`
        tables, sets, system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
 from memfiles as mf import nil
+when not declared(FileMode): import std/[syncio, objectdollar]; export syncio
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   IOKind* = enum cIk = "int8" , CIk = "uint8" , sIk = "int16", SIk = "uint16",
