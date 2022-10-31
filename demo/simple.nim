@@ -1,3 +1,4 @@
+when not declared(addFloat): import std/[formatfloat, objectdollar]
 import nio; from os import `/`
 
 # Trailing '/' matters to disambiguate given name vs. given dir

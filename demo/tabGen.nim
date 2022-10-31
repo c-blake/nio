@@ -1,3 +1,4 @@
+when not declared(stdout): import std/syncio
 import std/[os, strutils, random]
 # randomize()
 let n = if paramCount() > 0: parseInt(paramStr(1)) else: 30
