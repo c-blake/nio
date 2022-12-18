@@ -28,8 +28,8 @@ proc lab2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
     if lno > skip:
       sep.split(MSlice(mem: ln, len: nLn - 1), cols, max)
       var j: int
-      try   : j = colNo[cols[col]]
-      except: continue                                      # unnamed colKey
+      try      : j = colNo[cols[col]]
+      except Ce: continue                                   # unnamed colKey
       rows.mgetOrPut($cols[row], newRow)[j] = $cols[val]
   stdout.urite hdr                                          # print header
   for ck in colKeys: stdout.urite oDlm, ck

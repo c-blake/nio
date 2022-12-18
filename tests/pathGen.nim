@@ -15,11 +15,11 @@ echo typedPath[array[3, array[2, array[3, int16]]]]("")
 # These break and error out; Would need a () syntax for .N
 try:
   echo typedPath[array[3, array[2, Bar]]]("")
-except:
+except CatchableError:
   echo "exception"
 try:
   echo typedPath[Baz]("")
-except:
+except CatchableError:
   echo "exception"
 
 type
@@ -32,9 +32,9 @@ echo typedPath[BarT]("")
 # These break and should at least error out
 try:
   echo typedPath[array[3, array[2, BarT]]]("")
-except:
+except CatchableError:
   echo "exception"
 try:
   echo typedPath[BazT]("")
-except:
+except CatchableError:
   echo "exception"

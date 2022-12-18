@@ -44,9 +44,9 @@ func width*(nf: NFile): int = nf.rowFmt.bytes
 
 func low*(T: typedesc[float80]): float80 = float64.low    # float80 support
 func high*(T: typedesc[float80]): float80 = float64.high
-converter toFloat80*(pdqr: SomeNumber): float80 = {.emit: "result = pdqr;".}
+converter toFloat80*(pdqr: SomeNumber): float80 = {.emit: "result = `pdqr`;".}
 template defc(T) {.dirty.} = # need dirty to avoid genSym so emit can work
-  converter `to T`*(xyzw: float80): T = {.emit: "result = xyzw;".}
+  converter `to T`*(xyzw: float80): T = {.emit: "result = `xyzw`;".}
 defc(uint8);defc(uint16);defc(uint32);defc(uint64); defc(float32)
 defc( int8);defc( int16);defc( int32);defc( int64); defc(float64)
 
@@ -201,7 +201,7 @@ proc metaData(path: string): (string, IORow, string) =
   var endAt: int
   var (dir, name, ext) = splitPathName(path)
   let fmt = if ext.startsWith(".N"): ext[2 .. ^1] else:
-              try: dotContents(dir / "." & name) except:
+              try: dotContents(dir / "." & name) except Ce:
                 raise newException(ValueError,
                                    path & ": has no .N extension | dotfile")
   result[1] = fmt.initIORow(endAt)
@@ -233,7 +233,7 @@ proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
                            allowRemap=allowRemap, mapFlags=mapFlags)
       else:
         result.m.mem = cast[pointer](1)
-    except:
+    except Ce:
       result.f = open(path, mode, max(8192, result.rowFmt.bytes))
   if rest != nil: rest[] = rst
 
@@ -254,8 +254,8 @@ proc makeSuffix[T](result: var string, x: T, inArray=false) =
     var x: arrayBase(T)         # Use devious `arrayBase` to handle tensors
     result.makeSuffix x, inArray=true
   else:
-    try   : result.add nim2nio[$type(T)]
-    except: raise newException(ValueError, "missing type key: "&repr($type(T)))
+    try      :result.add nim2nio[$type(T)]
+    except Ce:raise newException(ValueError,"missing type key: "&repr($type(T)))
 
 proc makeName[T](result: var string, key: string, x: T, sep=",") =
   when T is tuple or T is object:
@@ -368,7 +368,7 @@ func `[]`*(nf: NFile, i: int): pointer {.inline.} =
   when not defined(danger):
     if i >=% nf.m.size div m:
       raise newException(BadIndex(), formatErrorIndexBound(i, nf.m.size div m))
-  cast[pointer](cast[ByteAddress](nf.m.mem) + i*m)
+  cast[pointer](cast[int](nf.m.mem) +% i*m)
 
 func `[]`*(nf: NFile; T: typedesc; i: int): T {.inline.} =
   ## Returns i-th row of a file opened with whatever row format *copied* into
@@ -435,12 +435,12 @@ template toOpenArray*[T](fa: FileArray[T]): untyped =
 
 iterator items*[T](fa: FileArray[T]): T =
   for b in countup(0, fa.nf.m.size, T.sizeof):
-    yield cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + b)[]
+    yield cast[ptr T](cast[int](fa.nf.m.mem) +% b)[]
 
 iterator pairs*[T](fa: FileArray[T]): (int, T) =
   let m = T.sizeof
   for i in countup(0, fa.nf.m.size div m):
-    yield (i, cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[])
+    yield (i, cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[])
 
 func len*[T](fa: FileArray[T]): int {.inline.} =
   ## Returns length of `fa` in units of T.sizeof records.  Since this does a
@@ -462,7 +462,7 @@ func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
       raise newException(BadIndex(),formatErrorIndexBound(i,fa.nf.m.size div m))
-  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
+  cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[]
 
 func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
@@ -473,7 +473,7 @@ func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
       raise newException(BadIndex(),formatErrorIndexBound(i,fa.nf.m.size div m))
-  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[]
+  cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[]
 
 func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
   ## Assign `val` to `i`-th row of `fa`.
@@ -484,7 +484,7 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
   when not defined(danger):
     if i * m >=% fa.nf.m.size:
       raise newException(BadIndex(),formatErrorIndexBound(i,fa.nf.m.size div m))
-  cast[ptr T](cast[ByteAddress](fa.nf.m.mem) + i * m)[] = val
+  cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[] = val
 
 proc `$`*[M](x: array[M, char]): string =
   ## Sometimes `x=initFileArray[array[z,char]]("x.NzC"); echo x[i]` is nice.
@@ -576,16 +576,16 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
     else:                               # $NO_UP can switch off even w/o schema
       result.mode = if getEnv("NO_UP", "xYz") == "xYz": rmUpdate else: rmIndex
   var info: FileInfo
-  try: info = getFileInfo(path)
-  except: discard
+  try      : info = getFileInfo(path)
+  except Ce: discard
   let openMode = if result.mode == rmUpdate and info.id.device == 0: fmWrite
                  else: fmAppend
   if info.size > type(result.off).high.int:
     raise newException(ValueError, &"{path}: too big for index pointer sizes")
   result.off = info.size.Ix
   let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else:
-    try: mf.open(path)
-    except: mf.MemFile(mem: nil,size: 0)
+    try      : mf.open(path)
+    except Ce: mf.MemFile(mem: nil, size: 0)
   let (_, _, ext) = splitPathName(path)
   if ext.len == 0 or ext == ".Dn":
     result = Repo(kind:rkDelim, dlm: '\n', m: m, na: na, mode: mode, kout: kout)
@@ -594,7 +594,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
       let dlm = ext[2..^1]
       result = Repo(kind:rkDelim, m: m, na: na, mode: mode, kout: kout,
                     dlm: (if dlm == "n": '\n' else: chr(parseInt(dlm))))
-    except:
+    except Ce:
       raise newException(ValueError, &"{path}: expecting .Dn or .D<INT>")
   elif ext.startsWith(".L") and ext.len == 3:
     result = Repo(kind:rkLenPfx, lenK: ioCodeK(ext[2]), m: m, na: na,
@@ -671,7 +671,7 @@ proc index*(r: var Repo, ixOut: pointer, k: string, lno: int) =
   let k = if   r.kind == rkFixWid: padClip(k, r.fmt.bytes)
           elif r.kind == rkLenPfx: r.clip(k, r.lenK, lno) else: k
   try: i = r.tab[k]                     # get extant index
-  except:                               # novel key
+  except Ce:                            # novel key
     if r.mode == rmIndex: retNA         # missing && !up -> NA index
     case r.kind                         # update in-memory Table & repo
     of rkFixWid: i = r.tab.len.Ix; r.tab[k] = i; r.f.urite k; r.off = i + 1
@@ -841,8 +841,8 @@ proc print*(sep="\t", at="", t='x', fmTy: Strings = @[], na="", paths: Strings)=
   #  C %[flags][minWidth][.prec][modifier][type]
   #    %[' +-#0]*[minWidth][.prec]{hh|h|l|ll|L|z|t}[csdiuoxXeEfFgGaA]
   var atShr: Repo
-  try: atShr = rOpen(at, na=na)           # `nil` if at == ""
-  except: erru &"Cannot open \"{at}\"\n"; quit(1)
+  try      : atShr = rOpen(at, na=na)     # `nil` if at == ""
+  except Ce: erru &"Cannot open \"{at}\"\n"; quit(1)
   if t != 'x' and at.len > 0 and paths.len == 0:
     for (key, ix) in atShr.keysAtOpen: outu key, t
     return
@@ -890,8 +890,8 @@ proc rip*(input: string, names: Strings): int =
   var offs, ns: seq[int]
   var off = 0
   for j in 0 ..< outs.len:                      # open all outputs
-    try: outs[j] = nOpen(names[j], fmWrite)
-    except:
+    try      : outs[j] = nOpen(names[j], fmWrite)
+    except Ce:
       if ".N" in names[j]: raise
       var sfx = ".N"
       for k, c in inp.rowFmt.cols[j].cnts:
@@ -1140,8 +1140,8 @@ proc load1*(inCode, oCode: char; xform="", count=1): int =
 
 proc maybeAppend(path: string): FileMode = # modes maybe weird from Windows
   var info: FileInfo
-  try: info = getFileInfo(path)
-  except: discard
+  try      : info = getFileInfo(path)
+  except Ce: discard
   result = if info.id.device == 0: fmWrite else: fmAppend
 
 from cligen/argcvt import unescape  # pulls in much, but impacts comptime little
@@ -1284,7 +1284,7 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
         try:
           discard parse(s, timeFmt)
           tOk[m*j + k].inc
-        except: discard
+        except Ce: discard
       if s.parseBiggestInt(i)   == s.len: iOk[j].inc
       if s.parseBiggestFloat(f) == s.len: fOk[j].inc
     else: empty[j].inc
@@ -1416,8 +1416,8 @@ proc kreduce*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
               na=0.0, paths: Strings): int =
   ## keyed-reduce (*by group*); Right now like `moments` but per-`group`-key.
   var grpFil: NFile
-  try   : grpFil = nOpen(group)
-  except: raise newException(ValueError, &"cannot open file {group}")
+  try      : grpFil = nOpen(group)
+  except Ce: raise newException(ValueError, &"cannot open file {group}")
   var inps: seq[NFile]                  # Open all the inputs
   for path in paths: inps.add nOpen(path)
   var g: int64                          # Integer group label
@@ -1477,8 +1477,8 @@ type #*** A DEFAULT SORT, MOST USEFUL (BUT ALSO AWKWARD) FOR STRING KEYS
     sgn: int            # sense of comparison; +1 ascending; -1 descending
 
 func compare(cmp: Comparator; i, j: int): int =
-  let a = cast[pointer](cast[ByteAddress](cmp.nf[i]) + cmp.off)
-  let b = cast[pointer](cast[ByteAddress](cmp.nf[j]) + cmp.off)
+  let a = cast[pointer](cast[int](cmp.nf[i]) +% cmp.off)
+  let b = cast[pointer](cast[int](cmp.nf[j]) +% cmp.off)
   if cmp.dir: cmpMem a, b, cmp.width
   elif cmp.at.isNil: compare cmp.iok, a, b
   else:                 # indirect case
@@ -1538,9 +1538,8 @@ proc order*(at="", output: string, paths: Strings): int =
   ## ``a,b,c.Niif:@-2,@as.LS+1,-3`` makes a multi-level order first descending
   ## by `bs[]`, then ascending by `as[]`, then descending by `c`.
   var atShr: Repo
-  try:
-    if at.len > 0: atShr = rOpen(at)                    # `nil` if at == ""
-  except: erru &"Cannot open \"{at}\"\n"; quit(1)
+  try      : (if at.len > 0: atShr = rOpen(at))         # `nil` if at == ""
+  except Ce: erru &"Cannot open \"{at}\"\n"; quit(1)
   let m = paths.len
   var nfs = newSeq[NFile](m)
   var cmps = newSeqOfCap[Comparator](m)
@@ -1645,7 +1644,7 @@ proc suOpen*(idVar: string; tms,ids: seq[string]; nT,nI, padT,padI: int;
   template initAx(K, ky, kys, name) =   # OPEN AXIS INDEX FILES
     try:
       result.`ax K` = axOpen(`ix2 ky`, fixed)
-    except:
+    except Ce:
       erru "cannot open ", name, " AxisFile\n"; return
     result.`pad K` = `pad K`
     result.`n K` = kys.known(result.`ax K`, `n K`, result.`pad K`)
@@ -1709,19 +1708,19 @@ proc ensureSpace(su: var StacksUpdater; vQ: var seq[NFile];
     let oldM = if vQ.len > 0: vQ[v].width div sz else: 0
     for i in 0 ..< oldN:
       for j in 0 ..< oldM:
-        copyMem cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz),
-                cast[pointer](cast[ByteAddress](vQ[v][i]) + j*sz), sz
+        copyMem cast[pointer](cast[int](vN[^1][i]) +% j*sz),
+                cast[pointer](cast[int](vQ[v][i]) +% j*sz), sz
       for j in oldM ..< m:
-        setNA iok, cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz)
+        setNA iok, cast[pointer](cast[int](vN[^1][i]) +% j*sz)
     for i in oldN ..< n:
       for j in 0 ..< m:
-        setNA iok, cast[pointer](cast[ByteAddress](vN[^1][i]) + j*sz)
+        setNA iok, cast[pointer](cast[int](vN[^1][i]) +% j*sz)
     let nw = (dir/su.outBase[v]&".N") & $m & ioCode[iok]
     if oldM != m:
       let p = (dir/su.outBase[v] & ".N") & $oldM & ioCode[iok]
       removeFile p
-    try: moveFile tmp, nw
-    except: discard
+    try      : moveFile tmp, nw
+    except Ce: discard
     if vQ.len > 0: vQ[v].close
   vQ = vN
 
@@ -1730,13 +1729,13 @@ proc wdExpand(wd, tm: string): string = wd.replace("@TM@", tm)
 proc update*(su: var StacksUpdater, tm: string): int =
   ## Returns number of rows incorporated into matrices
   var t: int                    # FIRST DECIDE NEEDED tm INDEX
-  try: t = su.axT[tm]
-  except:
+  try      : t = su.axT[tm]
+  except Ce:
     if su.fixed: erru &"ix2tm: no \"{tm}\" and static ix; skipping\n"; return 0
     else: t = su.axT.nKy        # `add` POST-UPDATE TO MARK COMPLETION
   var ids: NFile                # ids <- OPEN idVar
-  try: ids = nOpen(su.wd.wdExpand(tm)/su.idVar)
-  except: erru &"no id file: {su.wd.wdExpand(tm)/su.idVar}!\n"; return 0
+  try      : ids = nOpen(su.wd.wdExpand(tm)/su.idVar)
+  except Ce: erru &"no id file: {su.wd.wdExpand(tm)/su.idVar}!\n"; return 0
   if not su.fixed:              # UPDATE Id AXIS
     for id in ids: (if id notin su.axI: su.axI.add id)
     su.axI.fK.flushFile
@@ -1747,8 +1746,8 @@ proc update*(su: var StacksUpdater, tm: string): int =
   su.nT = max(su.nT, xT)        # Leave alone user-over provisioned
   su.nI = max(su.nI, xI)
   for v in su.inpVars:
-    try   : su.vI.add nOpen(v)
-    except: return 0
+    try      : su.vI.add nOpen(v)
+    except Ce: return 0
     if su.vI[^1].rowFmt.cols.len > 1 or
        su.vI[^1].rowFmt.cols[0].width > ioSize[su.vI[^1].rowFmt.cols[0].iok]:
       erru &"cannot make >2-D arrays for: {v}\n"; return 0
@@ -1756,12 +1755,12 @@ proc update*(su: var StacksUpdater, tm: string): int =
   if su.itDir.len>0: su.ensureSpace su.vX, su.nI, su.nT, su.itDir #SHAPE/OPEN
   var k = newString(ids.width)  # MAIN WORK: LOOK UP id & INJECT INTO MATRICES
   template elt(nf; i, j, w: int): untyped =
-    cast[pointer](cast[ByteAddress](nf[i]) + j*w)
+    cast[pointer](cast[int](nf[i]) +% j*w)
   for j, id in ids:
     var i: int
     copyMem k[0].addr, id[0].unsafeAddr, ids.width
-    try: i = su.axI[k]
-    except: (if su.fixed: erru &"ix2id: no \"{k}\"\n"); continue
+    try      : i = su.axI[k]
+    except Ce: (if su.fixed: erru &"ix2id: no \"{k}\"\n"); continue
     for v in 0 ..< su.inpVars.len:
       if su.vI[v].ok:
         let w = su.vI[v].width
@@ -1803,14 +1802,14 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
                   tiDir, itDir, wd, fixed)      # SET UP OUTPUTS
   var didWk = false                             # LOOP OVER INPUTS
   var t0: Time
-  try: t0 = getLastModificationTime(outDir/stamp)
-  except: discard # 0
+  try      : t0 = getLastModificationTime(outDir/stamp)
+  except Ce: discard # 0
   var fi: FileInfo
   for i in 0 ..< times.len:
     let time = times[i]
     let path = paths[i]
-    try   : fi = path.getFileInfo
-    except: erru &"could not access {path}\n"; continue
+    try      : fi = path.getFileInfo
+    except Ce: erru &"could not access {path}\n"; continue
     if doTs.len == 0: # XXX could also do any times > EndOf ix2tm mode
       if fi.lastWriteTime < t0: continue
     else:

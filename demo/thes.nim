@@ -28,7 +28,7 @@ proc toMemSlice(a: string): MemSlice =
   result.data = a.cstring; result.size = a.len
 
 proc removeFiles(paths: seq[string]) =
-  for p in paths: (try: p.removeFile except: discard)
+  for p in paths: (try: p.removeFile except CatchableError: discard)
 
 type # Core code is the ~108 non-comment lines after this to end of `thOpen`.
   TabEnt {.packed.} = object    # 11,21 work for Moby; May need >21 for bigger.
@@ -76,7 +76,8 @@ proc make(th: var Thes; input, base: string) = # Make binary files from `input`
   template offGetOrAdd(o, k, uniq, uniO, uniM) =
     if k.size>127: raise newException(ValueError,"overlong word: \"" & $k & "\"")
     try: o = uniq[k]                    # lptabz editOrInit would do only 1 find
-    except: o=uniO; uniq[k]=o; uniM.add chr(k.size.int8), uniO; uniM.add k, uniO
+    except CatchableError:
+      o=uniO; uniq[k]=o; uniM.add chr(k.size.int8), uniO; uniM.add k, uniO
   var inp = mfop(input)
   var nL = 0                            # Pass 1: just count lines
   for line in memSlices(inp): inc nL
