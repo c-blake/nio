@@ -39,16 +39,16 @@ type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   Strings* = seq[string]                        ## alias for seq[string]
 
 func isNil*(nf: NFile): bool = nf.m.mem.isNil and nf.f.isNil
-func ok*(nf: NFile): bool = not nf.isNil
+func ok*   (nf: NFile): bool = not nf.isNil
 func width*(nf: NFile): int = nf.rowFmt.bytes
 
-func low*(T: typedesc[float80]): float80 = float64.low    # float80 support
+func low* (T: typedesc[float80]): float80 = float64.low   # float80 support
 func high*(T: typedesc[float80]): float80 = float64.high
 converter toFloat80*(pdqr: SomeNumber): float80 = {.emit: "result = `pdqr`;".}
 template defc(T) {.dirty.} = # need dirty to avoid genSym so emit can work
   converter `to T`*(xyzw: float80): T = {.emit: "result = `xyzw`;".}
-defc(uint8);defc(uint16);defc(uint32);defc(uint64); defc(float32)
-defc( int8);defc( int16);defc( int32);defc( int64); defc(float64)
+defc uint8; defc uint16; defc uint32; defc uint64; defc float32
+defc  int8; defc  int16; defc  int32; defc  int64; defc float64
 
 const ioCode*: array[IOKind, char] = [ 'c','C', 's','S', 'i','I', 'l','L',
                                        'f','d','g' ]              ## type codes
@@ -60,14 +60,14 @@ let nim2nio* = {"int8"   : 'c', "uint8"  : 'C', "int16": 's', "uint16": 'S',
                 "float32": 'f', "float64": 'd', "float80": 'g', "int": 'l',
                 "uint": 'L', "float": 'd', "char": 'C', "byte": 'C'}.toTable
 
-func ioCodeK*(c: char): IOKind {.inline.} =
-  ## return IOKind correspnding to character `c`
+func kindOf*(c: char): IOKind {.inline.} =
+  ## return IOKind corresponding to character `c`
   let ix = ioCode.find(c)
   if ix < 0: raise newException(ValueError, "expecting [cCsSiIlLfdg]")
   IOKind(ix)
 
-func codeOf*(x: IONumber): IOKind =
-  ## return NIO code from a static Nim type
+func kindOf*(x: IONumber): IOKind =
+  ## return IOKind from a static Nim type
   when x is  int8  : result = cIk
   elif x is uint8  : result = CIk
   elif x is  int16 : result = sIk
@@ -85,17 +85,18 @@ func isUnsigned*(k: IOKind): bool {.inline.} = (k.int and 1) == 1
 func isFloat*   (k: IOKind): bool {.inline.} = k.int > LIk.int
 
 #*** MISSING VALUE CONVENTION; NA-AWARE LOW/HIGH MOSTLY FOR CLIPPING PARSED DATA
-const c_na* =  int8.low;const c_low* = int64( int8.low+1);const c_high* = int64( int8.high)
-const s_na* = int16.low;const s_low* = int64(int16.low+1);const s_high* = int64(int16.high)
-const i_na* = int32.low;const i_low* = int64(int32.low+1);const i_high* = int64(int32.high)
-const l_na* = int64.low;const l_low* = int64.low+1       ;const l_high* = int64.high
-const C_na* =  uint8.high;const C_low* = 0'u64;const C_high* = uint64( uint8.high-1)
-const S_na* = uint16.high;const S_low* = 0'u64;const S_high* = uint64(uint16.high-1)
-const I_na* = uint32.high;const I_low* = 0'u64;const I_high* = uint64(uint32.high-1)
-const L_na* = uint64.high;const L_low* = 0'u64;const L_high* = uint64.high-1
-const f_na* = float32(NaN); const f_low* = float32.low; const f_high* = float32.high #-+inf
-const d_na* = float64(NaN); const d_low* = float64.low; const d_high* = float64.high #-+inf
-const g_na* = float80(NaN); const g_low* = float80.low; const g_high* = float80.high #-+inf
+template defs(c, T) {.dirty.} =  # NA,Low,High-Signed
+ const `c na`* =T.low;const`c low`* =int64(T.low+1);const`c high`* =T.high.int64
+defs c,  int8; defs s,  int16; defs i,  int32; defs l,  int64
+
+template defu(C, T) {.dirty.} =  # NA,Low,High-Unsigned
+ const `C na`* =T.high; const `C low`* =0u64; const `C high`* = uint64(T.high-1)
+defu C, uint8; defu S, uint16; defu I, uint32; defu L, uint64
+
+template deff(f, T) {.dirty.} =  # NA,Low,High-floating point
+ const `f na`* = T(NaN); const `f low`* = T.low; const `f high`* = T.high
+deff f, float32; deff d, float64; deff g, float80
+
 const lowS*  = [c_low , s_low , i_low , l_low ] # [k.int shr 1] post-isSigned
 const highS* = [c_high, s_high, i_high, l_high]
 const lowU*  = [C_low , S_low , I_low , L_low ] # [k.int shr 1] post-isUnsigned
@@ -176,7 +177,7 @@ func initIORow*(fmt: string, endAt: var int): IORow =
 #Explicit "0+" -> raise newException(IOError, "0 dim in type fmt: "&fmt&fmtUse)
     of ',': col.cnts.add 0              # make room for next dimension
     of 'c', 'C', 's', 'S', 'i', 'I', 'l', 'L', 'f', 'd', 'g':
-      col.iok = fmt[i].ioCodeK
+      col.iok = fmt[i].kindOf
       for i in 0 ..< col.cnts.len:      # All 0s -> 1s
         if col.cnts[i] == 0: col.cnts[0] = 1
       col.width = col.cnts.prod
@@ -318,11 +319,11 @@ template defr(T) =
   proc read*(nf: var NFile, da: var T, naCvt=false): bool =
     var sk: IOKind
     if nf.read(sk, sBuf):
-      convert da.codeOf, sk, da.addr, sBuf[0].addr, naCvt
+      convert da.kindOf, sk, da.addr, sBuf[0].addr, naCvt
       result = true
 
-defr(uint8);defr(uint16);defr(uint32);defr(uint64); defr(float32)
-defr( int8);defr( int16);defr( int32);defr( int64); defr(float64); defr(float80)
+defr uint8; defr uint16; defr uint32; defr uint64; defr float32
+defr  int8; defr  int16; defr  int32; defr  int64; defr float64; defr float80
 
 proc readCvt*(nf: var NFile, nums: var openArray[IONumber], naCvt=false): bool =
   ## Read next `nums.len` items, converting to buf type & maybe converting NAs.
@@ -450,7 +451,7 @@ func len*[T](fa: FileArray[T]): int {.inline.} =
       raise newException(ValueError, "uninitialized FileArray[T]")
   when not defined(danger):
     if fa.nf.m.size mod T.sizeof != 0:
-      raise newException(ValueError, "FileArray[T] size non-multiple of T.sizeof")
+     raise newException(ValueError,"FileArray[T] size non-multiple of T.sizeof")
   fa.nf.m.size div T.sizeof
 
 func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
@@ -597,7 +598,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
     except Ce:
       raise newException(ValueError, &"{path}: expecting .Dn or .D<INT>")
   elif ext.startsWith(".L") and ext.len == 3:
-    result = Repo(kind:rkLenPfx, lenK: ioCodeK(ext[2]), m: m, na: na,
+    result = Repo(kind:rkLenPfx, lenK: kindOf(ext[2]), m: m, na: na,
                   mode: mode, kout: kout)
   elif ext.startsWith(".N"):
     let (path, fmt, rst) = metaData(cols[0])
@@ -675,7 +676,7 @@ proc index*(r: var Repo, ixOut: pointer, k: string, lno: int) =
     if r.mode == rmIndex: retNA         # missing && !up -> NA index
     case r.kind                         # update in-memory Table & repo
     of rkFixWid: i = r.tab.len.Ix; r.tab[k] = i; r.f.urite k; r.off = i + 1
-    of rkDelim : i = r.off; r.tab[k] = i; r.f.urite k, r.dlm; r.off += Ix(k.len+1)
+    of rkDelim : i = r.off; r.tab[k]=i; r.f.urite k, r.dlm; r.off += Ix(k.len+1)
     of rkLenPfx:  # convert length to output type, write, then write key
       i = r.off; r.tab[k] = i
       r.off += Ix(k.len + ioSize[r.lenK])
@@ -730,7 +731,7 @@ proc initFormatter*(rowFmt: IORow, atShr: Repo = nil, fmTy: Strings = @[],
     if cf[1]!='%': raise newException(ValueError, "no '%' between code & spec")
     if cf[0] notin ioCode:
       raise newException(ValueError, &"'{cf[0]}' not [cCsSiIlLfdg]")
-    ft[cf[0].ioCodeK] = cf[2..^1]
+    ft[cf[0].kindOf] = cf[2..^1]
   var fc: array[IOKind, StandardFormatSpecifier]
   for k in IOKind: fc[k] = parseStandardFormatSpecifier(ft[k], 0, true)
   for c in rowFmt.cols:
@@ -1043,16 +1044,16 @@ proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
       let (_, fmt, _) = metaData(path)
       result.add &"type {baseName}" & " {.packed.} = object\n"
       for c in fmt.cols:
-        let nm = if i < names.len: names[i] else: "field" & $i
-        result.add &"    {nm}: "
-        if   c.cnts.len > 2 :
-          result.add &"array[.., arr[{c.cnts[1]}, arr[{c.cnts[0]}, {ntype[c.iok]}]]"
-        elif c.cnts.len == 2:
-          result.add &"array[{c.cnts[1]}, array[{c.cnts[0]}, {ntype[c.iok]}]]"
-        elif c.cnts[0] > 1  : result.add &"array[{c.cnts[0]}, {ntype[c.iok]}]"
-        else                : result.add &"{ntype[c.iok]}"
-        result.add "\n"
-        i.inc
+       let nm = if i < names.len: names[i] else: "field" & $i
+       result.add &"    {nm}: "
+       if   c.cnts.len > 2 :
+        result.add &"array[..,arr[{c.cnts[1]},arr[{c.cnts[0]},{ntype[c.iok]}]]]"
+       elif c.cnts.len == 2:
+        result.add &"array[{c.cnts[1]}, array[{c.cnts[0]}, {ntype[c.iok]}]]"
+       elif c.cnts[0] > 1  : result.add &"array[{c.cnts[0]}, {ntype[c.iok]}]"
+       else                : result.add &"{ntype[c.iok]}"
+       result.add "\n"
+       i.inc
   of "c":
     let ctype: array[IOKind, string] = ["signed char", "unsigned char",
       "short", "unsigned short", "int", "unsigned int", "long", "unsigned long",
@@ -1084,11 +1085,11 @@ proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
   var nF: float
   var obuf: array[16, char]             # actual output buffer
 
-  template p(fn, n, k, low, high) =
+  template p(fn, n, k, u) =
     n = cast[type(n)](s.fn(eoNum))
     if eoNum == s.len:
-      let lo = type(n)(low[kout.int shr 1])
-      let hi = type(n)(high[kout.int shr 1])
+      let lo = type(n)(`low u`[kout.int shr 1])
+      let hi = type(n)(`high u`[kout.int shr 1])
       if n < lo: erru &"{pathName}:{lno} \"{$s}\" underflows\n"; n = lo
       if n > hi: erru &"{pathName}:{lno} \"{$s}\" overflows\n" ; n = hi
       convert kout, k, obuf[0].addr, n.addr
@@ -1104,10 +1105,10 @@ proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
     let pc = padClip($s, cnt)
     discard outp.uriteBuffer(pc[0].unsafeAddr, cnt)
     return
-  of 'b': (if kout.isSigned: p(parseBin,nS,lIk,lowS,highS) else: p(parseBin ,nU,LIk,lowU,highU))
-  of 'o': (if kout.isSigned: p(parseOct,nS,lIk,lowS,highS) else: p(parseOct ,nU,LIk,lowU,highU))
-  of 'd': (if kout.isSigned: p(parseInt,nS,lIk,lowS,highS) else: p(parseInt ,nU,LIk,lowU,highU))
-  of 'h': (if kout.isSigned: p(parseHex,nS,lIk,lowS,highS) else: p(parseHex ,nU,LIk,lowU,highU))
+  of 'b': (if kout.isSigned: p(parseBin,nS, lIk,S) else: p(parseBin,nU, LIk,U))
+  of 'o': (if kout.isSigned: p(parseOct,nS, lIk,S) else: p(parseOct,nU, LIk,U))
+  of 'd': (if kout.isSigned: p(parseInt,nS, lIk,S) else: p(parseInt,nU, LIk,U))
+  of 'h': (if kout.isSigned: p(parseHex,nS, lIk,S) else: p(parseHex,nU, LIk,U))
   of 'f':
     nF = s.parseFloat(eoNum)
     if eoNum == s.len: convert kout, dIk, obuf[0].addr, nF.addr
@@ -1129,7 +1130,7 @@ proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
 
 proc load1*(inCode, oCode: char; xform="", count=1): int =
   ## load 1 ASCII column on stdin to NIO on stdout (for import,testing).
-  let kout = ioCodeK(oCode)
+  let kout = kindOf(oCode)
   var xfm: Transform
   if inCode == 'x': xfm = initXfm(inCode, kout, xform)
   var lno = 1
@@ -1153,9 +1154,9 @@ type                                #*** SHARED STATE FOR  parseCol/Sch/fromSV
                  kout: IOKind; count: int]  # A parsed schema column
 
 proc parseCol(scols: seq[string], ss: var SchState): SchCol =
-  if scols.len < 3: raise newException(ValueError,&"{ss.schema}:{ss.lno} < 3 cols")
+  if scols.len<3:raise newException(ValueError,&"{ss.schema}:{ss.lno} < 3 cols")
   result.name = scols[0]
-  result.kout = ioCodeK(scols[1][^1])
+  result.kout = kindOf(scols[1][^1])
   result.inCode = scols[2][0]
   result.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
   if ss.doZip:                           # stdout zipped mode
@@ -1336,7 +1337,7 @@ proc xsum*(outKind='d', paths: Strings): int =
 #   erru "stdout is a terminal; pipe | redirect\n"; return 1
   var nfs: seq[NFile]                   # open inputs
   var nRow = 0
-  let kout = ioCodeK(outKind)
+  let kout = kindOf(outKind)
   for path in paths:
     nfs.add nOpen(path)
     nRow = max(nRow, nfs[^1].len)
@@ -1741,7 +1742,7 @@ proc update*(su: var StacksUpdater, tm: string): int =
     su.axI.fK.flushFile
   if su.nI < su.axI.nKy:
     su.nI = roundUp(su.axI.nKy, su.padI)
-  if su.inpVars.len == 0: su.getVars su.wd.wdExpand(tm) # OPEN INPUT RIP/VEC FILES
+  if su.inpVars.len==0: su.getVars su.wd.wdExpand(tm) # OPEN INPUT RIP/VEC FILES
   let (xT, xI) = su.extantAxSpc
   su.nT = max(su.nT, xT)        # Leave alone user-over provisioned
   su.nI = max(su.nI, xI)
@@ -1766,8 +1767,8 @@ proc update*(su: var StacksUpdater, tm: string): int =
         let w = su.vI[v].width
         if su.vO.len>0 and su.vO[v].ok:copyMem elt(su.vO[v],t,i,w),su.vI[v][j],w
         if su.vX.len>0 and su.vX[v].ok:copyMem elt(su.vX[v],i,t,w),su.vI[v][j],w
-    inc result  # Since OS may not, update mtime for # files maybe written via mmap.
-  if result > 0:
+    inc result
+  if result > 0: # OS may well not update mtime for files maybe written via mmap
     su.maybeTouch su.vO, su.tiDir, su.nT  # best effort stamp update (mmap
     su.maybeTouch su.vX, su.itDir, su.nI  # writes do not update file times.)
   ids.close                     # CLOSE ALL INPUTS
@@ -1850,17 +1851,17 @@ proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
   ## A generated program is left at *outp*.nim, easily copied for "utilitizing".
   ## Knowing AWK/Nim/`rp`, you can learn this PRONTO.  This is much like a full
   ## table scan in SQL but fully type-check compiled with access to all of Nim.
-  ## Examples (need data):
-  ##  nio q 'echo foo' \*.N\*                          #Extract column as ASCII
-  ##  nio q 'echo a,b,c' \*.N\* -w'nr mod 100==0'      #Print each 100th a,b,c
-  ##  nio q -b'var t=0' t+=x -w'x>0' -e'echo t' \*.N\* #Total >0 `x` ints
-  ##  nio q -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' \*.N\*
+  ## Examples (need data) using `alias nq='nio qry'`:
+  ##   nq 'echo foo' \*.N\*                          # Extract column as ASCII
+  ##   nq 'echo a,b,c' \*.N\* -w'nr mod 100==0'      # Print each 100th a,b,c
+  ##   nq -b'var t=0' t+=x -w'x>0' -e'echo t' \*.N\* # Total >0 `x` ints
+  ##   nq -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' \*.N\*
   ## You can (re-)compile generated programs with -d:danger to run faster.
   proc opens(inputs: seq[string]): string =
     var base0: string
     for j, input in inputs:
       let tail = input.splitPath.tail; let base = input.splitFile.name
-      let rowT = $ioCodeK(tail[^1]) #NOTE: only works for IOTensor style files.
+      let rowT = $kindOf(tail[^1]) #NOTE: only works for IOTensor style files.
       result.add &"  var f{base}s = initFileArray[{rowT}](\"{tail}\")\n"
       if j == 0: base0 = base
       else: result.add &"  if f{base}s.len != f{base0}s.len: quit \"badSize\"\n"
