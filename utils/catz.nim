@@ -1,4 +1,4 @@
-import std/[os, posix, strutils, strformat] # LESSOPEN="|-catz %s"; tar t -Icatz -f -
+import std/[os,posix,strutils,strformat] #LESSOPEN="|-catz %s";tar t -Icatz -f -
 when not declared(stderr): import std/syncio
 
 proc errstr: string = $strerror(errno)      # helper proc
