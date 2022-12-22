@@ -9,6 +9,7 @@ utils/tabGen
 utils/transpose
 utils/catz
 utils/catz.nims
+utils/catz.nim.cfg
 demo/timeSeries/DONE
 demo/timeSeries/idTm/
 demo/timeSeries/ix2id.N8C
