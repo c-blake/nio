@@ -167,28 +167,27 @@ proc compare*(k: IOKind; aP, bP: pointer): int {.inline.} =
 func initIORow*(fmt: string, endAt: var int): IORow =
   ## Parse NIO format string `fmt` into an `IORow`
   if fmt.len < 1: raise newException(IOError, "empty row format")
-  var col: IOCol
-  col.cnts.add 0
+  var col = IOCol(cnts: @[0])
   endAt = fmt.len - 1
   for i, c in fmt:
     case c:
-    of '_': discard                     # allow optional spacing stuff out
+    of '_': discard                     # Allow optional spacing stuff out
     of '0'..'9': col.cnts[^1] *= 10; col.cnts[^1] += ord(c) - ord('0')
 #Explicit "0+" -> raise newException(IOError, "0 dim in type fmt: "&fmt&fmtUse)
-    of ',': col.cnts.add 0              # make room for next dimension
+    of ',': col.cnts.add 0              # Make room for next dimension
     of 'c', 'C', 's', 'S', 'i', 'I', 'l', 'L', 'f', 'd', 'g':
-      col.iok = fmt[i].kindOf
+      col.iok = fmt[i].kindOf           # Type code terminates IO-column spec
       for i in 0 ..< col.cnts.len:      # All 0s -> 1s
         if col.cnts[i] == 0: col.cnts[0] = 1
       col.width = col.cnts.prod
       col.off = result.bytes
       result.bytes += col.width * ioSize[col.iok]
-      result.cols.add col
-      col.cnts = @[0]
+      result.cols.add move(col)         # only GC'd type in an IOCol is `cnts`..
+      col.cnts = @[0]                   #..which we re-init here anyway.
     else:
       if c in {'a'..'z', 'A'..'Z'}:
         raise newException(IOError, &"bad code {c} in fmt: " & fmt & fmtUse)
-      else: # allow things like '@'.* after format suffix
+      else: # Allow things like '@'.* after a format suffix
         endAt = i
         return
   if result.cols.len == 0:
@@ -543,7 +542,7 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
     var k = newString(r.fmt.bytes)
     for i in countup(0, r.m.size - 1, k.len):
       copyMem k[0].addr, cast[pointer](cast[int](r.m.mem) +% i), k.len
-      yield (k, Ix(i div r.fmt.bytes))
+      yield (k[0..^1], Ix(i div r.fmt.bytes)) #COPY
   of rkDelim:
     for ms in mf.memSlices(r.m, r.dlm):
       yield (mf.`$`(ms), Ix(cast[int](ms.data) -% cast[int](r.m.mem)))
@@ -558,7 +557,7 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       k.setLen len
       copyMem k[0].addr, cast[pointer](cast[uint64](r.m.mem) + off), len
       off += len.uint64
-      yield (k, off0)
+      yield (k[0..^1], off0)    #COPY
 
 var openRepos*: Table[string, Repo]
 proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
@@ -1191,7 +1190,7 @@ proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
   let sep = initSep("white")
   var scols: seq[string]
   var didCd = false
-  var ign: SchCol
+  var ign: SchCol               # Tuple of empty GC'd types can be moved safely.
   for line in lines(schema):
     if not didCd and dir.len > 0:       # Done in loop so users need no special
       discard existsOrCreateDir(dir)    #..instructions Re: schema path.
@@ -1211,7 +1210,7 @@ proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
     else:
       sep.split(line, scols, n=4)
       if scols.len > 0:
-        result[1].add if scols[0] == "_": ign else: scols.parseCol(result[0])
+        result[1].add if scols[0]=="_": ign.move else: scols.parseCol(result[0])
 
 proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
              SVs: Strings): int =
@@ -1436,7 +1435,7 @@ proc kreduce*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
         for j in 0 ..< inps[i].rowFmt.cols.len:
           if not inps[i].read(num): break fileLoop
           row.add if num.isNaN: na else: num
-        rec.add (i, row)
+        rec.add (i, row[0..^1]) #COPY
       gstats.mgetOrPut(g, empty).up rec, g
   for i in 0 ..< inps.len: inps[i].close
   for g, pathIxStats in gstats:
@@ -1505,7 +1504,7 @@ proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
       cmp.off = c.off
       cmp.width = c.width
       cmp.dir = cmp.iok == CIk and c.width > 1
-      r.add cmp
+      r.add cmp.move; cmp.nf = nf
   else:
     if fmt[0] != ':':
       erru &"expecting :<1-origin-colNum>[,...] not {fmt}\n"; return
@@ -1527,7 +1526,7 @@ proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
       cmp.off = nf.rowFmt.cols[cIx].off
       cmp.width = nf.rowFmt.cols[cIx].width
       cmp.dir = cmp.iok == CIk and nf.rowFmt.cols[cIx].width > 1
-      r.add cmp
+      r.add cmp.move; cmp.nf = nf
 
 import algorithm
 proc order*(at="", output: string, paths: Strings): int =
