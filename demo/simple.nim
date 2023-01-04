@@ -1,4 +1,5 @@
 when not declared(addFloat): import std/[formatfloat, objectdollar]
+include cligen/unsafeAddr
 import nio; from os import `/`
 
 # Trailing '/' matters to disambiguate given name vs. given dir

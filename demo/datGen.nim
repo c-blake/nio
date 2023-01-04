@@ -1,4 +1,5 @@
 when not declared(stderr): import std/syncio
+include cligen/unsafeAddr
 import std/[os, strutils, random]
 # randomize()
 let n    = if paramCount() > 0: parseInt(paramStr(1)) else: 30

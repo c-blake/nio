@@ -1,5 +1,6 @@
 when not declared(fmWrite): import std/[syncio, typedthreads]
 when not declared(Thread): import std/threads
+include cligen/unsafeAddr
 import std/[os, osproc, random, strutils, private/digitsutils],
        cligen/[strUt, osUt, macUt]
 

@@ -7,6 +7,7 @@ when declared(File):
 else:
   import std/[syncio, formatfloat]
   template stdOpen(x: varargs[untyped]): untyped = syncio.open(x)
+include cligen/unsafeAddr
 import system/ansi_c, std/[tables, os, math, hashes], std/memfiles as mf
 let mfop = mf.open                      # Collides with system.open
 
