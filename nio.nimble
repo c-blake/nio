@@ -6,7 +6,7 @@ license     = "MIT/ISC"
 
 # Deps
 requires    "nim >= 1.5.1"
-requires    "cligen >= 1.5.36"
+requires    "cligen >= 1.5.37"
 
 bin         = @[
   "nio",              # A big binary file manipulating multi-command
