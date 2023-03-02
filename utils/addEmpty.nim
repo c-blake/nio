@@ -1,5 +1,5 @@
 when not declared(File): import std/syncio
-import cligen/osUt
+import cligen/[osUt, unsafeAddr]
 
 proc addEmpty*(tab='\0', nl='\n', bSz=32768): int =
   ## stdin-stdout filter to add an extra *tab* before every *nl*. This adds an
@@ -11,7 +11,7 @@ proc addEmpty*(tab='\0', nl='\n', bSz=32768): int =
   discard c_setvbuf(stdout, nil, 0, bSz.uint)
   var tabNl = $tab & $nl
   for (row, nRow) in stdin.getDelims(nl):
-    if stdout.uriteBuffer(row[0].addr, nRow - 1) < nRow - 1 or
+    if stdout.uriteBuffer(row[0].unsafeAddr, nRow - 1) < nRow - 1 or
        stdout.uriteBuffer(tabNl[0].addr, 2) < 2: break
 
 when isMainModule: import cligen; dispatch addEmpty
