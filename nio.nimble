@@ -5,8 +5,8 @@ description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
 
 # Deps
-requires    "nim >= 1.5.1"
-requires    "cligen >= 1.5.41"
+requires    "nim >= 1.6.12"
+requires    "cligen >= 1.6.0"
 
 when defined(windows):
  bin         = @[
