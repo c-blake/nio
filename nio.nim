@@ -806,7 +806,7 @@ proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
 proc close*(fmtr: var Formatter) =
   for i in 0 ..< fmtr.ats.len: fmtr.ats[i].close
 
-proc st*(format="", nios: Strings): int =
+proc stat*(format="", nios: Strings): int =
   ## print numeric file metadata {like stat(1)}.
   let f = if format.len > 0: format
         else: "name: %n\nrows: %r\nbytes/row: %z\nlastWidth: %w\nlastType: %b\n"
@@ -1353,7 +1353,7 @@ proc xsum*(outKind='d', paths: Strings): int =
   for nf in mitems(nfs): nf.close
 
 when defined(useAdix):                  #*** NOT TOTALLY USELESS DEMO: moments
-  import adix/stat
+  import adix/mvstat
   type RunningStat = MovingStat[float32,uint32]
 else: import stats    # fall back to slow RunningStat
 
@@ -1909,7 +1909,7 @@ when isMainModule:
         let bn = paramStr(0).lastPathPart
         if bn.startsWith("n-"):
           let bns = bn[2..^1]           # baseName suffix
-          if bns in ["load1", "inferT", "fromSV", "st", "print", "zip", "rip",
+          if bns in ["load1", "inferT", "fromSV", "stat", "print", "zip", "rip",
                      "cut", "tails", "moments", "defType", "order", "emerge",
                      "upstack"]: # allow n-foo links
             result.add bn[2..^1]
@@ -1949,7 +1949,7 @@ when isMainModule:
                    "dir"    : "maybe create&chdir here; SVs may need '..'",
                    "reps"   : "set $REPS for interpolation",
                    "schema": "path to the parsing schema file"}],
-    [st    , help={"nios"  : "paths to NIO files",
+    [stat  , help={"nios"  : "paths to NIO files",
                    "format": """%[nrwzb]: name,rows,width,rowSize,lastBaseType
 empty string => full information format"""},
              short={"format": 'c'}],
