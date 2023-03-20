@@ -1,12 +1,11 @@
+### Overview
+
 The basic idea here is to take fully seriously the old chestnut that file name
 extensions tell users contained formats in order to make data access efficient.
-Specifically, we append to binary file pathnames a terse syntax inspired by (but
-simpler than) various Perl/Python "pack formats" and build APIs/tools around
-this.  The syntax is simple & easy to remember (I think) since it is derived
-from the C programming language family.  Most programmers have these basic "CPU
-types" memorized.  With the exception of long double (an already exceptional
-thing), the type code is just the first letter of each C type.  Uppercase are
-unsigned; Lowercase are signed.  The full syntax is one or more:
+Specifically, extensions are a terse syntax inspired by Python "struct formats",
+but using a simpler rule - the type code is just the first letter of each C type
+(with the exception of long double, an already exceptional thing).  Uppercase is
+unsigned; Lowercase is signed.  Elaborated, the full syntax is one or more:
 ```
   [<COUNT[,..]>]<c|C|s|S|i|I|l|L|f|d|g>
 ```
@@ -18,46 +17,46 @@ where
   l: signed (l)ong    L: unsigned (L)ong
   f: (f)loat          d: (d)ouble          g: lon(g) double
 ```
-The number of rows is inferred from the file size (but could be a length-prefix
-in some message buffer context).  Some examples:
+The number of rows is inferred from a file size (which could be a length-prefix
+in some message buffer context) or in stdio streams just the number of buffers
+read.  Some examples:
 ```
   hey.NS        a column-vector (Nx1 matrix) of unsigned shorts
   foo.N10f      an Nx10 matrix of floats
   bar.N2i4d     a table of int 2-vectors and double 4-vectors
   covs.N10,10f  a vector of 10 by 10 covariance matrices
 ```
-While learning the syntax is needed to use streaming/pipe style calculation, you
+While learning the syntax is needed to do streaming/pipe style calculations, you
 can also stow the format inside a file of a parallel name (e.g. "foo" & ".foo").
-I have found this setup to be usable, flexible, & efficient.  It can perhaps
-cure you from your likely addiction of parsing & re-parsing ASCII numbers which
-is up to hundreds of times slower than modern SIMD FP operations.  (Seriously --
-SIMD's go at L1 cache bandwidth which are order 100s of GB/s while parsing at
-even 1 GB/s is a challenge and printing/binary->ASCII is even slower.)
+
+This setup is usable, flexible, & efficient.  It can perhaps cure you from your
+likely addiction of parsing & re-parsing ASCII numbers which is up to hundreds
+of times slower than modern SIMD FP operations.[^1]
 
 Unpacking other linearized/serialized marshal formats often requires at least
 iterating over all data, but often has decompression work woven in.  NIO tries
-to allow "mmap & go" when feasible.  In a sense like the above 100s vs 1
-comparison, this is "***infinite GB/s***".  In a more accurate sense, start-up
-cost is as fixed as opening random access files can be.  (This is what DB
-software has always done and should not surprise.)
+to allow "mmap & go" when feasible.  This is "***infinite GB/s***".  In a more
+accurate sense, start-up cost is as fixed as opening random access files can be.
+(This is what DB software has always done and should not surprise the savvy.)
 
 More documentation can be had by just running `nio` with no arguments or `nio h`
 for a big help dump.  `nio` is both a library usable via `import nio` and a
-[cligen](https://github.com/c-blake/cligen) multi-command.  So the shortest
+[cligen](https://github.com/c-blake/cligen) multi-command.  So, the shortest
 unique prefix for subcommand names (and long option names) is sufficient.  The
 [FAQ](https://github.com/c-blake/nio/tree/main/FAQ.md) has more motivation.
 
 One can do some things with the `nio` command, but the main point of the design
 is to be extensible by actual programmers `import`ing, `nOpen`/`initFileArray`
-ing, etc., writing their own libs & tools either on top or off to the side.
-Extended tools/logic must document themselves, but they can, e.g. share `n-foo`
-namespaces if desired.  (Note that `nio zip` is named after functional PL
-terms|real world clothing zippers.  It is unrelated to data compression.)
+ing, etc., writing their own libs & tools either on top or off to the side even
+in other programming languages.  Extended tools/logic must document themselves,
+but they can, e.g. share `n-foo` namespaces if desired.  (Note that `nio zip`
+naming comes from functional PLs|real world clothing zippers - not data
+compression tools.)
 
-Convenience tools live in `utils/`.  E.g., `transpose` an be useful in the
+ETL convenience tools live in `utils/`.  E.g., `transpose` can be useful in the
 context of schema writing (as in `c2tsv < foo | head | transpose > editMe.sc`).
 
-### Usage Vignette
+### CLI Usage Vignette
 
 Here is a little usage vignette using simulated data.  First we will show some
 steps and then explain them.  To start, you will first need to compile & install
@@ -117,9 +116,8 @@ d.Nf:0 min: -16.27 max: 25.47
 Performance savvy readers may note, of the final line, that 40 ms for 4 million
 numbers is weak performance.  10 nanosec/number or 50 clock cycles/num or lowly
 16 MB/40ms = 400 MB/s is not great for what could be vectorized min/max in a
-perfectly predictable pipeline.  This is because I was lazy doing `nio moments`
-and just used stdlib `stats.RunningStat` which is accuracy semi-optimized, not
-speed optimized.
+perfectly predictable pipeline.  This is partly because `nio moments` uses
+`std/stats.RunningStat` which is accuracy semi-optimized, not speed-optimized.
 
 [demo/datGen](https://github.com/c-blake/nio/tree/main/demo/datGen.nim) shows
 how easy it is to just ***stay in binary the whole time***:
@@ -137,15 +135,22 @@ for 100 passes or 0.45 ms/pass.  This is 40ms/.45=~ ***90X faster*** or about
 ~45GB/s (with >=3 cores pulling).
 
 It is straightforward (but demo-messy) to [split the loop into `p`
-parts](https://forum.nim-lang.org/t/9115#59567) & then grand total over
-thread/process subtotals to realize that last 1.3x (45/35) speed-up.  More
-recent server/HEDT models have much higher peak parallel/peak single core BW
-ratios than 1.3 (more like 15+X) pushing optimizing folk to parallelism
-complexity simply to saturate DIMMs.  In this example, since outputs are tiny
-subtotals, it's fine to first memory map files, then `fork` to engage hardware
-parallelism with processes via `cligen/procpool`.  (Were outputs giant, kids
-could write to NIO files and return pathnames.  Once you are whole CPU/system
-optimizing, what idea is best quickly becomes "it depends".)
+parts](https://forum.nim-lang.org/t/9115#59567) & grand total over thread/proc
+subtotals to saturate memory BW which here would be (45/35=~1.3X) better.[^1] In
+this example, since outputs are tiny subtotals, it's fine to memory map files &
+then `fork` to engage hardware parallelism with processes via `cligen/procpool`.
+Were outputs giant, kids could write to NIO files and return pathnames.[^2]
 
 See [db-bench.md](https://github.com/c-blake/nio/tree/main/db-bench.md) for
 another worked out example, perhaps easier to compare to other systems.
+
+[^1]: Seriously -- SIMD's go at L1 cache bandwidth which are order 100s of GB/s
+while parsing at even 1 GB/s is a challenge and printing/binary->ASCII is even
+slower.
+
+[^2]: More recent server/HEDT models have much higher peak parallel/peak single
+core BW ratios than 1.3 (more like 15+X).  This pushes optimizers to parallel
+complexities simply to saturate DIMMs.
+
+[^3]: Once you are whole CPU/system optimizing, what idea is best quickly
+becomes "it depends".
