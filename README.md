@@ -136,10 +136,10 @@ for 100 passes or 0.45 ms/pass.  This is 40ms/.45=~ ***90X faster*** or about
 
 It is straightforward (but demo-messy) to [split the loop into `p`
 parts](https://forum.nim-lang.org/t/9115#59567) & grand total over thread/proc
-subtotals to saturate memory BW which here would be (45/35=~1.3X) better.[^1] In
+subtotals to saturate memory BW which here would be (45/35=~1.3X) better.[^2] In
 this example, since outputs are tiny subtotals, it's fine to memory map files &
 then `fork` to engage hardware parallelism with processes via `cligen/procpool`.
-Were outputs giant, kids could write to NIO files and return pathnames.[^2]
+Were outputs giant, kids could write to NIO files and return pathnames.[^3]
 
 See [db-bench.md](https://github.com/c-blake/nio/tree/main/db-bench.md) for
 another worked out example, perhaps easier to compare to other systems.
