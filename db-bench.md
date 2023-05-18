@@ -50,7 +50,7 @@ total 8601384
  390628 id1.Ni             390628 id3.Ni    390628 v1.Nf
 ```
 
-### Step 4: Run a "simple" query
+### Step 4: Run a "simple" query (Query 1)
 
 If you had a real data set you use often with pre-prepared data repositories,
 then this step would be all you needed.
@@ -82,10 +82,10 @@ even w/out parallelization, BUT it's already faster by a large margin than any
 numbers I see on the results portion of that db-bench website.
 
 For comparison, pandas-1.3.5 on the same machine takes ~4X longer at 0.45 sec {
-not nearly 3 sec like the above link.  It seems pandas may have seen big speed
-ups in the past 2 yrs. } No, I do not have patience to learn how to install and
-configure the many other alternatives, but I am happy to try to help anyone
-reproduce *this* addition. :-)
+not nearly 3 sec like the above link.  It seems Pandas may have seen big speed
+ups recently. }  duckdb on the same machine took ~5X longer at 0.6 sec for *in
+RAM* DBs.  While I do not have patience to learn how to install & config all the
+backends, I'm happy to try to help anyone reproduce *this* addition.  :-)
 
 ### Step 6: Maybe abstract & generalize
 
@@ -142,9 +142,9 @@ and then if you really need ASCII output, say to compare:
 ```sh
 nio pr id1.N16C out.Nf
 ```
-(Yes, yes, `xsum` could also be parallelized if you had enough CPUs to warrant
-such.  For this calculation on my test box, the combined time for both nio xsum
-& print is < 2 ms which is below measurement error, TBH.)
+(Yes, yes, `xsum` could also be parallelized if warranted.  For this calculation
+on my test box, the combined time for both nio xsum & print is < 2 ms which is
+below measurement error, TBH.)
 
 ### Post Script: Some other observations
 
@@ -243,7 +243,6 @@ we apply BS-scaling to say 2x\*2.5x. ;-) }
 
 ### Triple Extra Credit: Sort-Based GroupBy
 
-The random nature of hashing can cause slowdown with many groups when storage or
-memory latency is high at appropriate scales.  One can do sort-based variants
-which instead become bandwidth bound.  This is left as an exercise for the
-ambitious reader (for now), but is important enough to mention.
+The random nature of hashing can cause slowdown at some scales on some hardware.
+One can do sort-based variants which instead become bandwidth bound.  This is
+left as an exercise for the ambitious reader (for now), but worth a mention.
