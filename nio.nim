@@ -200,16 +200,18 @@ proc dotContents(path: string): string =
 
 proc metaData(path: string): (string, IORow, string) =
   var endAt: int
-  var (dir, name, ext) = splitPathName(path)
-  let fmt = if ext.startsWith(".N"): ext[2 .. ^1] else:
+  var (dir, name) = splitPath(path)
+  let ext = name.find(".N")
+  let fmt = if ext != -1: name[ext+2 .. ^1] else:
               try: dotContents(dir / "." & name) except Ce:
                 raise newException(ValueError,
                                    path & ": has no .N extension | dotfile")
   result[1] = fmt.initIORow(endAt)
+  if ext != -1: name = name[0..<ext]
   if endAt >= fmt.len - 1:
     result[0] = if name.len == 0: "" else: path
   else:
-    result[0] = if ext.startsWith(".N"): path[0 ..< path.len - fmt.len + endAt]
+    result[0] = if ext != -1: path[0 ..< path.len - fmt.len + endAt]
                 elif name.len == 0: "" else: path
     result[2] = fmt[endAt..^1]
 
