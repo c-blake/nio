@@ -297,7 +297,7 @@ proc read*(nf: var NFile, buf: var string, sz=0): bool =
   let sz = if sz > 0: sz else: nf.rowFmt.bytes
   buf.setLen sz
   if not nf.f.isNil:
-    result = nf.f.readBuffer(buf[0].addr, sz) == sz:
+    result = nf.f.readBuffer(buf[0].addr, sz) == sz
   elif not nf.m.mem.isNil:
     result = nf.off + sz <= nf.m.size
     if result:
