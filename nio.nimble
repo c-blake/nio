@@ -1,12 +1,12 @@
 # Package
-version     = "0.6.6"
+version     = "0.6.7"
 author      = "Charles Blake"
 description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
 
 # Deps
 requires    "nim >= 1.6.12"
-requires    "cligen >= 1.6.3"
+requires    "cligen >= 1.6.6"
 
 when defined(windows):
  bin         = @[
