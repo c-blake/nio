@@ -437,12 +437,12 @@ template toOpenArray*[T](fa: FileArray[T]): untyped =
   toOpenArray[T](cast[ptr UncheckedArray[T]](fa.nf.m.mem), 0, fa.len - 1)
 
 iterator items*[T](fa: FileArray[T]): T =
-  for b in countup(0, fa.nf.m.size, T.sizeof):
+  for b in countup(0, fa.nf.m.size - T.sizeof, T.sizeof):
     yield cast[ptr T](cast[int](fa.nf.m.mem) +% b)[]
 
 iterator pairs*[T](fa: FileArray[T]): (int, T) =
   let m = T.sizeof
-  for i in countup(0, fa.nf.m.size div m):
+  for i in countup(0, fa.nf.m.size div m - 1):
     yield (i, cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[])
 
 func len*[T](fa: FileArray[T]): int {.inline.} =
