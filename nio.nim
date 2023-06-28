@@ -1130,13 +1130,14 @@ proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
 # elif xfm.startsWith("L"):             # external shared library/DLL
   else: raise newException(ValueError, "unknown transformer prefix")
 
-proc load1*(inCode, oCode: char; xform="", count=1): int =
+proc load1*(inCode, oCode: char; delim='\n', xform="", count=1): int =
   ## load 1 ASCII column on stdin to NIO on stdout (for import,testing).
   let kout = kindOf(oCode)
   var xfm: Transform
   if inCode == 'x': xfm = initXfm(inCode, kout, xform)
   var lno = 1
-  for (cs, n) in getDelims(stdin):
+  for (cs, n) in stdin.getDelims(delim):
+    let n = if n > 0 and cs[n-1] == delim: n - 1 else: n
     MSlice(mem: cs, len: n).parse "stdin",lno, "COL0", inCode, kout, xfm, count
     lno.inc
   if inCode == 'x': xfm nil, "", 0      # tell Transform to close
@@ -1930,6 +1931,7 @@ when isMainModule:
     [load1 , help={"inCode": """input code: [**bodh**] Bin|Octal|Dec|Hex int
 **f** Float; **c** charArray(count); **x** transform""",
                    "oCode" : "Usual [**cCsSiIlLfdg**] NIO storage code",
+                   "delim" : "alternate delimiter/terminator like '\0'",
                    "xform" : "TransformParams; Eg. @file.[NDL].. {NOUP}",
                    "count" : "Output size; Only works for 'c'"}],
     [defType,help={"paths" : "[paths: 1|more paths to NIO files]",
