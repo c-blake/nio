@@ -1931,7 +1931,7 @@ when isMainModule:
     [load1 , help={"inCode": """input code: [**bodh**] Bin|Octal|Dec|Hex int
 **f** Float; **c** charArray(count); **x** transform""",
                    "oCode" : "Usual [**cCsSiIlLfdg**] NIO storage code",
-                   "delim" : "alternate delimiter/terminator like '\0'",
+                   "delim" : "alternate delimiter/terminator like '\\\\0'",
                    "xform" : "TransformParams; Eg. @file.[NDL].. {NOUP}",
                    "count" : "Output size; Only works for 'c'"}],
     [defType,help={"paths" : "[paths: 1|more paths to NIO files]",
