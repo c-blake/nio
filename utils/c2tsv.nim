@@ -12,15 +12,16 @@ type DFAState = enum sFEnd, sNonQuo, sQuo, sQuoInQuo, sCRAtEnd, sCRInQuo
 
 proc c2tsv(tab='\t', TabSub="\\t", nl='\n', NlSub="\\n", log: set[Log]={},
            si="stdin", bSz=65536): int =
-  ## Convert rfc4180-ish quoted CSV UTF-8 on stdin to *strictly separated*,
-  ## \\-escaped IANA-ish TSV on stdout.  Traits here that vary among CSV tools:
+  ## THERE IS NO ONE SPEC FOR "CSV".  This program converts rfc4180-ish quote-
+  ## escaped CSV UTF-8 on stdin to *strictly separated*, \\-escaped IANA TSV on
+  ## stdout.  Traits here that vary among CSV tools:
   ##  - Accepts {\\r|\\r\\n|\\n} for end-of-line; Always emits *nl* (incl @EOF).
-  ##  - \\n & ',' inside quoted fields are supported (output must not collide).
+  ##  - \\n & ',' inside quoted fields are supported.
   ##  - " is ok in unquoted fields; Fields starting w/" must obey quoting rules.
-  ## Output is soundly newline char-frameable & split-parsable { un-escape of
-  ## (backslash, TabSub, NlSub) is nice to render for '\\'-unfamiliar users }.
-  ## Parsing ease & pipeline | file parallelism imply higher level ideas (header
-  ## | table struct..) are best done via `popen("c2tsv")` | a temp file.
+  ## Output is soundly record&field split-parsable w/{\\\\, \\t, \\n} needing
+  ## de-escape post-framing to get original 8-bit vals.  Parsing ease & pipeline
+  ## | file parallelism imply higher level ideas (header | table struct..) are
+  ## best done via `popen("c2tsv")` | temp files.
   if tab in TabSub: erru &"`TabSub` must not contain `tab`\n"; return 1
   if nl  in NlSub : erru &"`NlSub` must not contain `nl`\n"; return 1
   const BackSub = "\\\\"
