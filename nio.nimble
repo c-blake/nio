@@ -20,6 +20,7 @@ when defined(windows):
   "utils/lp2term",    # length-prefix => terminated
   "utils/nmatch",     # print out lines prefixed by number of matches
   "utils/transpose",  # transpose a text matrix
+  "utils/nsv",        # number of entries in SV data
  ]
 else:
  bin         = @[
@@ -33,4 +34,5 @@ else:
   "utils/lp2term",    # length-prefix => terminated
   "utils/nmatch",     # print out lines prefixed by number of matches
   "utils/transpose",  # transpose a text matrix
+  "utils/nsv",        # number of entries in SV data
  ]
