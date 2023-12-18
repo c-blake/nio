@@ -73,6 +73,8 @@ most/almost all prog.langs have exposure to C, e.g. for foreign function
 interfaces.  A great many programmers who would never call themselves "C
 programmers" nevertheless find the suffix syntax easy to remember.  I have
 accessed NIO files from C, C++, Python, and Nim.  The format is all the same.
+(In fact, "CIO" may make most sense of all.  File name extension .Cc & .CC for
+char vectors collide case-insensitively with common C++ extensions, though.)
 
 ### 3: NIO isn't CPU architecture neutral?  Aaaawhaaaaa?
 
@@ -246,32 +248,27 @@ nice organization and maybe all you need.
 
 ### 12: Why no bit fields/discriminated unions/even fancier things?
 
-This is a good question.  Choosing the best least common denominator is hard.
-".N3:i5:i" instead of ".NC" with some prohibition on prefix multipliers might
-work as a syntax for bit fields.  Discriminated unions (Nim's "variants")
-might be .N?C10C for a 10Byte union.  One problem is that it is much less
-obvious what zip, rip, cut, and similar transforms mean in the presence of
-either.  Obviousness is good, as are general tools.
+Choosing the best least common denominator is always hard.  Discriminated unions
+(Nim's "variants") might be .N?C10C for a 10Byte union.  One problem is that
+zip, rip, cut, and similar transforms become hard to define.  Related to bytes
+as a fundamental unit of addressability, ripped bit-fields (e.g. an `x.N3b5b`)
+already disrupt outermost dimension inference and need an adix/seqUint library.
 
-Another problem is PL portability.  While available in C/C++/Nim/.., they may
-well be unavailable in NumPy/Julia/R/.. This fanciness just slightly exceeds
-the floor of what many PLs consider necessary.  If you are willing to give up
-the general tools & portability then you may be able to retain other nice
-aspects of NIO & handle these with a native typedef/object and some kind of
-sizeof, losing only data file portability to other PLs (or maybe to other
-compilers within the same PL).  At this point the value of language-external
-format collapses.
+Another problem is PL portability.  While available in C/C++/Nim/.., they may be
+unavailable in NumPy/Julia/R/.. This fanciness just slightly exceeds the floor
+of what many PLs consider necessary.  If you give up cross-PL tools & formats
+then you may be able to retain other nice aspects of NIO & handle these with a
+native typedef/object and some kind of sizeof, though.
 
 { `R` does not even do `float32` - to use NIO, you need `double` everywhere.
-Similar comments apply to `unsigned`.  So, some might say the type system is
-already "a half-step too fancy", but no `float` is a rare choice (one that has
-aged poorly with SIMD popularity) and support for `unsigned` is easy to both
-do & understand. }
+Similar comments apply to `unsigned` or bit-fields.  So, some might say the type
+system is already "a half-step too fancy", but no `float` is a rare choice (one
+that has aged poorly with SIMD popularity) and support for `unsigned` is easy to
+both do & understand. }
 
 In any event, these cases can also be handled by the current NIO format but with
 higher-level interpretation, as with strings.  Sadly, the interpretation is
-fancier than "pointers are repo indices".  (Well, with discriminated unions you
-might just have however many files with the concrete types.)
+fancier than "pointers are repo indices".
 
 ### 13: What about filename limits, like 255 chars?
 
