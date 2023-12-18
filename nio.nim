@@ -230,7 +230,8 @@ proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
     of fmAppend, fmWrite: result.f = stdout
     else: raise newException(ValueError, "nameless unsupported by " & $mode)
   else:
-    try: # XXX could get this down to 1 syscall
+    try: # XXX could get this down to 1 open syscall & map setup
+      if mode == fmAppend: raise newException(ValueError, "") # force stdIO
       if not (mode == fmRead and path.fileExists and path.getFileSize == 0):
         result.m = mf.open(path, mode, newFileSize=newFileSize,
                            allowRemap=allowRemap, mapFlags=mapFlags)
