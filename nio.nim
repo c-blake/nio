@@ -240,7 +240,7 @@ proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
       result.f = open(path, mode, max(8192, result.rowFmt.bytes))
   if rest != nil: rest[] = rst
 
-proc close*(nf: var NFile) =
+proc close*(nf: var NFile) =    # mf.close requires `var`
   if not nf.m.mem.isNil and nf.m.mem != cast[pointer](1): mf.close nf.m
   if not nf.f.isNil: close nf.f
 
@@ -888,7 +888,7 @@ proc rip*(input: string, names: Strings): int =
   ## input or the type specified in .N/.foo metaData.
   var inp = nOpen(input)
   if inp.rowFmt.cols.len != names.len:
-    erru &"too few/many names for input: \"{input}\"\n"; return 1
+    erru &"too few/many names for input: \"{input}\"\n"; inp.close; return 1
   var outs = newSeq[NFile](inp.rowFmt.cols.len)
   var offs, ns: seq[int]
   var off = 0
