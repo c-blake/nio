@@ -928,6 +928,40 @@ proc zip*(paths: Strings): int =
         outu buf
   for i in 0 ..< fs.len: fs[i].close
 
+proc widen*(io: Strings, pad='\0'): int =
+  ## Widen (/narrow) numeric types or subColumns.
+  ##
+  ## Egs: `nio w .N7C .N8C` right-pads rows with a 0-byte (shorter truncs)
+  ##  `nio w .N9f .N9d` widens float matrix on stdin to double on stdout
+  ##  `nio w .N3C5C .NLL | nio p .NLL` -> (24-bit decimal, 40-bit decimal)
+  proc c_fputc(c: char, f: File): cint {.importc: "fputc", header: "stdio.h".}
+  var i = nOpen(io[0])
+  var o = nOpen(io[1], fmAppend)        # fmAppend here ensures nurite works
+  template bye = i.close; o.close; return 1
+  if i.rowFmt.cols.len != o.rowFmt.cols.len: #XXX COULD become more strict
+    erru "`width`: need out & in to have same number of major columns\n"; bye()
+  var row, obuf: string
+  while i.read row:
+    for j, ic in i.rowFmt.cols:
+      let oc = o.rowFmt.cols[j]
+      if ioSize[ic.iok] == 1 and ioSize[oc.iok] == 1: # Both iok 1-byte
+        if oc.width <= ic.width:        # Truncating copy
+          discard o.f.uriteBuffer(row[ic.off].addr, oc.width)
+        else:                           # Pad
+          discard o.f.uriteBuffer(row[ic.off].addr, ic.width)
+          for k in 0 ..< oc.width - ic.width: discard c_fputc(pad, o.f)
+      elif ic.width == oc.width:        # Convert elements 1-by-1
+        obuf.setLen ioSize[oc.iok]
+        for k in 0 ..< ic.width:        # Same iok & width => just cp 1-by-1
+          convert oc.iok,ic.iok,obuf[0].addr,row[ic.off + k*ioSize[ic.iok]].addr
+          discard o.f.uriteBuffer(obuf[0].addr, ioSize[oc.iok])
+      elif ioSize[ic.iok] == 1 and oc.width == 1: #XXX COULD collapse fastest..
+        var u: uint64                             #  ..varying dim, not all.
+        for k in 0 ..< ic.width: u = u or (row[ic.off + k].uint64 shl (8*k))
+        obuf.setLen ioSize[oc.iok]      #XXX ^- Handle big-endianness someday
+        convert oc.iok, LIk, obuf[0].addr, u.addr
+        discard o.f.uriteBuffer(obuf[0].addr, obuf.len)
+
 proc cvtSlice(ab: tuple[a, b: int]; bound: int): (int, int) =
   var a = ab.a
   var b = ab.b
@@ -1969,6 +2003,7 @@ if AT=="" %s renders as a number via `fmTy`""",
     [rip   , help={"input" : "NIO file to separate",
                    "names" : "pre.N names for output files"}],
     [zip   , help={"paths" : "[paths: 2|more paths to NIO files]"}],
+    [widen , help={"io"    : "input output", "pad": "pad for wider char cols"}],
     [cut   , help={"path"  : "{paths: 1 path to a NIO file}",
                    "drop"  : "drop/delete field slice [a][:[b]]",
                    "pass"  : "pass/propagate field slice [a][:[b]]"}],
