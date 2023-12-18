@@ -209,10 +209,10 @@ proc metaData(path: string): (string, IORow, string) =
   result[1] = fmt.initIORow(endAt)
   if ext != -1: name = name[0..<ext]
   if endAt >= fmt.len - 1:
-    result[0] = if name.len == 0: "" else: path
+    result[0] = if name.len == 0 or ext == 0: "" else: path
   else:
-    result[0] = if ext != -1: path[0 ..< path.len - fmt.len + endAt]
-                elif name.len == 0: "" else: path
+    result[0] = if name.len == 0 or ext==0: ""
+                elif ext != -1: path[0 ..< path.len-fmt.len+endAt] else: path
     result[2] = fmt[endAt..^1]
 
 #*** FILE IO SECTION
