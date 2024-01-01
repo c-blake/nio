@@ -259,7 +259,8 @@ proc makeSuffix[T](result: var string, x: T, inArray=false) =
     result.makeSuffix x, inArray=true
   else:
     try      :result.add nim2nio[$type(T)]
-    except Ce:raise newException(ValueError,"missing type key: "&repr($type(T)))
+    except Ce:raise newException(ValueError,"missing type key: " &
+              (when (NimMajor,NimMinor) < (2,1): repr($type(T)) else: T.repr))
 
 proc makeName[T](result: var string, key: string, x: T, sep=",") =
   when T is tuple or T is object:
@@ -634,7 +635,7 @@ proc `[]`*(at: Repo, i: Ix): string =
     p = cast[pointer](cast[uint](at.m.mem) + i)
     let e = c_memchr(p, at.dlm.cint, csize_t(at.m.size.Ix - i))
     if e == nil:
-      raise newException(ValueError, &"no terminating delimiter for {i}")
+      raise newException(ValueError, &"no terminating delimiter for {i.int}")
     n = Ix(cast[uint](e) - cast[uint](p))
   of rkLenPfx:                  # Here `i` is a byte offset to length field
     let pL = cast[pointer](cast[uint](at.m.mem) + i)
