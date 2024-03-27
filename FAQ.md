@@ -217,9 +217,8 @@ decompression via backing store IO >20x less.  kdb had nothing comparable and
 its over-bundled design made users need to wait.
 
 [Tea Files](http://discretelogics.com/teafiles/) are quite similar in spirit,
-but not tensor-rank general and oriented too specifically against time as a
-primary table key.  Similar comments apply to other efforts like Apache
-Parquet&Arrow.
+but not tensor-rank-general and oriented too specifically against time as a
+primary table key.  Similar comments apply to other efforts like Apache Arrow.
 
 As far as I can tell, NIO is alone in striving for a flexible column/vector
 |matrix|tensor "store" that strives to just solve **just one simple problem**:
