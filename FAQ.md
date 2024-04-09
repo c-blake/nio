@@ -218,15 +218,17 @@ its over-bundled design made users need to wait.
 
 [Tea Files](http://discretelogics.com/teafiles/) are quite similar in spirit,
 but not tensor-rank-general and oriented too specifically against time as a
-primary table key.  Similar comments apply to other efforts like Apache Arrow.
+primary table key.  Similar comments apply to other efforts like Apache Arrow
+(though were Arrow goes astray is more over-generality with sparse unions and
+dictionaries and in-line variable length fields as well as simple structs).
 
-As far as I can tell, NIO is alone in striving for a flexible column/vector
-|matrix|tensor "store" that strives to just solve **just one simple problem**:
-running "live" off pre-parsed data, but solve that problem as generally as is
-easy in a programming language-neutral way.  As said elsewhere, it's mostly just
-`numpy.save` format with an external header (but, at least for me, it pre-dates
-things like numpy/pytables by years and they punt on PL-neutrality - except by
-using the simplest possible format).
+AFAICT, NIO is alone in striving for a flexible column/vector | matrix/struct |
+tensor "store" that strives to just solve **just one simple problem**: running
+"live" off pre-parsed data, but solve that problem as generally as is easy in a
+programming language-neutral way.  As said elsewhere, it's mostly `numpy.save`
+format with an external header (but, at least for me, it pre-dates things like
+numpy/pytables by years and they punt on PL-neutrality - except by using the
+simplest possible format).
 
 ### 11: Ok..Why not a full object graph?
 
