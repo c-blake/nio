@@ -1,12 +1,12 @@
 # Package
-version     = "0.6.11"
+version     = "0.7.0"
 author      = "Charles Blake"
 description = "Low Overhead Numerical/Native IO library & tools"
 license     = "MIT/ISC"
 
 # Deps
 requires    "nim >= 1.6.12"
-requires    "cligen >= 1.6.18"
+requires    "cligen >= 1.7.1"
 
 bin         = @[
   "nio",              # A big binary file manipulating multi-command
