@@ -43,17 +43,16 @@ typedef enum { sFEnd, sNonQuo, sQuo, sQuoInQuo, sCRAtEnd, sCRInQuo } DFAState_t;
 int main(int ac, char **av) {
   char  *si  = ac > 1 ? av[1]       : "stdin";
   size_t bSz = ac > 2 ? atoi(av[2]) : 65536;
-  if (ac < 2) return fprintf(stderr, use, av[0], el), 1;
-#if defined(_WIN32)||defined(_WIN64)||defined(__WIN32__)||defined(__WINDOWS__)
-  _setmode(_fileno(stdin) , _O_BINARY);
-  _setmode(_fileno(stdout), _O_BINARY);
-#endif
   DFAState_t s = sFEnd;         /* Current parser state */
   size_t rNo = 1, fNo = 0,      /* [10]-origin input row/field numbers */
          totNl = 0, totTab = 0, totBs = 0, /* Cnters for in-field dlm stats */
          n;                     /* number of bytes read */
   char *buffr = malloc(bSz);    /* Input buffer */
   char *inBuf = &buffr[0];
+  if (ac < 2) return fprintf(stderr, use, av[0], el), 1;
+#if defined(_WIN32)||defined(_WIN64)||defined(__WIN32__)||defined(__WINDOWS__)
+  _setmode(_fileno(stdin), _O_BINARY); _setmode(_fileno(stdout), _O_BINARY);
+#endif
   setvbuf(stdout, NULL,0, bSz); /* Match output buffer size w/input's */
 # define EOR() rNo++; fNo = 0 /* End Of Row/record */
 
