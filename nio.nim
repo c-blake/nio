@@ -98,26 +98,26 @@ template deff(f, T) {.dirty.} =  # NA,Low,High-floating point
  const `f na`* = T(NaN); const `f low`* = T.low; const `f high`* = T.high
 deff f, float32; deff d, float64; deff g, float80
 
-const lowS*  = [c_low , s_low , i_low , l_low ] # [k.int shr 1] post-isSigned
-const highS* = [c_high, s_high, i_high, l_high]
-const lowU*  = [C_low , S_low , I_low , L_low ] # [k.int shr 1] post-isUnsigned
-const highU* = [C_high, S_high, I_high, L_high]
+const lowS*  = [clow , slow , ilow , llow ] # [k.int shr 1] post-isSigned
+const highS* = [chigh, shigh, ihigh, lhigh]
+const lowU*  = [Clow , Slow , Ilow , Llow ] # [k.int shr 1] post-isUnsigned
+const highU* = [Chigh, Shigh, Ihigh, Lhigh]
 const lowF*  = [float64.low , float64.low , float64.low ] # [k.int-8] post-isFlt
 const highF* = [float64.high, float64.high, float64.high]
 
 template withTyped_P_NA(k, adr, p, na, body) =
   case k
-  of cIk: (let p = cast[ptr  int8  ](adr); let na{.used.} = c_na; body)
-  of CIk: (let p = cast[ptr uint8  ](adr); let na{.used.} = C_na; body)
-  of sIk: (let p = cast[ptr  int16 ](adr); let na{.used.} = s_na; body)
-  of SIk: (let p = cast[ptr uint16 ](adr); let na{.used.} = S_na; body)
-  of iIk: (let p = cast[ptr  int32 ](adr); let na{.used.} = i_na; body)
-  of IIk: (let p = cast[ptr uint32 ](adr); let na{.used.} = I_na; body)
-  of lIk: (let p = cast[ptr  int64 ](adr); let na{.used.} = l_na; body)
-  of LIk: (let p = cast[ptr uint64 ](adr); let na{.used.} = L_na; body)
-  of fIk: (let p = cast[ptr float32](adr); let na{.used.} = f_na; body)
-  of dIk: (let p = cast[ptr float64](adr); let na{.used.} = d_na; body)
-  of gIk: (let p = cast[ptr float80](adr); let na{.used.} = g_na; body)
+  of cIk: (let p = cast[ptr  int8  ](adr); let na{.used.} = cna; body)
+  of CIk: (let p = cast[ptr uint8  ](adr); let na{.used.} = Cna; body)
+  of sIk: (let p = cast[ptr  int16 ](adr); let na{.used.} = sna; body)
+  of SIk: (let p = cast[ptr uint16 ](adr); let na{.used.} = Sna; body)
+  of iIk: (let p = cast[ptr  int32 ](adr); let na{.used.} = ina; body)
+  of IIk: (let p = cast[ptr uint32 ](adr); let na{.used.} = Ina; body)
+  of lIk: (let p = cast[ptr  int64 ](adr); let na{.used.} = lna; body)
+  of LIk: (let p = cast[ptr uint64 ](adr); let na{.used.} = Lna; body)
+  of fIk: (let p = cast[ptr float32](adr); let na{.used.} = fna; body)
+  of dIk: (let p = cast[ptr float64](adr); let na{.used.} = dna; body)
+  of gIk: (let p = cast[ptr float80](adr); let na{.used.} = gna; body)
 
 func isNA*(k: IOKind, adr: pointer): bool {.inline.} =
   ## Test the number IO kind at `adr` against its missing/NA value
@@ -539,7 +539,7 @@ type #*** INDIRECTION SUBSYSTEM FOR FIXED OR VARIABLE-LENGTH STRING DATA
     off:  Ix                    # running file size (what to set .[DL] ptrs to)
     tab*: Table[string, Ix]     ## index lookup table
 const IxIk = IIk
-const IxNA = I_na
+const IxNA = Ina
 
 iterator keysAtOpen*(r: Repo): (string, Ix) =
   case r.kind
