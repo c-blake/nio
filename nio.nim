@@ -8,10 +8,10 @@
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
 when not declared(FileMode): import std/[syncio, objectdollar]; export syncio
-include cligen/unsafeAddr
-import strutils as su, math, os, times, strtabs, strformat {.all.},#`formatInt`
-       tables, sets, system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
-from memfiles as mf import nil
+include cligen/unsafeAddr                                   # `formatInt` --|
+import std/strutils as su, std/[math, os, times, strtabs], std/strformat{.all.},
+       std/[tables, sets], system/ansi_C, cligen/[osUt, strUt, fileUt, mslice]
+from std/memfiles as mf import nil
 
 type #*** BASIC TYPE SETUP  #NOTE: gcc __float128 CPU-portable but slow
   IOKind* = enum cIk = "int8" , CIk = "uint8" , sIk = "int16", SIk = "uint16",
@@ -782,7 +782,7 @@ proc formatFloat*(result: var string, value: float64, fmt=".04g") =
 proc formatFloat*(value: float64, fmt: string): string = # E.g. ".4g"
   formatFloat(result, value, fmt)
 
-import unicode
+import std/unicode
 proc fmt*(result: var string; fmtr: Formatter; j: int; k: IOKind, s: string,
           naCvt=false) =
   let spec = fmtr.specs[j]
@@ -1112,7 +1112,7 @@ proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
       result.add "} __attribute__((__packed__));\n"
   else: erru &"unknown programming language \"{lang}\"\n"; return ""
 
-import parseutils
+import std/parseutils
 type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
 proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
@@ -1394,7 +1394,7 @@ proc xsum*(outKind='d', paths: Strings): int =
 when defined(useAdix):                  #*** NOT TOTALLY USELESS DEMO: moments
   import adix/mvstat
   type RunningStat = MovingStat[float32,uint32]
-else: import stats    # fall back to slow RunningStat
+else: import std/stats                  # fall back to slow RunningStat
 
 type MomKind = enum mkN="n", mkMin="min", mkMax="max", mkSum="sum",
                     mkAvg="avg", mkSdev="sdev", mkSkew="skew", mkKurt="kurt"
@@ -1568,7 +1568,7 @@ proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
       cmp.dir = cmp.iok == CIk and nf.rowFmt.cols[cIx].width > 1
       r.add cmp.move; cmp.nf = nf
 
-import algorithm
+import std/algorithm
 proc order*(at="", output: string, paths: Strings): int =
   ## write indices to make a multi-level order among `paths`.
   ##
