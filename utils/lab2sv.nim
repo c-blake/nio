@@ -2,7 +2,7 @@ import std/[tables, sequtils, sugar], cligen/[osUt, mslice], cligen
 when not declared(stdin): import std/syncio
 
 # Return Table mapping keys in `oa` to their positions.  Dups raise.
-proc colNos[T](oa: openarray[T]): Table[T,int] = (for i,k in oa: result[k] = i)
+proc colNos[T](oa: openArray[T]): Table[T,int] = (for i,k in oa: result[k] = i)
 
 proc lab2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
             skip=0, max=1024, colKeys: seq[string]) =
