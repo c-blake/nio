@@ -70,7 +70,7 @@ proc fix2sv(inp="/dev/stdin", tab='\t', TabSub="\\t", log: set[Log]={},
   if totalSubs in log:
     erru &"{si}: {totTab} \\t subs {totBack} \\\\ subs\n"
 
-when isMainModule: dispatch fix2sv, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch fix2sv, help={
   "specs" : "width1[Lchars][Rchars] width2[Lchars][Rchars]..",
   "inp"   : "input file; reg files get mem.mapped",
   "tab"   : "output field delim byte (e.g. '\\\\t')",

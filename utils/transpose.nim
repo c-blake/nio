@@ -23,6 +23,7 @@ proc transpose(delim='\0', sep='\t', null="N/A", verbose=false) =
       outu (if j < tab[i].len: tab[i][j] else: null)
     outu "\n"
 
-when isMainModule: import cligen; dispatch transpose, help={
+when isMainModule:
+ import cligen; include cligen/mergeCfgEnv; dispatch transpose, help={
   "delim": "input delimiter", "sep": "output separator", "null": "N/A code",
   "verbose": "identify table irregularities"}

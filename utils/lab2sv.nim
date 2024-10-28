@@ -39,7 +39,7 @@ proc lab2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
     for c in cs: stdout.urite oDlm, c
     stdout.urite '\n'
 
-when isMainModule: dispatch lab2sv, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch lab2sv, help={
   "colKeys": "in-order values of column keys/hdrs for SV",
   "iDlm": "input delimiter",
   "oDlm": "output delimiter",

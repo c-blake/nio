@@ -14,4 +14,4 @@ proc addEmpty*(tab='\0', nl='\n', bSz=32768): int =
     if stdout.uriteBuffer(row[0].unsafeAddr, nRow - 1) < nRow - 1 or
        stdout.uriteBuffer(tabNl[0].addr, 2) < 2: break
 
-when isMainModule: import cligen; dispatch addEmpty
+when isMainModule: import cligen; include cligen/mergeCfgEnv; dispatch addEmpty

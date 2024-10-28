@@ -19,6 +19,7 @@ proc lp2term*(eor='\0', subEor=" ", index="", paths: Strings) =
     r.close
 
 when isMainModule:
+  include cligen/mergeCfgEnv
   dispatch lp2term, help={"paths" : "{1|more paths to a .L file}",
                           "eor"   : "output record terminator",
                           "subEor": "string for rec term inside bufs",

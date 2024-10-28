@@ -18,5 +18,4 @@ proc nmatch*(nCt = -1, xCt = -1, delim=":", patterns: seq[string]): int =
       stdout.write sum, delim, line, '\n'
 
 when isMainModule:
-  import cligen
-  dispatch nmatch, help={}
+  import cligen; include cligen/mergeCfgEnv; dispatch nmatch, help={}

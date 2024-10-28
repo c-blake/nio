@@ -98,7 +98,7 @@ proc c2tsv(tab='\t', TabSub="\\t", nl='\n', NlSub="\\n", log: set[Log]={},
     erru &"{si}:{rNo} unterminated quote @EOF\n"; return 1
 
 when isMainModule:  # Build with --gc:markAndSweep & PGO for best performance.
-  import cligen; dispatch c2tsv, help = {
+  import cligen; include cligen/mergeCfgEnv; dispatch c2tsv, help = {
     "tab"   : "output field delimiter byte (e.g. '\\\\t')",
     "nl"    : "output record terminator byte",
     "TabSub": "how to spell delim inside output fields",

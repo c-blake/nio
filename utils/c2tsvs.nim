@@ -50,7 +50,7 @@ proc c2tsvs(comma=',', quote='"', escape='\0', skip=false, tab='\t',
   if totalSubs in log:
     erru &"{si}: {totNl} \\n subs {totTab} \\t subs {totBack} \\t subs\n"
 
-when isMainModule: import cligen; dispatch c2tsvs, help = {
+when isMainModule:import cligen;include cligen/mergeCfgEnv;dispatch c2tsvs,help={
   "comma"   : "CSV delimiter",
   "quote"   : "CSV quote character",
   "escape"  : "CSV escape character",

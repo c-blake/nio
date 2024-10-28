@@ -54,7 +54,7 @@ proc labs2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
         else: j = -1                    # So k = j + 1 starts at 0
   wr()                                  # Write any final row
 
-when isMainModule: dispatch labs2sv, help={
+when isMainModule: include cligen/mergeCfgEnv; dispatch labs2sv, help={
   "colKeys": "in-order values of column keys/hdrs for SV",
   "iDlm": "input delimiter",
   "oDlm": "output delimiter",
