@@ -1,5 +1,5 @@
 ## This is a system for managing pre-parsed N)umeric|N)ative binary data.  File
-## names have extensions with metadata needed to interpret data as typed rows.
+## names have extensions|dotfiles w/metadata needed to grasp data as typed rows.
 ## Syntax is *".N"* then 1|more *{COUNT{,COUNT..}}[cCsSiIlLfdg]* specs where
 ## **Uppercase => Unsigned** & letter=1st letter of C type except g=lonG double.
 ## No count => 1.  *'_'* is ignored.  *idDayVal.N2sf* <~> packed *struct{ short
