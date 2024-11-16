@@ -1875,59 +1875,60 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
   su.close
 
 proc dfl(n: int): tuple[a,b: int] = parseSlice(getEnv("ROWS", "0:" & $n))
-template qryRange*(n: int): untyped =
+template queryRange*(n: int): untyped =
   cvtSlice(dfl(n), n)[0] ..< cvtSlice(dfl(n), n)[1]
 
 import std/hashes
-proc qry*(prelude="", begin="", where="true", stmtInputs:seq[string], epilog="",
-          nim="", run=true, args="", verbose=0, outp="/tmp/qXXX"): int =
+const es: Strings = @[]; proc jn(sq: Strings): string = sq.join("\n")
+proc query*(prelude=es, begin=es, `var`=es, where="true", stmtInputs:Strings,
+            epilog=es, nim="",run=true,args="",verbose=0,outp="/tmp/qXXX"): int=
   ## Gen & Run a *prelude*,*begin*,*where*,*stmt*,*epilog* IOTensor "query".
   ##
   ## Run against similarly indexed *inputs* NIO files (> 1st of *stmtInputs*).
   ## Likely works best for "column files" as per eg.s.  Within *where* & *stmt*:
-  ##   *qryI*: curr row index; (prefixed to help avoid `inputs` name clashes.)
-  ##   Each row has `let INP=fINPs[qryI]` bindings (from *gen-time* basenames).
-  ## A generated program is left at *outp*.nim, easily copied for "utilitizing".
-  ## Knowing AWK/Nim/`rp`, you can learn this PRONTO.  This is much like a full
-  ## table scan in SQL but fully type-check compiled with access to all of Nim.
-  ## Examples (need data) using `alias nq='nio qry'`:
-  ##   nq 'echo foo' \*.N\*                          # Extract column as ASCII
-  ##   nq 'echo a,b,c' \*.N\* -w'nr mod 100==0'      # Print each 100th a,b,c
-  ##   nq -b'var t=0' t+=x -w'x>0' -e'echo t' \*.N\* # Total >0 `x` ints
-  ##   nq -p'import stats' -b'var r:RunningStat' 'r.push bar' -e'echo r' \*.N\*
-  ## You can (re-)compile generated programs with -d:danger to run faster.
+  ##   *qI*: curr row index; (prefixed to help avoid `inputs` name clashes.)
+  ##   Each row has `let INP=fINP[qI]` bindings (for *GenTime* basenames `INP`).
+  ## Generated program left at *outp*.nim; Copy to "utilitize"|compile better.
+  ## Knowing AWK/Nim/`rp`, you can learn this FAST.  This is much like SQL full
+  ## table scans BUT type-check-compiled with access to all of Nim/SIMD.  Eg.:
+  ##   nio q 'echo foo' foo.N\*                    # Extract `foo` as ASCII
+  ##   nio q 'echo a,b,c' \*.N\* -w'nr mod 99==0'   # Echo 99th a,b,c ([abc].N*)
+  ##   nio q -vt=0 t+=x -w'x>0' -e'echo t' \*.N\*   # Total >0 `x.N*` ints
+  ##   nio q -pimport\\ stats -vr:RunningStat r.push\\ bar -eecho\\ r \*.N\*
   proc opens(inputs: seq[string]): string =
     var base0: string
     for j, input in inputs:
       let tail = input.splitPath.tail; let base = input.splitFile.name
       let rowT = $kindOf(tail[^1]) #NOTE: only works for IOTensor style files.
-      result.add &"  var f{base}s = initFileArray[{rowT}](\"{tail}\")\n"
+      result.add &"  var f{base} = initFileArray[{rowT}](\"{tail}\")\n"
       if j == 0: base0 = base
-      else: result.add &"  if f{base}s.len != f{base0}s.len: quit \"badSize\"\n"
+      else: result.add &"  if f{base}.len != f{base0}.len: quit \"badSize\"\n"
   proc lets(inputs: seq[string]): string =
     for j, input in inputs:
       let base = input.splitFile.name
-      result.add &"    let {base} {{.used.}} = f{base}s[qryI]\n"
+      result.add &"    let {base} {{.used.}} = f{base}[qI]\n"
   let stmt    = if stmtInputs.len > 0: stmtInputs[0]     else: ""
   let inputs  = if stmtInputs.len > 1: stmtInputs[1..^1] else: @[]
   if inputs.len < 1:
-    stderr.write "`qry` needs >= 1 real file input; --help says more"; quit 1
+    stderr.write "`query` needs >= 1 real file input; --help says more"; quit 1
   let base0 = inputs[0].splitFile.name
+  var vars = es; (for v in `var`: vars.add "var " & v)
+  let begin = vars & (if begin.len>0: begin else: @[])
   var program = &"""import nio
-{prelude} # [prelude]
-proc qryMain() = # [autoOpens]
+{prelude.jn} # [prelude]
+proc qMain() = # [autoOpens]
 {inputs.opens}
-{indent(begin, 2)} # [begin]
-  for qryI in qryRange(f{base0}s.len):
+{indent(begin.jn, 2)} # [begin]
+  for qI in queryRange(f{base0}.len):
 {inputs.lets} # [inputs lets]
     if {where}: # [where] auto ()s?
 """
   if stmt.len == 0: program.add "      discard\n"
   else            : program.add "      " & stmt & " # {stmt}\n"
-  program.add indent(epilog, 2)
-  program.add " # {epilogue}\nqryMain()\n"
+  program.add indent(epilog.jn, 2)
+  program.add " # {epilogue}\nqMain()\n"
   let bke  = if run: "r" else: "c"
-  let args = if args.len > 0: args else: "-d:danger --gc:arc"
+  let args = if args.len > 0: args else: "-d:danger --mm:arc"
   let verb = "--verbosity:" & $verbose
   let digs = count(outp, 'X')
   let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
@@ -2023,14 +2024,15 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "fmt"   : "Nim floating point output format",
                    "group" : "nio file for group keys",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
-    [qry , help={"stmtInputs": "{stmt} {input paths}",
+    [query, help={"stmtInputs": "{stmt} {input paths}",
                   "prelude": "Nim code for prelude/imports section",
                   "begin"  : "Nim code for begin/pre-loop section",
+                  "var"    : "preface begin w/\"var \"+these shorthand",
                   "where"  : "Nim code for row inclusion",
                   "epilog" : "Nim code for epilog/end loop section",
                   "nim"    : "\"\" => nim {if run: r else: c} {args}",
                   "run"    : "Run at once using nim r .. < input",
-                  "args"   : "\"\" => -d:danger --gc:arc",
+                  "args"   : "\"\" => -d:danger --mm:arc",
                   "verbose": "Nim compile verbosity level",
                   "outp"   : "output executable; .nim NOT REMOVED"}],
     [order , help={"at"    : "shared default repo for @ compares",
