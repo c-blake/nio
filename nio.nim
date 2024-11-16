@@ -1854,9 +1854,7 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
       if fi.lastWriteTime < t0: continue
     else:
       if time notin doTs: continue              # Could preprocess -> HashSet
-    if path.getFileSize < 64:
-      stderr.write &"Skipping nearly empty {path}\n"
-      continue
+    if path.getFileSize < 64: erru &"Skipping nearly empty {path}\n"; continue
 # New ids appearing & output matrix resize conservation => 2 pass: ids & data.
 # Id notin data by def. Id-segregated piped output may seem best BUT pipe writes
 # block if buffers fill. More buffering works; Buffer may as well be /dev/shm.
@@ -1909,8 +1907,7 @@ proc query*(prelude=es, begin=es, `var`=es, where="true", stmtInputs:Strings,
       result.add &"    let {base} {{.used.}} = f{base}[qI]\n"
   let stmt    = if stmtInputs.len > 0: stmtInputs[0]     else: ""
   let inputs  = if stmtInputs.len > 1: stmtInputs[1..^1] else: @[]
-  if inputs.len < 1:
-    stderr.write "`query` needs >= 1 real file input; --help says more"; quit 1
+  if inputs.len < 1: quit "`query` needs >=1 file inputs; --help says more", 1
   let base0 = inputs[0].splitFile.name
   var vars = es; (for v in `var`: vars.add "var " & v)
   let begin = vars & (if begin.len>0: begin else: @[])
