@@ -7,7 +7,6 @@
 ## | unsigned.high.  "" before ".N" gives *stdin* row formats when needed.
 const fmtUse* = "\nSyntax: ({COUNT{,COUNT...}}[cCsSiIlLfdg])+\n"
 
-{.warning[Uninit]:off, warning[ProveInit]:off.} # Should be verbosity:2, not 1
 when not declared(FileMode): import std/[syncio, objectdollar]; export syncio
 include cligen/unsafeAddr                                   # `formatInt` --|
 import std/strutils as su, std/[math, os, times, strtabs], std/strformat{.all.},
