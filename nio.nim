@@ -1847,10 +1847,13 @@ proc dfl(n: int): tuple[a,b: int] = parseSlice(getEnv("ROWS", "0:" & $n))
 template queryRange*(n: int): untyped =
   cvtSlice(dfl(n), n)[0] ..< cvtSlice(dfl(n), n)[1]
 
-import std/hashes
+import std/[hashes, sugar]
+proc orD(s, default: string): string =  # little helper for accumulating params
+  if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 const es: Strings = @[]; proc jn(sq: Strings): string = sq.join("\n")
-proc query*(prelude=es, begin=es, `var`=es, where="true", stmtInputs:Strings,
-            epilog=es, nim="",run=true,args="",verbose=0,outp="/tmp/qXXX"): int=
+proc query*(prelude=es, vars=es, begin=es, where="true", stmtInputs: Strings,
+            epilog=es, nim="", run=true, args="", cache="", lgLevel=0,
+            outp="/tmp/qXXX", src=false, Warn=""): int =
   ## Gen & Run a *prelude*,*begin*,*where*,*stmt*,*epilog* IOTensor "query".
   ##
   ## Run against similarly indexed *inputs* NIO files (> 1st of *stmtInputs*).
@@ -1880,8 +1883,7 @@ proc query*(prelude=es, begin=es, `var`=es, where="true", stmtInputs:Strings,
   let inputs  = if stmtInputs.len > 1: stmtInputs[1..^1] else: @[]
   if inputs.len < 1: quit "`query` needs >=1 file inputs; --help says more", 1
   let base0 = inputs[0].splitFile.name
-  var vars = es; (for v in `var`: vars.add "var " & v)
-  let begin = vars & (if begin.len>0: begin else: @[])
+  let begin = collect(for v in vars: "var "&v) & (if begin.len>0:begin else: es)
   var program = &"""import nio
 {prelude.jn} # [prelude]
 proc qMain() = # [autoOpens]
@@ -1889,24 +1891,19 @@ proc qMain() = # [autoOpens]
 {indent(begin.jn, 2)} # [begin]
   for qI in queryRange(f{base0}.len):
 {inputs.lets} # [inputs lets]
-    if {where}: # [where] auto ()s?
-"""
+    if {where}: # [where] auto ()s?""" & "\n"
   if stmt.len == 0: program.add "      discard\n"
   else            : program.add "      " & stmt & " # {stmt}\n"
   program.add indent(epilog.jn, 2)
   program.add " # {epilogue}\nqMain()\n"
-  let bke  = if run: "r" else: "c"
-  let args = if args.len > 0: args else: "-d:danger --mm:arc"
-  let verb = "--verbosity:" & $verbose
-  let digs = count(outp, 'X')
-  let hsh  = toHex(program.hash and ((1 shl 16*digs) - 1), digs)
-  let outp = if digs > 0: outp[0 ..< ^digs] & hsh else: outp
-  let nim  = if nim.len > 0: nim else: "nim $1 $2 $3 -o:$4 $5" % [
-                                       bke, args, verb, outp, outp]
-  let f = mkdirOpen(outp & ".nim", fmWrite)
-  f.write program
-  f.close
-  execShellCmd(nim)
+  if src: stderr.write program
+  let oNm  = writeContAddrTempFile(outp, ".nim", program)
+  let subc = if run: "r" else: "c" # sub-command; TODO cpp as well? Bubble-up?
+  let args = args.orD("-d:danger ") & " " & cache.orD("--nimcache:/tmp/q ") &
+             " " & Warn.orD("--warning[CannotOpenFile]=off ")
+  let verb = "--verbosity:" & $lgLevel
+  let cmd  = if nim.len > 0: nim else: "nim $1 $2 $3" % [subc, args, verb]
+  execShellCmd cmd & (" -o:$1 $1" % oNm)
 
 when isMainModule:
   import cligen, cligen/cfUt
@@ -1994,15 +1991,17 @@ if AT=="" %s renders as a number via `fmTy`""",
                    "stats":"*n* *min* *max* *sum* *avg* *sdev* *skew* *kurt*"}],
     [query, help={"stmtInputs": "{stmt} {input paths}",
                   "prelude": "Nim code for prelude/imports section",
+                  "vars"   : "preface begin w/\"var \"+these shorthand",
                   "begin"  : "Nim code for begin/pre-loop section",
-                  "var"    : "preface begin w/\"var \"+these shorthand",
                   "where"  : "Nim code for row inclusion",
                   "epilog" : "Nim code for epilog/end loop section",
                   "nim"    : "\"\" => nim {if run: r else: c} {args}",
                   "run"    : "Run at once using nim r .. < input",
                   "args"   : "\"\" => -d:danger --mm:arc",
-                  "verbose": "Nim compile verbosity level",
-                  "outp"   : "output executable; .nim NOT REMOVED"}],
+                  "cache"  : "\"\": --nimcache:/tmp/q (--incr:on?)",
+                  "lgLevel": "Nim compile verbosity level",
+                  "outp"   : "output executable; .nim NOT REMOVED",
+                  "Warn"   : "\"\": --warning[CannotOpenFile]=off"}],
     [order , help={"at"    : "shared default repo for @ compares",
                    "output": "path + basename of output order file",
                    "paths" : "[paths: 0|more paths to NIO files]"}],
