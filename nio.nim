@@ -1847,7 +1847,7 @@ proc dfl(n: int): tuple[a,b: int] = parseSlice(getEnv("ROWS", "0:" & $n))
 template queryRange*(n: int): untyped =
   cvtSlice(dfl(n), n)[0] ..< cvtSlice(dfl(n), n)[1]
 
-import std/[hashes, sugar]
+import std/sugar
 proc orD(s, default: string): string =  # little helper for accumulating params
   if s.startsWith("+"): default & s[1..^1] elif s.len > 0: s else: default
 const es: Strings = @[]; proc jn(sq: Strings): string = sq.join("\n")
