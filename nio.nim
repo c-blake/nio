@@ -64,7 +64,7 @@ let nim2nio* = {"int8"   : 'c', "uint8"  : 'C', "int16": 's', "uint16": 'S',
 func kindOf*(c: char): IOKind {.inline.} =
   ## return IOKind corresponding to character `c`
   let ix = ioCode.find(c)
-  if ix < 0: Value!"expecting [cCsSiIlLfdg]"
+  if ix < 0: Value!!"expecting [cCsSiIlLfdg]"
   IOKind(ix)
 
 func kindOf*(x: IONumber): IOKind =
@@ -167,14 +167,14 @@ proc compare*(k: IOKind; aP, bP: pointer): int {.inline.} =
 #*** METADATA ACQUISITION SECTION
 func initIORow*(fmt: string, endAt: var int): IORow =
   ## Parse NIO format string `fmt` into an `IORow`
-  if fmt.len < 1: IO!"empty row format"
+  if fmt.len < 1: IO!!"empty row format"
   var col = IOCol(cnts: @[0])
   endAt = fmt.len - 1
   for i, c in fmt:
     case c:
     of '_': discard                     # Allow optional spacing stuff out
     of '0'..'9': col.cnts[^1] *= 10; col.cnts[^1] += ord(c) - ord('0')
-#Explicit "0+" -> IO!"0 dim in type fmt: " & fmt & fmtUse
+#Explicit "0+" -> IO!!"0 dim in type fmt: " & fmt & fmtUse
     of ',': col.cnts.add 0              # Make room for next dimension
     of 'c', 'C', 's', 'S', 'i', 'I', 'l', 'L', 'f', 'd', 'g':
       col.iok = fmt[i].kindOf           # Type code terminates IO-column spec
@@ -186,11 +186,11 @@ func initIORow*(fmt: string, endAt: var int): IORow =
       result.cols.add move(col)         # only GC'd type in an IOCol is `cnts`..
       col.cnts = @[0]                   #..which we re-init here anyway.
     else:
-      if c in {'a'..'z', 'A'..'Z'}: IO ! &"bad code {c} in fmt: "&fmt&fmtUse
+      if c in {'a'..'z', 'A'..'Z'}: IO !! &"bad code {c} in fmt: "&fmt&fmtUse
       else: # Allow things like '@'.* after a format suffix
         endAt = i
         return
-  if result.cols.len == 0: IO!"no columns in fmt: " & fmt & fmtUse
+  if result.cols.len == 0: IO!!"no columns in fmt: " & fmt & fmtUse
 
 #XXX Add $pfx$kind${sep}foo meta file|dirs for kind="fmt","out".. Eg: .fmt/foo
 proc dotContents(path: string): string =
@@ -202,7 +202,7 @@ proc metaData(path: string): (string, IORow, string) =
   let ext = name.find(".N")
   let fmt = if ext != -1: name[ext+2 .. ^1] else:
               try: dotContents(dir / "." & name) except Ce:
-                Value!path&": has no .N extension | dotfile"
+                Value!!path&": has no .N extension | dotfile"
   result[1] = fmt.initIORow(endAt)
   if ext != -1: name = name[0..<ext]
   if endAt >= fmt.len - 1:
@@ -218,17 +218,17 @@ proc metaData(path: string): (string, IORow, string) =
 proc nOpen*(path: string, mode=fmRead, newFileSize = -1, allowRemap=false,
             mapFlags=cint(-1), rest: ptr string=nil): NFile =
   let (path, fmt, rst) = metaData(path)
-  if fmt.bytes == 0: Value ! &"{path}: some ext problem"
+  if fmt.bytes == 0: Value !! &"{path}: some ext problem"
   result.rowFmt = fmt
   result.mode = mode
   if path.len == 0:
     case mode
     of fmRead: result.f = stdin
     of fmAppend, fmWrite: result.f = stdout
-    else: Value!"nameless unsupported by " & $mode
+    else: Value!!"nameless unsupported by " & $mode
   else:
     try: # XXX could get this down to 1 open syscall & map setup
-      if mode == fmAppend: Value!""     # force stdIO
+      if mode == fmAppend: Value!!""     # force stdIO
       if not (mode == fmRead and path.fileExists and path.getFileSize == 0):
         result.m = mf.open(path, mode, newFileSize=newFileSize,
                            allowRemap=allowRemap, mapFlags=mapFlags)
@@ -245,7 +245,7 @@ proc close*(nf: var NFile) =    # mf.close requires `var`
 template arrayBase[I, T](a: typedesc[array[I, T]]): untyped = T
 proc makeSuffix[T](result: var string, x: T, inArray=false) =
   when T is tuple or T is object:
-    if inArray: Value!"array[N, obj|tup] is unsupported"
+    if inArray: Value!!"array[N, obj|tup] is unsupported"
     for e in x.fields:          # could maybe do 2-passes to count and for
       result.makeSuffix e       #..the special case of 1 field just unbox.
   elif T is array:
@@ -255,7 +255,7 @@ proc makeSuffix[T](result: var string, x: T, inArray=false) =
     result.makeSuffix x, inArray=true
   else:
     try      : result.add nim2nio[$type(T)]
-    except Ce: Value!("missing type key: " &
+    except Ce: Value!!("missing type key: " &
                  (when (NimMajor,NimMinor)<(2,1): repr($type(T)) else: T.repr))
 
 proc makeName[T](result: var string, key: string, x: T, sep=",") =
@@ -285,7 +285,7 @@ proc save*[T: tuple|object|array|IONumber](x: openArray[T], path="",
   ## Blast `x` to a file with optionally generated path a la `typedPath`.
   var f = open(typedPath[T](path, sep), mode)
   let n = T.sizeof * x.len
-  if f.writeBuffer(x[0].unsafeAddr, n) < n: Value!"nio.save: short write"
+  if f.writeBuffer(x[0].unsafeAddr, n) < n: Value!!"nio.save: short write"
   f.close
 
 proc read*(nf: var NFile, buf: var string, sz=0): bool =
@@ -349,7 +349,7 @@ proc nurite*(f: File, kout: IOKind, buf: pointer) =
 
 #*** MEMORY MAPPED IO SECTION
 func len*(nf: NFile): int {.inline.} =
-  when not defined(danger): (if nf.m.mem.isNil: Value!"non-mmapped file")
+  when not defined(danger): (if nf.m.mem.isNil: Value!!"non-mmapped file")
   nf.m.size div nf.rowFmt.bytes
 
 template BadIndex: untyped =
@@ -363,7 +363,7 @@ func `[]`*(nf: NFile, i: int): pointer {.inline.} =
   ##   `let p = cast[ptr MyType](nfil[17]); echo p.myField; p.bar=2 #May SEGV!`.
   let m = nf.rowFmt.bytes
   when not defined(danger):
-    if nf.m.mem.isNil: Value!"non-mmapped file"
+    if nf.m.mem.isNil: Value!!"non-mmapped file"
     if i >=% nf.m.size div m: razIE(i,nf,m)
   cast[pointer](cast[int](nf.m.mem) +% i*m)
 
@@ -398,7 +398,7 @@ type
 
 func initFileArray*[T](nf: NFile): FileArray[T] =
   ## An init from NFile in case you want to nf.close before program exit.
-  if T.sizeof != nf.rowFmt.bytes:Value!"path rowFmt.bytes != FileArray T.sizeof"
+  if T.sizeof != nf.rowFmt.bytes:Value!!"path rowFmt.bytes != FileArray T.sizeof"
   result.nf = nf
 
 proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newLen = -1,
@@ -442,16 +442,16 @@ func len*[T](fa: FileArray[T]): int {.inline.} =
   ## Returns length of `fa` in units of T.sizeof records.  Since this does a
   ## divmod, you should save an answer rather than re-calling if appropriate.
   when not defined(danger):
-    if fa.nf.m.mem.isNil: Value!"uninitialized FileArray[T]"
+    if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
     if fa.nf.m.size mod T.sizeof != 0:
-      Value!"FileArray[T] size non-multiple of T.sizeof"
+      Value!!"FileArray[T] size non-multiple of T.sizeof"
   fa.nf.m.size div T.sizeof
 
 func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
   let m = T.sizeof
   when not defined(danger):
-    if fa.nf.m.mem.isNil: Value!"uninitialized FileArray[T]"
+    if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
     if i * m >=% fa.nf.m.size: razIE(i,nf,m)
   cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[]
 
@@ -459,7 +459,7 @@ func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
   let m = T.sizeof
   when not defined(danger):
-    if fa.nf.m.mem.isNil: Value!"uninitialized FileArray[T]"
+    if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
     if i * m >=% fa.nf.m.size: razIE(i,fa.nf,m)
   cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[]
 
@@ -467,7 +467,7 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
   ## Assign `val` to `i`-th row of `fa`.
   let m = T.sizeof
   when not defined(danger):
-    if fa.nf.m.mem.isNil: Value!"uninitialized FileArray[T]"
+    if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
     if i * m >=% fa.nf.m.size: razIE(i,nf,m)
   cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[] = val
 
@@ -483,11 +483,11 @@ proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
   let (path, fmt, _) = metaData(path) #XXX Match filled-in IOTensor fields; Add
   tsr.fmt = fmt                       #.. DATA_PATH search; For nOpen add ixing/
   tsr.t = fmt.cols[0].iok             #.. slicing ops/neo/Arraymancer compat.
-  if fmt.cols.len != 1: Value ! &"{path}: impure tensors unsupported"
+  if fmt.cols.len != 1: Value !! &"{path}: impure tensors unsupported"
   tsr.m = mf.open(path)
   if tsr.m.size mod fmt.bytes != 0:
     mf.close tsr.m
-    Value ! &"{path}: file size indivisible by row size"
+    Value !! &"{path}: file size indivisible by row size"
   tsr.d = @[ tsr.m.size div fmt.bytes ] & fmt.cols[0].cnts
 
 proc mOpen*(path: string, mode=fmRead, mappedSize = -1, offset=0,
@@ -564,7 +564,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   let openMode = if result.mode == rmUpdate and info.id.device == 0: fmWrite
                  else: fmAppend
   if info.size > type(result.off).high.int:
-    Value ! &"{path}: too big for index pointer sizes"
+    Value !! &"{path}: too big for index pointer sizes"
   result.off = info.size.Ix
   let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else:
     try: mf.open(path) except Ce: mf.MemFile(mem: nil, size: 0)
@@ -576,17 +576,17 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
       let dlm = ext[2..^1]
       result = Repo(kind:rkDelim, m: m, na: na, mode: mode, kout: kout,
                     dlm: (if dlm == "n": '\n' else: chr(parseInt(dlm))))
-    except Ce: Value ! &"{path}: expecting .Dn or .D<INT>"
+    except Ce: Value !! &"{path}: expecting .Dn or .D<INT>"
   elif ext.startsWith(".L") and ext.len == 3:
     result = Repo(kind:rkLenPfx, lenK: kindOf(ext[2]), m: m, na: na,
                   mode: mode, kout: kout)
   elif ext.startsWith(".N"):
     let (path, fmt, rst) = metaData(cols[0])
-    if rst.len > 0: Value ! &"{path}: inappropriate for a repo"
+    if rst.len > 0: Value !! &"{path}: inappropriate for a repo"
     if not (fmt.cols.len == 1 and fmt.cols[0].iok in {cIk, CIk}):
-      Value ! &"{path}: expecting .N<size>[cC]"
+      Value !! &"{path}: expecting .N<size>[cC]"
     result = Repo(kind:rkFixWid, fmt: fmt, m: m, na: na, mode: mode, kout: kout)
-  else: Value ! &"{path}: unknown repo ext {ext}"
+  else: Value !! &"{path}: unknown repo ext {ext}"
   if result.mode == rmUpdate and (result.f := mkdirOpen(path, openMode)) == nil:
     result.mode = rmIndex; erru &"{path}: cannot append; indexing anyway\n"
   for k, i in result.keysAtOpen: result.tab[k] = i
@@ -607,7 +607,7 @@ proc `[]`*(at: Repo, i: Ix): string =
   of rkDelim:                   # Here `i` is a byte offset to start of row
     p = cast[pointer](cast[uint](at.m.mem) + i)
     let e = c_memchr(p, at.dlm.cint, csize_t(at.m.size.Ix - i))
-    if e == nil: Value ! &"no terminating delimiter for {i.int}"
+    if e == nil: Value !! &"no terminating delimiter for {i.int}"
     n = Ix(cast[uint](e) - cast[uint](p))
   of rkLenPfx:                  # Here `i` is a byte offset to length field
     let pL = cast[pointer](cast[uint](at.m.mem) + i)
@@ -635,13 +635,13 @@ proc clip(r: var Repo; k: string, lenK: IOKind, lno: int): string {.inline.} =
       erru &"inputLine{lno}: truncating field of len {k.len}\n"
       result = k[0..<lim]
     else: result = k
-  else: Value ! "Length Prefix cannot be a float"
+  else: Value !! "Length Prefix cannot be a float"
 
 proc index*(r: var Repo, ixOut: pointer, k: string, lno: int) =
   template retNA =                      # helper template to return NA
     setNA(r.kout, ixOut); return
   if ixOut == nil: r.close; return
-  if r.mode == rmFast: Value ! "rmFast mode does not do index(string)"
+  if r.mode == rmFast: Value !! "rmFast mode does not do index(string)"
   if k.len == 0: retNA                  # NA key -> NA index
   var i: Ix
   let k = if   r.kind == rkFixWid: padClip(k, r.fmt.bytes)
@@ -692,7 +692,7 @@ proc parseAugmentedSpecifier(s: string, start: int, at: var Repo,
     if s.len > start and s[start] == '@' and pct > 1:
       at = rOpen(s[1..<pct])
     spec = parseStandardFormatSpecifier(s, pct + 1, ignoreUnknownSuffix=true)
-  else: Value ! &"{s}: missing '%' or type code"
+  else: Value !! &"{s}: missing '%' or type code"
 
 proc initFormatter*(rowFmt: IORow, atShr: Repo = nil, fmTy: Strings = @[],
                     fmt="", na=""): Formatter =
@@ -702,9 +702,9 @@ proc initFormatter*(rowFmt: IORow, atShr: Repo = nil, fmTy: Strings = @[],
   var ft: array[IOKind,  string] = ["d", "c", "d", "d", "d", "d", "d", "d",
                                     ".07g", ".016g", ".019g"]
   for cf in fmTy:
-    if cf.len < 3: Value ! &"\"{cf}\" too short"
-    if cf[1]!='%': Value ! "no '%' between code & spec"
-    if cf[0] notin ioCode: Value ! &"'{cf[0]}' not [cCsSiIlLfdg]"
+    if cf.len < 3: Value !! &"\"{cf}\" too short"
+    if cf[1]!='%': Value !! "no '%' between code & spec"
+    if cf[0] notin ioCode: Value !! &"'{cf[0]}' not [cCsSiIlLfdg]"
     ft[cf[0].kindOf] = cf[2..^1]
   var fc: array[IOKind, StandardFormatSpecifier]
   for k in IOKind: fc[k] = parseStandardFormatSpecifier(ft[k], 0, true)
@@ -716,7 +716,7 @@ proc initFormatter*(rowFmt: IORow, atShr: Repo = nil, fmTy: Strings = @[],
     result.ats   .add atShr
   var start, j: int
   while start < fmt.len:
-    if j >= rowFmt.cols.len: Value ! &"\"{fmt}\" too many output formats"
+    if j >= rowFmt.cols.len: Value !! &"\"{fmt}\" too many output formats"
     parseAugmentedSpecifier fmt, start, result.ats[j+1], result.specs[j]
     result.radix[j]  = result.specs[j].radix
     result.ffmode[j] = result.specs[j].ffmode
@@ -1119,7 +1119,7 @@ proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
     if eoNum == s.len: convert kout, dIk, obuf[0].addr, nF.addr
     else: setNA kout, obuf[0].addr; erru &"stdin:{lno}: bad fmt \"{$s}\""
   of 'x': xfm obuf[0].addr, $s, lno
-  else: IO ! &"{inCode}: inCode not in [bodhfx]"
+  else: IO !! &"{inCode}: inCode not in [bodhfx]"
   outp.nurite kout, obuf[0].addr
 
 proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
@@ -1131,7 +1131,7 @@ proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
 # elif xfm.startsWith("T"):             # parse times into whatever XXX
 # elif xfm.startsWith("~"):             # integer-to-integer mapper
 # elif xfm.startsWith("L"):             # external shared library/DLL
-  else: Value!"unknown transformer prefix"
+  else: Value!!"unknown transformer prefix"
 
 proc load1*(inCode, oCode: char; delim='\n', xform="", count=1): int =
   ## load 1 ASCII column on stdin to NIO on stdout (for import,testing).
@@ -1159,7 +1159,7 @@ type                                #*** SHARED STATE FOR  parseCol/Sch/fromSV
                  kout: IOKind; count: int]  # A parsed schema column
 
 proc parseCol(scols: seq[string], ss: var SchState): SchCol =
-  if scols.len < 3: Value ! &"{ss.schema}:{ss.lno} < 3 cols"
+  if scols.len < 3: Value !! &"{ss.schema}:{ss.lno} < 3 cols"
   result.name = scols[0]
   result.kout = kindOf(scols[1][^1])
   result.inCode = scols[2][0]
@@ -1180,7 +1180,7 @@ proc parseCol(scols: seq[string], ss: var SchState): SchCol =
           result.xfm = ss.xfm0
         else: result.xfm = ss.xfm0
       else: result.xfm = initXfm(result.inCode, result.kout, scols[3] % ss.stab)
-  elif result.inCode == 'x': Value ! "'x' but no transform arguments"
+  elif result.inCode == 'x': Value !! "'x' but no transform arguments"
 
 proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
                                                                 seq[SchCol]) =
@@ -1303,10 +1303,10 @@ proc inferT*(ext=".sc", pre="", delim="\x00", nHdr=1, timeFmts: Strings = @[],
       if lno > nHdr:                    # skip however many header rows
         var j = 0
         for inp in row.split(delim):
-          if j + 1 > hdrs.len: IO ! &"too many columns >{j+1} @line:{lno}"
+          if j + 1 > hdrs.len: IO !! &"too many columns >{j+1} @line:{lno}"
           su.strip(inp).check j
           j.inc
-        if j < hdrs.len: IO ! &"too few columns {j} @line:{lno}"
+        if j < hdrs.len: IO !! &"too few columns {j} @line:{lno}"
       lno.inc
     discard inpFile.pclose(pre)
     let o = open(path & ext, fmWrite)
@@ -1419,7 +1419,7 @@ proc kreduce*(fmt=".4g", group: string, stats: set[MomKind] = {mkMin, mkMax},
               na=0.0, paths: Strings): int =
   ## keyed-reduce (*by group*); Right now like `moments` but per-`group`-key.
   var grpFil: NFile
-  try: grpFil = nOpen(group) except Ce: Value ! &"cannot open file {group}"
+  try: grpFil = nOpen(group) except Ce: Value !! &"cannot open file {group}"
   var inps: seq[NFile]                  # Open all the inputs
   for path in paths: inps.add nOpen(path)
   var g: int64                          # Integer group label
@@ -1500,7 +1500,7 @@ proc add(r: var seq[Comparator]; nf: NFile, fmt: string, atShr: Repo) =
   cmp.sgn = +1
   if fmt.len == 0:
     for c in nf.rowFmt.cols:
-      if c.cnts.len>1 or (c.cnts[0]!=1 and c.iok!=CIk): Value!"key too complex"
+      if c.cnts.len>1 or (c.cnts[0]!=1 and c.iok!=CIk): Value!!"key too complex"
       cmp.iok = c.iok
       cmp.off = c.off
       cmp.width = c.width
@@ -1604,7 +1604,7 @@ func contains*(af: AxisFile,key: string): bool {.inline.} = key in af.k2ix
 proc add*(af: var AxisFile, key: string) =
   ## add `key` to an open axis index file
   if af.fK.writeBuffer(key[0].unsafeAddr, af.mKy) != af.mKy:
-    IO!"cannot append; disk full?"
+    IO!!"cannot append; disk full?"
   af.k2ix[key] = af.nKy
 
 proc axOpen*(path: string, fixed=false): AxisFile =
@@ -1792,7 +1792,7 @@ proc upstack*(cmd="", idVar="", outDir=".", fixed=false, nT= -1, nI= -1,
     doTs="", ids="", wd="/tmp/up",clr=false, stamp="DONE", inpPat: seq[string])=
   ## make/update time series matrices from per-tm cross-sectional files.
   if inpPat.len != 1 or inpPat[0].split("@TM@").len != 2:
-    Value!"non-option not @TM@ pattern; See --help."
+    Value!!"non-option not @TM@ pattern; See --help."
   let (times, paths) = getTimePaths(inpPat[0].split "@TM@")
   if times.len == 0: echo &"No inputs match {inpPat[0]}"; return
   var su = suOpen(idVar, times, su.split(ids), nT, nI, padT, padI, ix2tm, ix2id,

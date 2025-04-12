@@ -37,7 +37,7 @@ proc fix2sv(inp="/dev/stdin", tab='\t', TabSub="\\t", log: set[Log]={},
     o.add `x Sub`
     if eachSub   in log: erru &"{si}:{rNo} " & rep & " substitution\n"
     if totalSubs in log: `tot x`.inc
-  if specs.len<1: Help!"Too few `specs`; Full ${HELP}"
+  if specs.len<1: Help!!"Too few `specs`; Full ${HELP}"
   var stripL, stripR: seq[bool]
   var charsL, charsR: seq[set[char]]
   var offs, lens: seq[int]
