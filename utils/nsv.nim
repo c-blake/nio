@@ -1,4 +1,4 @@
-import cligen, cligen/[osUt, textUt, mslice, mfile]
+import cligen, cligen/[sysUt, osUt, textUt, mslice, mfile]
 
 proc nsv(input="-", delim="\t", maxCol=0, prLen=false, bulkSt=false,
          convert=false, sepOut="\t"): int =
@@ -7,8 +7,7 @@ proc nsv(input="-", delim="\t", maxCol=0, prLen=false, bulkSt=false,
   ## almost generate a parsing schema for fixed width text fields by massaging:
   ##   `paste <(head -n1 < $datSV | tr , \\\\n) <(tail -n+2 < $datSV | nsv -b)`
   ## `tail -n+2 < $datSV | nsv -c | bu/cstats ..` can give detailed width stats.
-  if not bulkSt and not convert:
-    raise newException(HelpError, "No work! Full ${HELP}")
+  if not bulkSt and not convert: Help!"No work! Full ${HELP}"
   template maxEq(mx,x) = mx = max(mx,x) # Accumulate in analogy with += | *=
   var n, m: int                         # Input line number, Num of columns
   let dlm = delim.initSep               # Compile delim string into a splitter

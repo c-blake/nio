@@ -1,4 +1,4 @@
-import std/[tables, sequtils, sugar], cligen/[osUt, mslice], cligen
+import std/[tables, sequtils, sugar], cligen/[sysUt, osUt, mslice], cligen
 when not declared(stdin): import std/syncio
 
 # Return Table mapping keys in `oa` to their positions.  Dups raise.
@@ -14,8 +14,7 @@ proc lab2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
   ##     b,A,3    b,3,4,
   ##     a,C,2
   ## This is hash-based.  For large data, see also labs2sv.
-  if colKeys.len == 0:
-    raise newException(HelpError, "Need >0 column keys; Full ${HELP}")
+  if colKeys.len == 0: Help!"Need >0 column keys; Full ${HELP}"
   let colKeys = collect(for j in 0..<colKeys.len: colKeys[j].toMSlice)
   let colNo   = colNos(colKeys)                             # colKey->slot
   let newRow  = repeat[string](na, colKeys.len)             # a fresh row

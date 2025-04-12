@@ -1,4 +1,4 @@
-import cligen, cligen/[osUt, mslice], std/sugar
+import cligen, cligen/[sysUt, osUt, mslice], std/sugar
 when not declared(stdout): import std/syncio
 
 proc setFrom*(str: var string, slc: MSlice) =
@@ -15,8 +15,7 @@ proc labs2sv(iDlm=",", oDlm="\t", na="", hdr="ROW", row=0, col=1, val=2,
   ##     b,B,4
   ## Something like `sort -t, -k1 -k2` is useful for preprocessing.  Input lines
   ## with missing row keys are ignored.  See also `lab2sv`.
-  if colKeys.len == 0:
-    raise newException(HelpError, "Need >0 column keys; Full ${HELP}")
+  if colKeys.len == 0: Help!"Need >0 column keys; Full ${HELP}"
   stdout.urite hdr                      # print header
   for ck in colKeys: stdout.urite oDlm, ck
   stdout.urite '\n'
