@@ -398,7 +398,7 @@ type
 
 func initFileArray*[T](nf: NFile): FileArray[T] =
   ## An init from NFile in case you want to nf.close before program exit.
-  if T.sizeof != nf.rowFmt.bytes:Value!!"path rowFmt.bytes != FileArray T.sizeof"
+  if T.sizeof!=nf.rowFmt.bytes: Value!!"path rowFmt.bytes != FileArray T.sizeof"
   result.nf = nf
 
 proc init*[T](fa: var FileArray[T], path: string, mode=fmRead, newLen = -1,
@@ -815,7 +815,7 @@ proc print*(sep="\t", at="", t='x', fmTy: Strings = @[], na="", paths: Strings)=
   #  C %[flags][minWidth][.prec][modifier][type]
   #    %[' +-#0]*[minWidth][.prec]{hh|h|l|ll|L|z|t}[csdiuoxXeEfFgGaA]
   var atShr: Repo     # `nil` if at == ""
-  try: atShr = rOpen(at, na=na) except Ce: erru &"Cannot open \"{at}\"\n"; quit(1)
+  try: atShr = rOpen(at, na=na) except Ce: erru &"Cannot open \"{at}\"\n";quit 1
   if t != 'x' and at.len > 0 and paths.len == 0:
     for (key, ix) in atShr.keysAtOpen: outu key, t
     return

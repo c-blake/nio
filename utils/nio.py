@@ -168,8 +168,8 @@ def classify_dirents(path):
 ############ Index Descriptor/Representation Helper Functions ############
 
 def Str(charArray):
-    "Convert array of char w/NUL pad to a python string, stripping NUL bytes"
-    return charArray.tobytes().decode(encoding="ascii", errors="ignore").strip("\000")
+ "Convert array of char w/NUL pad to a python string, stripping NUL bytes"
+ return charArray.tobytes().decode(encoding="ascii",errors="ignore").strip("\0")
 
 def CharArr(s, m=None):                     # mapP/W returns byte not string
     "Convert a Python string to a NumPy char array of size m (len + 1)."
