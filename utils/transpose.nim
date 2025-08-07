@@ -2,7 +2,7 @@ import std/[strutils, strformat], cligen/osUt
 when not declared(stdin): import std/syncio
 
 proc transpose(delim='\0', sep='\t', null="N/A", verbose=false) =
-  ## A stdin-stdout filter that transposes strict \\t-\\n-delimited TSV.  When 
+  ## A stdin-stdout filter that transposes strict \\t-\\n-delimited TSV.  When
   ## the table is irregular, *null* is substituted for a real value.  This is
   ## useful to extract schemas as in `c2tsv < foo.csv | head -n4 | transpose`.
   var tab: seq[seq[string]]
