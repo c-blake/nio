@@ -1092,7 +1092,7 @@ proc parse(s: MSlice; pathName: string; lno: int; colName: string;sl:Slice[int];
   if sl != 1..0:    # 1..0 is for nicer `load1` help than 0..9223372036854775807
     let a = max(0, min(s.len - 1, if sl.a < 0: s.len + sl.a else: sl.a))
     let b = max(0, min(s.len - 1, if sl.b < 0: s.len + sl.b else: sl.b))
-    if b >= a: s.mem = s.mem +! a; s.len = b - a + 1
+    if b >= a: s.mem = s.mem +! a; s.len = min(s.len, b - a + 1)
     else: s.len = 0
 
   template p(fn, n, k, u) =
