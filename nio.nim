@@ -1173,7 +1173,7 @@ proc parseCol(scols: seq[string], ss: var SchState): SchCol =
     if result.sl == 0..int.high: result.sl = 1..0
   else: result.sl = 1..0
   result.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
-  if ss.doZip:                           # stdout zipped mode
+  if ss.doZip:                          # stdout zipped mode
     result.f = stdout
     if ss.outBase.len > 0: ss.outBase.add ss.nameSep
     ss.outBase.add scols[0]
@@ -1228,7 +1228,7 @@ proc parseSch(schema,nameSep,dir,reps: string; onlyOut: bool): (SchState,
 
 proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
              SVs: Strings): int =
-  ## parse *strict* separated values on stdin|SVs to NIO files via schemas.
+  ## parse *strict* Separated Values on stdin|SVs to NIO files via schemas.
   ##
   ## An example schema file (with default values but for `outSfx`):
   ##   --preproc=gzip -d $1|c2tsv   # popen() preproc to make strict TSV
