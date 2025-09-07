@@ -1082,13 +1082,18 @@ proc defType*(names: Strings = @[], lang="nim", paths: Strings): string =
 import std/parseutils
 type Transform = proc(ixOut: pointer, inp: string, lno: int)
 
-proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
-           kout: IOKind; xfm: Transform; cnt=1; outp=stdout) {.inline.} =
-  let s = s.strip                       #XXX could be conditional
+proc parse(s: MSlice; pathName: string; lno: int; colName: string;sl:Slice[int];
+           inCode: char; kout: IOKind; xfm: Transform; cnt=1; outp=stdout) =
+  var s = s.strip                       #XXX could be conditional
   var nS, eoNum: int                    # widest types for number parsing
   var nU: uint
   var nF: float
   var obuf: array[16, char]             # actual output buffer
+  if sl != 1..0:    # 1..0 is for nicer `load1` help than 0..9223372036854775807
+    let a = max(0, min(s.len, if sl.a < 0: s.len + sl.a else: sl.a))
+    let b = max(0, min(s.len, if sl.b < 0: s.len + sl.b else: sl.b))
+    if b > a: s.mem = s.mem +! a; s.len = b - a
+    else: s.len = 0
 
   template p(fn, n, k, u) =
     n = cast[type(n)](s.fn(eoNum))
@@ -1100,7 +1105,7 @@ proc parse(s: MSlice; pathName: string; lno: int; colName: string; inCode: char;
       convert kout, k, obuf[0].addr, n.addr
     else:
       setNA kout, obuf[0].addr
-      erru &"stdin:{lno}: col:{colName} ic:{inCode} oc:{kout} !=~ \"{$s}\""
+      erru &"{lno}: col:{colName} oc:{kout}; sl:{sl} ic:{inCode} !=~ \"{$s}\"\n"
 
   if s.len == 0:                        # empty string ==> N/A
     setNA kout, obuf[0].addr; outp.nurite kout, obuf[0].addr
@@ -1133,7 +1138,7 @@ proc initXfm(inCode: char, kout: IOKind, xfm: string): Transform =
 # elif xfm.startsWith("L"):             # external shared library/DLL
   else: Value!!"unknown transformer prefix"
 
-proc load1*(inCode, oCode: char; delim='\n', xform="", count=1): int =
+proc load1*(inCode,oCode: char; slice=1..0, delim='\n', xform="", count=1): int=
   ## load 1 ASCII column on stdin to NIO on stdout (for import,testing).
   let kout = kindOf(oCode)
   var xfm: Transform
@@ -1141,7 +1146,7 @@ proc load1*(inCode, oCode: char; delim='\n', xform="", count=1): int =
   var lno = 1
   for (cs, n) in stdin.getDelims(delim):
     let n = if n > 0 and cs[n-1] == delim: n - 1 else: n
-    MSlice(mem: cs, len: n).parse "stdin",lno, "COL0", inCode, kout, xfm, count
+    MSlice(mem: cs, len: n).parse "stdin",lno,"COL0",slice,inCode,kout,xfm,count
     lno.inc
   if inCode == 'x': xfm nil, "", 0      # tell Transform to close
 
@@ -1156,13 +1161,17 @@ type                                #*** SHARED STATE FOR  parseCol/Sch/fromSV
                    doZip, onlyOut: bool; nHdr, mxLg, lno: int; dlm: char;
                    xfm0: Transform; stab: StringTableRef]
   SchCol = tuple[name: string; inCode: char; f: File; xfm: Transform;
-                 kout: IOKind; count: int]  # A parsed schema column
+                 sl: Slice[int]; kout: IOKind; count: int] # Parsed schema colum
 
 proc parseCol(scols: seq[string], ss: var SchState): SchCol =
   if scols.len < 3: Value !! &"{ss.schema}:{ss.lno} < 3 cols"
   result.name = scols[0]
   result.kout = kindOf(scols[1][^1])
   result.inCode = scols[2][0]
+  if scols[2].len > 1:                  # Honor `load1` 1..0 convention
+    result.sl = parseHSlice[int,int](scols[2][1..^1])
+    if result.sl == 0..int.high: result.sl = 1..0
+  else: result.sl = 1..0
   result.count = if scols[1].len > 1: parseInt(scols[1][0..^2]) else: 1
   if ss.doZip:                           # stdout zipped mode
     result.f = stdout
@@ -1260,7 +1269,7 @@ proc fromSV*(schema="", nameSep="", dir="", reps="", onlyOut=false,
             break
           let c = cols[cix]
           if c.f != nil:
-            s.parse path, lno, c.name, c.inCode, c.kout, c.xfm, c.count, c.f
+            s.parse path,lno, c.name, c.sl,c.inCode, c.kout, c.xfm, c.count, c.f
           cix.inc
     discard inpFile.pclose(ss.pp)
   for c in cols:
@@ -1918,6 +1927,7 @@ when isMainModule:
     [load1 , help={"inCode": """input code: [**bodh**] Bin|Octal|Dec|Hex int
 **f** Float; **c** charArray(count); **x** transform""",
                    "oCode" : "Usual [**cCsSiIlLfdg**] NIO storage code",
+                   "slice" : "py-like slice within source column to use",
                    "delim" : "alternate delimiter/terminator like '\\\\0'",
                    "xform" : "TransformParams; Eg. @file.[NDL].. {NOUP}",
                    "count" : "Output size; Only works for 'c'"}],
