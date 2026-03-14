@@ -538,8 +538,8 @@ iterator keysAtOpen*(r: Repo): (string, Ix) =
       convert lIk, r.lenK, len.addr, cast[pointer](cast[uint64](r.m.mem) + off)
       len = len.abs
       off.inc ioSize[r.lenK]
-      k.setLen len
-      copyMem k[0].addr, cast[pointer](cast[uint64](r.m.mem) + off), len
+      k.setLen len.Natural
+      copyMem k[0].addr, cast[pointer](cast[uint64](r.m.mem) + off), len.Natural
       off += len.uint64
       yield (k[0..^1], off0)    #COPY
 
@@ -575,7 +575,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
     try:
       let dlm = ext[2..^1]
       result = Repo(kind:rkDelim, m: m, na: na, mode: mode, kout: kout,
-                    dlm: (if dlm == "n": '\n' else: chr(parseInt(dlm))))
+                    dlm: (if dlm == "n": '\n' else: char(parseInt(dlm))))
     except Ce: Value !! &"{path}: expecting .Dn or .D<INT>"
   elif ext.startsWith(".L") and ext.len == 3:
     result = Repo(kind:rkLenPfx, lenK: kindOf(ext[2]), m: m, na: na,
@@ -725,7 +725,7 @@ proc initFormatter*(rowFmt: IORow, atShr: Repo = nil, fmTy: Strings = @[],
 
 proc formatFloat(result: var string, value: float64, ffmode: FloatFormatMode,
                  spec: StandardFormatSpecifier) =
-  var f = formatBiggestFloat(value, ffmode, spec.precision)
+  var f = formatBiggestFloat(value, ffmode, range[-1..32](spec.precision))
   var sign = false      # Fix `strformat.formatBiggestFloat` += `sign`,
   if value >= 0.0:      #.. `padWithZero`, `minimumWidth`, `align`, & uppercase
     if spec.sign!='-':
