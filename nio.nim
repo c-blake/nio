@@ -568,7 +568,7 @@ proc rOpen*(path: string, mode=rmFast, kout=IxIk, na=""): Repo =
   result.off = info.size.Ix
   let m = if openMode==fmWrite: mf.MemFile(mem: nil,size: 0) else:
     try: mf.open(path) except Ce: mf.MemFile(mem: nil, size: 0)
-  let (_, _, ext) = splitPathName(path)
+  let (_, _, ext) = splitPathName(path, shortestExt=true)
   if ext.len == 0 or ext == ".Dn":
     result = Repo(kind:rkDelim, dlm: '\n', m: m, na: na, mode: mode, kout: kout)
   elif ext.startsWith(".D"):
