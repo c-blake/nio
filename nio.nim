@@ -388,7 +388,8 @@ iterator pairs*(nf: NFile): (int, string) =
 
 type
   FileArray*[T] = object ## For *typed* external arrays of general records
-    nf*: NFile # whole NFile here allows .close & maybe MemFile.resize niceness
+    nf*: NFile ## Whole NFile here allows .close & maybe MemFile.resize niceness
+    used*: int ## Number top-level index slots in use (vs. room == .len).
 
   IOTensor* = object  ## Specialization for single-IOKind-base-types
     m*:   mf.MemFile  ## backing file
@@ -477,6 +478,26 @@ proc `$`*[M](x: array[M, char]): string =
   result.setLen m + 1                 # space for NUL-term for debug builds
   copyMem result[0].addr, x[0].unsafeAddr, m
   result.setLen result[0].addr.cstring.c_strlen
+
+proc setRoom*[T](fa: var FileArray[T], room: int) {.inline.} =
+  ## Set file-allocated space to `room` & re-map into memory.  If `room < used`,
+  ## `.used = .room` is also an effect.
+  if fa.nf.m.mem.isNil: Value !! "`fa` is not memory mapped"
+  mf.resize fa.nf.m, room*T.sizeof
+  if room < fa.used: fa.used = room
+
+proc add*[T](fa: var FileArray[T], val: T, room0=64, growFac=2) {.inline.} =
+  ## If `fa.used < fa.len` & `fa` is writable, set `[used++] = val` else first
+  ## grow then append `val`.
+  if fa.used < fa.len:
+    fa[fa.used] = val; fa.used.inc; return
+  fa.setRoom (if fa.used==0: room0 else: fa.used)*growFac
+  fa[fa.used] = val; fa.used.inc
+
+template `[]=`*[T](fa: var FileArray[T]; i: SomeInteger; field, val: untyped) =
+  ## Single-field row update that is SAFE even if evaluating `val` adds/grows.
+  ## E.g.: `nodes[n, link] = nodes.add(nodes[n].link, ...)`.
+  block: (let v = val; fa[i].field = v)
 
 proc mOpen*(tsr: var IOTensor, path: string, mode=fmRead, mappedSize = -1,
             offset=0, newFileSize = -1, allowRemap=false, mapFlags=cint(-1)) =
