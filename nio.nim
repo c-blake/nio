@@ -447,17 +447,17 @@ func len*[T](fa: FileArray[T]): int {.inline.} =
       Value!!"FileArray[T] size non-multiple of T.sizeof"
   fa.nf.m.size div T.sizeof
 
-func `[]`*[T](fa: FileArray[T], i: int): T {.inline.} =
+func `[]`*[T](fa: FileArray[T], i: SomeInteger): T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
-  let m = T.sizeof
+  let m = T.sizeof; let i = i.int
   when not defined(danger):
     if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
-    if i * m >=% fa.nf.m.size: razIE(i,nf,m)
+    if i * m >=% fa.nf.m.size: razIE(i,fa.nf,m)
   cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[]
 
-func `[]`*[T](fa: var FileArray[T], i: int): var T {.inline.} =
+func `[]`*[T](fa: var FileArray[T], i: SomeInteger): var T {.inline.} =
   ## Returns i-th row of `r` copied into `result`.
-  let m = T.sizeof
+  let m = T.sizeof; let i = i.int
   when not defined(danger):
     if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
     if i * m >=% fa.nf.m.size: razIE(i,fa.nf,m)
@@ -468,7 +468,7 @@ func `[]=`*[T](fa: FileArray[T], i: int, val: T) {.inline.} =
   let m = T.sizeof
   when not defined(danger):
     if fa.nf.m.mem.isNil: Value!!"uninitialized FileArray[T]"
-    if i * m >=% fa.nf.m.size: razIE(i,nf,m)
+    if i * m >=% fa.nf.m.size: razIE(i,fa.nf,m)
   cast[ptr T](cast[int](fa.nf.m.mem) +% i * m)[] = val
 
 proc `$`*[M](x: array[M, char]): string =
